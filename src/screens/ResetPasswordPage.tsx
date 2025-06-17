@@ -1,49 +1,50 @@
-import { Button, Checkbox, Input, Typography } from "@material-tailwind/react";
+import { Button, Input } from "@material-tailwind/react";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-export const Login = (): JSX.Element => {
+export const ResetPassword = (): JSX.Element => {
   const navigate = useNavigate();
+  const { token } = useParams();
+  const [searchParams] = useSearchParams();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = async (email: string, password: string) => {
+  const handleSubmit = async () => {
     try {
       setIsLoading(true);
       setError(null);
+      setSuccess(null);
 
-      const response = await axios.post(`${API_BASE_URL}/login`, {
+      // Validate passwords match
+      if (password !== passwordConfirmation) {
+        setError("Passwords do not match");
+        return;
+      }
+
+      const response = await axios.post(`${API_BASE_URL}/reset-password`, {
+        token,
         email,
-        password
+        password,
+        password_confirmation: passwordConfirmation
       });
 
-      if (response.data.success) {
-        // Store the token and user data
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('role', response.data.user.role);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-
-        // Redirect based on role
-        navigate(`/${response.data.user.role}-home`);
-      } else {
-        setError(response.data.message || 'Login failed. Please try again.');
-      }
+      setSuccess(response.data.message || 'Password has been reset successfully.');
+      
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error: any) {
       if (error.response) {
-        // Handle specific error cases
-        if (error.response.status === 401) {
-          setError('Invalid email or password');
-        } else if (error.response.status === 403) {
-          setError('Your account is not activated. Please check your email for verification.');
-        } else {
-          setError(error.response.data.message || 'An error occurred during login');
-        }
+        setError(error.response.data.message || 'Failed to reset password. Please try again.');
       } else if (error.request) {
         setError('No response from server. Please check your internet connection.');
       } else {
@@ -79,18 +80,24 @@ export const Login = (): JSX.Element => {
           {/* Heading */}
           <div className="flex flex-col w-[435px] items-center gap-5 mb-10">
             <h1 className="font-heading font-[600] text-black text-[45px] text-center tracking-[0] leading-[52px]">
-              Sign In
+              Reset Password
             </h1>
             <p className="font-['Roboto',Helvetica] font-normal text-[#79747e] text-2xl text-center tracking-[0] leading-8">
-              Enter your email and password to sign in
+              Enter your new password
             </p>
           </div>
 
-          {/* Login Form */}
+          {/* Form */}
           <div className="w-[382px] border-none bg-transparent shadow-none p-0 space-y-6">
             {error && (
               <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
                 {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">
+                {success}
               </div>
             )}
 
@@ -100,14 +107,16 @@ export const Login = (): JSX.Element => {
                 htmlFor="email"
                 className="font-text-sm-font-medium font-[500] text-[#263238] text-[14px] tracking-[0] leading-[150%]"
               >
-                Your Email
+                Email
               </Label>
               <Input
                 id="email"
+                type="email"
                 label="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 px-3 py-3 rounded-lg bg-white border border-solid text-[#90a4ae] placeholder:text-[#90a4ae]"
+                disabled
+                className="h-12 px-3 py-3 rounded-lg bg-gray-100 border border-solid text-[#90a4ae] placeholder:text-[#90a4ae]"
               />
             </div>
 
@@ -117,7 +126,7 @@ export const Login = (): JSX.Element => {
                 htmlFor="password"
                 className="font-text-sm-font-medium font-[500] text-[#263238] text-[14px] tracking-[0] leading-[150%]"
               >
-                Password
+                New Password
               </Label>
               <Input
                 id="password"
@@ -129,44 +138,40 @@ export const Login = (): JSX.Element => {
               />
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  label={
-                    <Typography className="font-normal text-md">
-                      Remember Me
-                    </Typography>
-                  }
-                  className="w-[18px] h-[18px] rounded border border-solid border-black"
-                />
-              </div>
-              <p 
-                onClick={() => navigate("/forgot-password")}
-                className="font-['Roboto',Helvetica] font-medium text-gray-600 text-sm p-0 h-auto cursor-pointer hover:text-dark-plum"
+            {/* Confirm Password Field */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="passwordConfirmation"
+                className="font-text-sm-font-medium font-[500] text-[#263238] text-[14px] tracking-[0] leading-[150%]"
               >
-                Forgot password
-              </p>
+                Confirm New Password
+              </Label>
+              <Input
+                id="passwordConfirmation"
+                type="password"
+                label="Confirm Password"
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                className="h-12 px-3 py-3 rounded-lg bg-white border border-solid text-[#90a4ae] placeholder:text-[#90a4ae]"
+              />
             </div>
 
-            {/* Sign In Button */}
+            {/* Submit Button */}
             <Button
               className="w-full h-12 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-sm rounded-lg capitalize hover:bg-light-purple"
-              onClick={() => login(email, password)}
+              onClick={handleSubmit}
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? "Resetting..." : "Reset Password"}
             </Button>
 
-            {/* Create Account Link */}
-            <div className="text-center font-['Roboto',Helvetica] font-normal text-gray-600 text-sm tracking-[0] leading-[21px]">
-              <span className="text-[#757575]">Not registered?</span>
-              <span className="font-medium text-[#757575]">&nbsp;</span>
+            {/* Back to Login */}
+            <div className="text-center">
               <span
-                onClick={() => navigate("/register")}
-                className="p-0 h-auto font-medium text-[#212121] capitalize text-sm cursor-pointer hover:text-dark-plum"
+                onClick={() => navigate("/login")}
+                className="text-dark-plum hover:text-light-purple cursor-pointer font-medium"
               >
-                Create account
+                Back to Login
               </span>
             </div>
           </div>
@@ -174,4 +179,4 @@ export const Login = (): JSX.Element => {
       </div>
     </div>
   );
-};
+}; 
