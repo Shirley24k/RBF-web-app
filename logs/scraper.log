@@ -1,0 +1,36 @@
+Starting scraper at Tue 17/06/2025 11:21:38.06 
+Running one-time scraper job
+Starting SCM scrape...
+Page loaded.
+Scrolled to bottom.
+Content container found.
+Found 1702 investor names.
+Processed 0/1702 names
+Processed 1000/1702 names
+Finished writing investor names to scm_investor_names.csv
+PostgreSQL updated with scraped data.
+Browser closed.
+Starting scraper at Wed 18/06/2025 10:00:01.98 
+Running one-time scraper job
+Starting SCM scrape...
+Page loaded.
+Scrolled to bottom.
+Content container found.
+Found 1702 investor names.
+Processed 0/1702 names
+Processed 1000/1702 names
+Finished writing investor names to scm_investor_names.csv
+PostgreSQL updated with scraped data.
+Browser closed.
+Starting scraper at Sat 21/06/2025 14:29:36.77 
+Running one-time scraper job
+Starting SCM scrape...
+Page loaded.
+Scrolled to bottom.
+Content container found.
+Found 1704 investor names.
+Processed 0/1704 names
+Processed 1000/1704 names
+Finished writing investor names to scm_investor_names.csv
+PostgreSQL updated with scraped data.
+Browser closed.
