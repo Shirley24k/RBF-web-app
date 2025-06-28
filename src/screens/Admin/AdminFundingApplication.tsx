@@ -1,44 +1,30 @@
 import { FunnelIcon } from "@heroicons/react/24/solid";
-import { Button } from "@material-tailwind/react";
+import { Button, Card, CardBody } from "@material-tailwind/react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 import { StatusBadge } from "../../components/StatusBadge";
 
-const applications = [
-  {
-    id: "A0001",
-    number: 1,
-    datetime: "2025-04-19 08:00:00",
-    status: "Await Review",
-  },
-  {
-    id: "A0002",
-    number: 2,
-    datetime: "2025-03-31 08:00:00",
-    status: "Pending",
-  },
-  {
-    id: "A0003",
-    number: 3,
-    datetime: "2024-12-19 08:00:00",
-    status: "Active",
-  },
-  {
-    id: "A0004",
-    number: 4,
-    datetime: "2024-06-19 08:00:00",
-    status: "In Progress",
-  },
-  {
-    id: "A0005",
-    number: 5,
-    datetime: "2023-02-23 08:00:00",
-    status: "Completed",
-  },
-];
-
 export const AdminFunding = (): JSX.Element => {
   const navigate = useNavigate();
+  const [fundingApplication, setFundingApplication] = useState<any>(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const fetchApplications = async () => {
+    await axios.get(`${API_BASE_URL}/applications`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      }
+    })
+    .then((response) => {
+      setFundingApplication(response.data.data);
+    })
+  }
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
   return (
     <div className="relative flex h-screen w-full">
@@ -58,6 +44,17 @@ export const AdminFunding = (): JSX.Element => {
 
           {/* Main content section */}
           <div className="flex-1 mt-10 w-full">
+            {/* No Applications Card */}
+            {fundingApplication && fundingApplication.length === 0 ? (
+            <Card className="w-[948px] h-[152px] absolute top-[185px] left-[443px] rounded-[10px] border border-solid border-[#574964c7]">
+              <CardBody className="flex items-center justify-center h-full p-0">
+                <div className="font-text-xl-font-normal font-[400] text-gray-600 text-[20px] text-center tracking-[0px] leading-[150%] whitespace-nowrap [font-style: normal]">
+                  No applications found — it looks like you haven&apos;t applied
+                  for funding yet.
+                </div>
+              </CardBody>
+            </Card>
+            ) : (
             <div className="w-full max-w-[900px] ml-[150px]">
               <table className="table-borderless w-full">
                 <thead className="border-b border-gray-300">
@@ -66,7 +63,10 @@ export const AdminFunding = (): JSX.Element => {
                       No.
                     </th>
                     <th className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap text-left pl-12">
-                      Application ID
+                      Startup
+                    </th>
+                    <th className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap text-left pl-12">
+                      Investor
                     </th>
                     <th className="w-[200px]"></th>
                     <th className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap text-left">
@@ -86,20 +86,23 @@ export const AdminFunding = (): JSX.Element => {
                   </tr>
                 </thead>
                 <tbody>
-                  {applications.map((row) => (
-                    <tr key={row.number} className="border-b border-gray-300">
+                  {(fundingApplication || []).map((application: any, idx: number) => (
+                    <tr key={application.id} className="border-b border-gray-300">
                       <td className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap py-4">
-                        {row.number}
+                        {idx + 1}
                       </td>
-                      <td className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-12">
-                        {row.id}
-                      </td>
+                        <td className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-12">
+                          {application.startup_name}
+                        </td>
+                        <td className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-12">
+                          {application.investor_name}
+                        </td>
                       <th className="w-[200px]"></th>
                       <td className="[font-family:'Roboto',Helvetica] font-normal text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap">
-                        {row.datetime}
+                        {application.date}
                       </td>
                       <td>
-                        <StatusBadge status={row.status} />
+                        <StatusBadge status={application.status} />
                       </td>
 
                       <td className="text-center">
@@ -107,13 +110,7 @@ export const AdminFunding = (): JSX.Element => {
                           variant="outlined"
                           className="h-8 px-[5px] py-1.5 rounded-[5px] border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm tracking-[0] leading-[21px] capitalize"
                           onClick={() =>
-                            navigate("/admin-application-details", {
-                              state: {
-                                id: row.id,
-                                datetime: row.datetime,
-                                status: row.status,
-                              },
-                            })
+                            navigate(`/application/${application.id}`)
                           }
                         >
                           View Details
@@ -123,17 +120,8 @@ export const AdminFunding = (): JSX.Element => {
                   ))}
                 </tbody>
               </table>
-            </div>
-
-            {/* No Applications Card */}
-            {/* <Card className="w-[948px] h-[152px] absolute top-[185px] left-[443px] rounded-[10px] border border-solid border-[#574964c7]">
-            <CardBody className="flex items-center justify-center h-full p-0">
-              <div className="font-text-xl-font-normal font-[400] text-gray-600 text-[20px] text-center tracking-[0px] leading-[150%] whitespace-nowrap [font-style: normal]">
-                No applications found — it looks like you haven&apos;t applied
-                for funding yet.
-              </div>
-            </CardBody>
-          </Card> */}
+            </div> 
+            )}
           </div>
         </div>
       </div>

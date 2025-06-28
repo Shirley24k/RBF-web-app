@@ -6,6 +6,7 @@ import {
   HomeIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/solid";
+import axios from "axios";
 import clsx from "clsx";
 import { useState } from "react";
 
@@ -23,11 +24,40 @@ interface SidenavProps {
 }
 
 export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
-  const [open, setOpen] = useState(true);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const [open, setOpen] = useState(() => {
+    const saved = localStorage.getItem("sidenavOpen");
+    return saved === null ? true : saved === "true";
+  });
   const role = localStorage.getItem("role");
+  const isStripeLinked = localStorage.getItem("isStripeLinked") === "true";
+  const shouldRestrict = role === "startup" || role === "investor";
 
   const handleNav = (path: string) => {
     window.location.href = path;
+  };
+
+  const handleToggle = () => {
+    setOpen((prev) => {
+      localStorage.setItem("sidenavOpen", String(!prev));
+      return !prev;
+    });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/logout`, {}, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      localStorage.clear();
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
 
   const navItems = [
@@ -73,8 +103,8 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
       )}
     >
       <Card className="h-full rounded-none bg-warm-off-white border-0">
-        <div className="flex items-center p-4">
-          <IconButton variant="text" onClick={() => setOpen(!open)}>
+        <div className="flex items-center justify-start px-4 h-14">
+          <IconButton variant="text" onClick={handleToggle}>
             <Bars3Icon className="h-6 w-6 text-dark-plum" />
           </IconButton>
           {open && (
@@ -90,36 +120,50 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
         </div>
 
         <List>
-          {navItems.map(({ key, label, icon, path }) => (
-            <ListItem
-              key={key}
-              onClick={() => handleNav(path)}
-              className={clsx(
-                active === key
-                  ? "bg-avocado-green"
-                  : "hover:bg-avocado-green",
-                "transition-colors"
-              )}
-            >
-              <ListItemPrefix>{icon}</ListItemPrefix>
-              {open && (
-                <Typography
-                  variant="paragraph"
-                  className="font-semibold text-dark-plum"
-                >
-                  {label}
-                </Typography>
-              )}
-            </ListItem>
-          ))}
+          {navItems.map(({ key, label, icon, path }) => {
+            const isRestricted = shouldRestrict && !isStripeLinked && key !== "home" && key !== "profile";
+            return (
+              <ListItem
+                key={key}
+                onClick={() => {
+                  if (isRestricted) {
+                    alert("Please link your Stripe account to access this feature.");
+                  } else {
+                    handleNav(path);
+                  }
+                }}
+                className={clsx(
+                  !isRestricted && active === key && open
+                    ? "bg-avocado-green"
+                    : open
+                      ? "hover:bg-avocado-green"
+                      : "",
+                  !open ? "hover:bg-avocado-green w-14 rounded-md" : "",
+                  !isRestricted && active === key && !open ? "bg-avocado-green w-14 rounded-md" : "",
+                  "transition-colors"
+                )}
+              >
+                <ListItemPrefix>
+                  <span className="flex items-center justify-center w-8 h-8">
+                    {icon}
+                  </span>
+                </ListItemPrefix>
+                {open && (
+                  <Typography
+                    variant="paragraph"
+                    className="font-semibold text-dark-plum"
+                  >
+                    {label}
+                  </Typography>
+                )}
+              </ListItem>
+            );
+          })}
         </List>
 
         <div className="mt-auto px-4 pb-4">
           <ListItem
-            onClick={() => {
-              localStorage.removeItem("role");
-              window.location.href = "/login";
-            }}
+            onClick={handleLogout}
             className="hover:bg-avocado-green/50"
           >
             <ListItemPrefix>

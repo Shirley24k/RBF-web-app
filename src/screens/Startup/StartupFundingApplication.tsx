@@ -1,50 +1,30 @@
 import { FunnelIcon } from "@heroicons/react/24/solid";
-import { Button } from "@material-tailwind/react";
+import { Button, Card, CardBody } from "@material-tailwind/react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 import { StatusBadge } from "../../components/StatusBadge.tsx";
 
-const investorData = [
-  {
-    id: 1,
-    investor: "John Tan",
-    datetime: "2025-04-19 08:00:00",
-    status: "Await Review",
-  },
-  {
-    id: 2,
-    investor: "InvestCo",
-    datetime: "2024-12-19 08:00:00",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    investor: "InvestCo",
-    datetime: "2024-06-19 08:00:00",
-    status: "In Progress",
-  },
-  {
-    id: 4,
-    investor: "FundBhd",
-    datetime: "2023-02-23 08:00:00",
-    status: "Rejected",
-  },
-  {
-    id: 5,
-    investor: "InvestCo",
-    datetime: "2023-02-23 08:00:00",
-    status: "Active",
-  },
-  {
-    id: 6,
-    investor: "InvestCo",
-    datetime: "2023-02-23 08:00:00",
-    status: "Completed",
-  },
-];
-
 export const StartupFunding = (): JSX.Element => {
   const navigate = useNavigate();
+  const [fundingApplication, setFundingApplication] = useState<any>(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  const fetchApplications = async () => {
+    await axios.get(`${API_BASE_URL}/startup/applications`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      }
+    })
+    .then((response) => {
+      setFundingApplication(response.data.data);
+    })
+  }
+  
+  useEffect(() => {
+    fetchApplications();
+  }, []);
 
   return (
     <div className="bg-white flex flex-row justify-center w-full">
@@ -73,6 +53,17 @@ export const StartupFunding = (): JSX.Element => {
 
           {/* Main content section */}
           <div className="flex-1 mt-10 w-full">
+            {/* No Applications Card */}
+            {fundingApplication && fundingApplication.length === 0 ? (
+            <Card className="w-[948px] h-[152px] absolute top-[185px] left-[443px] rounded-[10px] border border-solid border-[#574964c7]">
+            <CardBody className="flex items-center justify-center h-full p-0">
+              <div className="font-text-xl-font-normal font-[400] text-gray-600 text-[20px] text-center tracking-[0px] leading-[150%] whitespace-nowrap [font-style: normal]">
+                No applications found — it looks like you haven&apos;t applied
+                for funding yet.
+              </div>
+            </CardBody>
+          </Card>
+          ) : (
             <div className="w-full max-w-[943px] ml-[150px]">
               <table className="table-borderless w-full">
                 <thead className="border-b border-gray-300">
@@ -85,7 +76,7 @@ export const StartupFunding = (): JSX.Element => {
                     </th>
                     <th className="w-[200px]"></th>
                     <th className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap text-left">
-                      Datetime
+                      Date
                     </th>
                     <th>
                       <div className="flex items-center gap-2">
@@ -101,20 +92,20 @@ export const StartupFunding = (): JSX.Element => {
                   </tr>
                 </thead>
                 <tbody>
-                  {investorData.map((row) => (
-                    <tr key={row.id} className="border-b border-gray-300">
+                  {(fundingApplication || []).map((application:any, idx:number) => (
+                    <tr key={application.id} className="border-b border-gray-300">
                       <td className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap py-4">
-                        {row.id}
+                        {idx + 1}
                       </td>
                       <td className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-12">
-                        {row.investor}
+                        {application.investor_name}
                       </td>
                       <th className="w-[200px]"></th>
                       <td className="[font-family:'Roboto',Helvetica] font-normal text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap">
-                        {row.datetime}
+                        {application.date}
                       </td>
                       <td>
-                        <StatusBadge status={row.status} />
+                        <StatusBadge status={application.status} />
                       </td>
 
                       <td className="text-center">
@@ -122,13 +113,7 @@ export const StartupFunding = (): JSX.Element => {
                           variant="outlined"
                           className="h-8 px-[5px] py-1.5 rounded-[5px] border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm tracking-[0] leading-[21px] capitalize"
                           onClick={() =>
-                            navigate("/startup-application-details", {
-                              state: {
-                                investor: row.investor,
-                                datetime: row.datetime,
-                                status: row.status,
-                              },
-                            })
+                            navigate(`/application/${application.id}`)
                           }
                         >
                           View Details
@@ -139,16 +124,7 @@ export const StartupFunding = (): JSX.Element => {
                 </tbody>
               </table>
             </div>
-
-            {/* No Applications Card */}
-            {/* <Card className="w-[948px] h-[152px] absolute top-[185px] left-[443px] rounded-[10px] border border-solid border-[#574964c7]">
-            <CardBody className="flex items-center justify-center h-full p-0">
-              <div className="font-text-xl-font-normal font-[400] text-gray-600 text-[20px] text-center tracking-[0px] leading-[150%] whitespace-nowrap [font-style: normal]">
-                No applications found — it looks like you haven&apos;t applied
-                for funding yet.
-              </div>
-            </CardBody>
-          </Card> */}
+          )}
           </div>
         </div>
       </div>

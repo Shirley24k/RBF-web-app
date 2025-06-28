@@ -44,6 +44,15 @@ export const InvestorRegister = (): JSX.Element => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>("MY");
 
+  const investmentAmountOptions = [
+    "Less than RM 100,000",
+    "RM 100,000 - RM 500,000",
+    "RM 500,000 - RM 1,000,000",
+    "RM 1,000,000 - RM 2,000,000",
+    "RM 2,000,000 - RM 5,000,000",
+    "More than RM 5,000,000"
+  ];
+
   // Get list of countries from libphonenumber-js
   const countries = getCountries();
 
@@ -670,9 +679,11 @@ export const InvestorRegister = (): JSX.Element => {
                 }}
                 error={!!errors.investmentRange}
               >
-                <Option value="less_than_500k">Less than RM500k</Option>
-                <Option value="500k_to_2000k">RM500k - RM2000k</Option>
-                <Option value="more_than_2000k">More than RM2000k</Option>
+                {investmentAmountOptions.map((option) => (
+                  <Option key={option} value={option}>
+                    {option}
+                  </Option>
+                ))}
               </Select>
               {errors.investmentRange && (
                 <span className="text-red-500 text-sm">{errors.investmentRange}</span>

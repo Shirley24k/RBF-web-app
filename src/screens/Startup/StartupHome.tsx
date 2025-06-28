@@ -1,10 +1,67 @@
 import { Button } from "@material-tailwind/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidenav } from "../../components/sidenav";
+import axios from "axios";
 
 export const StartupHome = (): JSX.Element => {
-  //set state for stripe linking status
-  const [isStripeLinked, setIsStripeLinked] = useState(false);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [isStripeLinked, setIsStripeLinked] = useState(localStorage.getItem("isStripeLinked") === "true");
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('stripe_linked') === '1'){
+      localStorage.setItem('isStripeLinked', 'true');
+      setIsStripeLinked(true);
+
+      //Generate dummy sales transaction if startup has linked stripe account
+      axios.get(`${API_BASE_URL}/startup/profile`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      .then((response) => {
+        const stripeId = response.data?.data?.stripe_id;
+        axios.post(`${API_BASE_URL}/dummy-transactions`, {'stripe_id': stripeId}, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {
+          console.error("Error generating dummy transaction:", error);
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching startup profile:", error);
+      });
+    }
+  }, []);
+
+  const handleStripeLinking = async() => {
+    try {
+      const clientId = import.meta.env.VITE_STRIPE_CLIENT_ID; // Replace with your real client ID
+      const redirectUri = encodeURIComponent('http://localhost:8000/api/stripe/oauth/callback');
+      const userInfo = {
+        user_id: (user as any)?.id,
+        role: (user as any)?.role,
+        email: (user as any)?.email
+      };
+      const state = btoa(JSON.stringify(userInfo)); // Base64 encode
+      const stripeUrl = `https://connect.stripe.com/oauth/authorize` +
+      `?response_type=code` +
+      `&client_id=${clientId}` +
+      `&scope=read_write` +
+      `&redirect_uri=${redirectUri}` +
+      `&state=${state}`;
+
+      window.location.href = stripeUrl;
+    } catch (error) {
+      console.error("Stripe linking failed:", error);
+    }
+  }
 
   return (
     <div className="bg-white flex flex-row justify-center w-full min-h-screen">
@@ -55,7 +112,7 @@ export const StartupHome = (): JSX.Element => {
 
                 <Button
                   className="mt-8 bg-dark-plum hover:bg-light-purple text-white font-bold h-12 py-[5px] px-[145px] rounded-lg text-sm capitalize"
-                  onClick={() => setIsStripeLinked(true)}
+                  onClick={handleStripeLinking}
                 >
                   Connect Stripe Account
                 </Button>

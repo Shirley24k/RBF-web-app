@@ -1,7 +1,27 @@
 import { Alert } from "@material-tailwind/react";
+import axios from "axios";
 import { Sidenav } from "../../components/sidenav";
+import { useEffect, useState } from "react";
 
 export const AdminHome = (): JSX.Element => {
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [applications, setApplications] = useState<any>([]);
+  
+  const fetchApplications = async () => {
+    await axios.get(`${API_BASE_URL}/pending-applications`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      }
+    })
+    .then((response) => {
+      setApplications(response.data.data);
+    })
+  }
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
   return (
     <div className="bg-white flex min-h-screen">
       {/* Sidebar */}
@@ -13,6 +33,7 @@ export const AdminHome = (): JSX.Element => {
           Welcome, Admin!
         </h1>
 
+      {applications && applications.length > 0 && (
         <Alert variant="ghost" color="red" className="max-w-xl text-center">
           <span>You have agreement pending to review. Click </span>
           <a
@@ -23,6 +44,7 @@ export const AdminHome = (): JSX.Element => {
           </a>
           <span> to review.</span>
         </Alert>
+      )}
       </main>
     </div>
   );

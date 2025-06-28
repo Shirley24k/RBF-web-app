@@ -28,7 +28,26 @@ export const Login = (): JSX.Element => {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('role', response.data.user.role);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-
+        
+        // Check if stripe is linked
+        if(response.data.user.role === "startup" || response.data.user.role === "investor"){
+          const endpoint = response.data.user.role === "startup" ? "startup/profile" : "investor/profile";
+          await axios.get(`${API_BASE_URL}/${endpoint}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          })
+          .then((response) => {
+            if (response.data?.data?.stripe_id){
+              localStorage.setItem('isStripeLinked', 'true');
+            } else {
+              localStorage.setItem('isStripeLinked', 'false');
+            }
+          })
+          .catch((error) => {
+            console.error('Error fetching profile for Stripe check:', error);
+          });
+        } 
         // Redirect based on role
         navigate(`/${response.data.user.role}-home`);
       } else {

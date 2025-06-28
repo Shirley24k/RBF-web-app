@@ -8,25 +8,27 @@ import {
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
+import axios from "axios";
 
 export const EditProfile = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Initial values from previous page
-  const prevData = location.state || {};
+  const investment_preferences = location.state || {};
 
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>(
-    prevData.preferredIndustry || []
+    investment_preferences.preferred_industry || []
   );
   const [investmentRange, setInvestmentRange] = useState(
-    prevData.investmentAmount || ""
+    investment_preferences.investment_amount_range || ""
   );
   const [selectedStage, setSelectedStage] = useState<string[]>(
-    prevData.fundingStage || []
+    investment_preferences.preferred_funding_stage || []
   );
   const [revenueShare, setRevenueShare] = useState<number>(
-    prevData.revenueShare || 5
+    investment_preferences.revenue_share_percentage || 0
   );
 
   const toggleMultiSelect = (
@@ -41,16 +43,34 @@ export const EditProfile = () => {
     }
   };
 
-  const handleSave = () => {
-    const updatedPreferences = {
-      preferredIndustry: selectedIndustries,
-      investmentAmount: investmentRange,
-      fundingStage: selectedStage,
-      revenueShare: revenueShare,
-    };
-    // Pass back the data and go to previous page
-    navigate("/investor-profile", { state: updatedPreferences });
+  const handleSave = async () => {
+    const investment_preferences = {
+      preferred_industry: selectedIndustries,
+      investment_amount_range: investmentRange,
+      preferred_funding_stage: selectedStage,
+      revenue_share_percentage: revenueShare,
+    }
+    await axios.patch(`${API_BASE_URL}/investor/update-preferences`, {investment_preferences}, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+    .then((response) => {
+      navigate("/investor-profile");
+    })
+    .catch((error) => {
+      console.log(error);
+    });
   };
+
+  const investmentAmountOptions = [
+    "Less than RM 100,000",
+    "RM 100,000 - RM 500,000",
+    "RM 500,000 - RM 1,000,000",
+    "RM 1,000,000 - RM 2,000,000",
+    "RM 2,000,000 - RM 5,000,000",
+    "More than RM 5,000,000"
+  ];
 
   return (
     <div className="flex justify-center w-full bg-white">
@@ -122,14 +142,11 @@ export const EditProfile = () => {
                   value={investmentRange}
                   onChange={(val) => setInvestmentRange(val || "")}
                 >
-                  <Option value="Less than RM 10,000">
-                    Less than RM 10,000
-                  </Option>
-                  <Option value="RM 10,000 - 20,000">RM 10,000 - 20,000</Option>
-                  <Option value="RM 20,000 - 50,000">RM 20,000 - 50,000</Option>
-                  <Option value="RM 50,000 - 100,000">
-                    RM 50,000 - 100,000
-                  </Option>
+                  {investmentAmountOptions.map((option) => (
+                    <Option key={option} value={option}>
+                      {option}
+                    </Option>
+                  ))}
                 </Select>
               </div>
 

@@ -1,33 +1,33 @@
 import { PencilIcon, UserCircleIcon } from "@heroicons/react/24/solid";
-import { IconButton, Typography } from "@material-tailwind/react";
+import { IconButton, Spinner, Typography } from "@material-tailwind/react";
+import axios from "axios";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 
 export const InvestorProfile = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const defaultPreferences = {
-    preferredIndustry: ["SaaS", "FinTech", "EdTech"],
-    investmentAmount: "RM 20,000 - 50,000",
-    fundingStage: ["Seed", "Series A"],
-    revenueShare: 5,
-  };
-
-  const [preferences, setPreferences] = useState(defaultPreferences);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    if (location.state) {
-      setPreferences((prev) => ({
-        ...prev,
-        ...location.state,
-      }));
+    const fetchProfile = async () => {
+      await axios.get(`${API_BASE_URL}/investor/profile`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      .then((response) => {
+        setProfile(response.data.data);
+      })
     }
-  }, [location.state]);
+    fetchProfile();
+  }, []);
 
   const handleEdit = () => {
-    navigate("/edit-profile", { state: preferences });
+    navigate("/edit-profile", { state: profile?.investment_preferences });
   };
 
   return (
@@ -39,13 +39,18 @@ export const InvestorProfile = () => {
 
       {/* Main Content */}
       <div className="ml-[255px] p-10 w-full overflow-auto">
+        {profile === null ? (
+          <div className="flex justify-center items-center h-full">
+            <Spinner className="h-12 w-12 text-dark-plum" />
+          </div>
+        ) : (
         <div className="space-y-10 max-w-[1200px] ml-[20px]">
           {/* Profile Header */}
           <div className="flex justify-center items-center flex-col space-y-4 pr-[100px]">
             <UserCircleIcon className="w-[120px] h-[120px] text-gray-400" />
             <div className="text-center">
               <Typography variant="h5" className="text-black">
-                John Tan
+                {profile?.name}
               </Typography>
               <Typography className="text-light-purple text-base font-medium">
                 Investor
@@ -71,26 +76,41 @@ export const InvestorProfile = () => {
                   <Typography className="text-lg font-medium text-black">
                     Email Address
                   </Typography>
-                  <Typography className="text-lg font-medium text-black">
-                    Country
-                  </Typography>
+                  {profile?.type === "individual" ? (
+                    <Typography className="text-lg font-medium text-black">
+                      Country
+                    </Typography>
+                  ) : (
+                    <Typography className="text-lg font-medium text-black">
+                      Company Address
+                    </Typography>
+                  )
+                  }
                   <Typography className="text-lg font-medium text-black">
                     Role
                   </Typography>
                 </div>
                 <div className="space-y-6">
                   <Typography className="text-lg font-medium text-light-purple">
-                    John Tan
+                    {profile?.name}
                   </Typography>
                   <Typography className="text-lg font-medium text-light-purple">
-                    +6012-345 6789
+                    {profile?.contact_no}
                   </Typography>
                   <Typography className="text-lg font-medium text-light-purple">
-                    john@gmail.com
+                    {user?.email}
                   </Typography>
+                  {profile?.type === "individual" ? 
+                  (
                   <Typography className="text-lg font-medium text-light-purple">
-                    Malaysia
+                    {profile?.country}
                   </Typography>
+                  ) : 
+                  (
+                    <Typography className="text-lg font-medium text-light-purple">
+                    {profile?.company_address}
+                  </Typography>
+                  )}
                   <Typography className="text-lg font-medium text-light-purple">
                     Investor
                   </Typography>
@@ -128,22 +148,23 @@ export const InvestorProfile = () => {
                 </div>
                 <div className="space-y-6">
                   <Typography className="text-lg font-medium text-light-purple">
-                    {preferences.preferredIndustry.join(", ")}
+                    {profile?.investment_preferences.preferred_industry.join(", ")}
                   </Typography>
                   <Typography className="text-lg font-medium text-light-purple">
-                    {preferences.investmentAmount}
+                    {profile?.investment_preferences.investment_amount_range}
                   </Typography>
                   <Typography className="text-lg font-medium text-light-purple">
-                    {preferences.fundingStage.join(", ")}
+                    {profile?.investment_preferences.preferred_funding_stage.join(", ")}
                   </Typography>
                   <Typography className="text-lg font-medium text-light-purple">
-                    {preferences.revenueShare}%
+                    {profile?.investment_preferences.revenue_share_percentage}%
                   </Typography>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

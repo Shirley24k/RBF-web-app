@@ -1,11 +1,42 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@material-tailwind/react";
 import { Sidenav } from "../../components/sidenav";
 
 export const InvestorHome = (): JSX.Element => {
-  //set state for stripe linking status
-  const [isStripeLinked, setIsStripeLinked] = useState(false);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [isStripeLinked, setIsStripeLinked] = useState(localStorage.getItem("isStripeLinked") === "true");
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('stripe_linked') === '1'){
+      localStorage.setItem('isStripeLinked', 'true');
+      setIsStripeLinked(true);
+    }
+  }, []);
+
+  const handleStripeLinking = async() => {
+    try {
+      const clientId = import.meta.env.VITE_STRIPE_CLIENT_ID; // Replace with your real client ID
+      const redirectUri = encodeURIComponent('http://localhost:8000/api/stripe/oauth/callback');
+      const userInfo = {
+        user_id: (user as any)?.id,
+        role: (user as any)?.role,
+        email: (user as any)?.email
+      };
+      const state = btoa(JSON.stringify(userInfo)); // Base64 encode
+      const stripeUrl = `https://connect.stripe.com/oauth/authorize` +
+      `?response_type=code` +
+      `&client_id=${clientId}` +
+      `&scope=read_write` +
+      `&redirect_uri=${redirectUri}` +
+      `&state=${state}`;
+
+      window.location.href = stripeUrl;
+    } catch (error) {
+      console.error("Stripe linking failed:", error);
+    }
+  }
+  
   return (
     <div className="bg-white flex flex-row justify-center w-full min-h-screen">
       <div className="w-full relative flex">
@@ -53,7 +84,7 @@ export const InvestorHome = (): JSX.Element => {
 
                 <Button
                   className="mt-8 bg-dark-plum hover:bg-light-purple text-white font-bold h-12 py-[5px] px-[145px] rounded-lg text-sm capitalize"
-                  onClick={() => setIsStripeLinked(true)}
+                  onClick={handleStripeLinking}
                 >
                   Connect Stripe Account
                 </Button>
