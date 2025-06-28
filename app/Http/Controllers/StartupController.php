@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Startup;
 use App\Services\StartupService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class StartupController extends Controller
 {
@@ -16,10 +17,10 @@ class StartupController extends Controller
         $this->startupService = $startupService;
     }
 
-    public function show($id): JsonResponse
+    public function show(): JsonResponse
     {
         try {
-            $startup = Startup::findOrFail($id);
+            $startup = Startup::where('user_id', auth()->user()->id)->first();
             return response()->json([
                 'data' => $startup
             ]);
@@ -57,4 +58,6 @@ class StartupController extends Controller
             ], 500);
         }
     }
+
+    
 }

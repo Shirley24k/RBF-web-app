@@ -17,6 +17,7 @@ class Investor extends Model
         'company_address',
         'investment_preferences',
         'validation_status',
+        'stripe_id',
         'user_id'
     ];
 

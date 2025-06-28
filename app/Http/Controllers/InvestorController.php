@@ -17,10 +17,10 @@ class InvestorController extends Controller
         $this->investorService = $investorService;
     }
 
-    public function show($id): JsonResponse
+    public function show(): JsonResponse
     {
         try {
-            $investor = Investor::findOrFail($id);
+            $investor = Investor::where('user_id', auth()->user()->id)->first();
             return response()->json([
                 'data' => $investor
             ]);
@@ -63,4 +63,27 @@ class InvestorController extends Controller
         }
     }
 
+    public function updatePreferences(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'investment_preferences' => 'required|array',
+            'investment_preferences.preferred_industry' => 'required|array',
+            'investment_preferences.preferred_funding_stage' => 'required|array',
+            'investment_preferences.investment_amount_range' => 'required|string',
+            'investment_preferences.revenue_share_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+
+        try {
+            $investor = $this->investorService->updatePreferences($validated);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Preferences updated successfully',
+            'data' => $investor
+        ], 200);
+    }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +26,9 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 // Public routes (no authentication required)
 Route::post('/register/investor', [InvestorController::class, 'store']);
 Route::post('/register/startup', [StartupController::class, 'store']);
+
+// Stripe OAuth callback route (no authentication required)
+Route::get('/stripe/oauth/callback', [UserController::class, 'handleOAuthCallback']);
 
 // Authentication routes
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
@@ -57,9 +61,29 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
+    // Application routes
+    Route::get('/application/{id}', [ApplicationController::class, 'getApplication']);
+    
     // Investor routes
-    Route::get('/investor/{id}', [InvestorController::class, 'show']);
+    Route::get('/investor/profile', [InvestorController::class, 'show']);
+    Route::patch('/investor/update-preferences', [InvestorController::class, 'updatePreferences']);
+    Route::get('/investor/applications', [ApplicationController::class, 'getApplicationsForInvestor']);
+    Route::post('/investor/upload-agreement/{application_id}', [ApplicationController::class, 'uploadAgreement']);
+    Route::patch('/application/{id}/accept', [ApplicationController::class, 'acceptApplication']);
+    Route::patch('/application/{id}/reject', [ApplicationController::class, 'rejectApplication']);
     
     // Startup routes
-    Route::get('/startup/{id}', [StartupController::class, 'show']);
+    Route::get('/startup/profile', [StartupController::class, 'show']);
+    Route::post('/startup/submit-funding', [ApplicationController::class, 'submitApplication']);
+    Route::get('/startup/applications', [ApplicationController::class, 'getApplicationsForStartup']);
+    Route::post('/startup/upload-agreement/{application_id}', [ApplicationController::class, 'uploadAgreement']);
+    Route::post('/dummy-transactions', [UserController::class, 'createDummyTransactions']);
+
+    // Admin routes
+    Route::get('/applications', [ApplicationController::class, 'getAllApplications']);
+    Route::get('/pending-applications', [ApplicationController::class, 'getPendingApplications']);
+    Route::patch('/application/{id}/admin-approve', [ApplicationController::class, 'adminApproveApplication']);
+    Route::patch('/application/{id}/admin-decline', [ApplicationController::class, 'adminDeclineApplication']);
+
+    
 });

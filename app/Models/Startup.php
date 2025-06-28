@@ -14,6 +14,7 @@ class Startup extends Model
         'company_name',
         'company_sector',
         'company_address',
+        'stripe_id',
         'user_id'
     ];
 

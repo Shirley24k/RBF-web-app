@@ -62,4 +62,12 @@ class InvestorService
             return $investor;
         });
     }
+
+    public function updatePreferences(array $data)
+    {
+        $investor = Investor::where('user_id', auth()->user()->id)->first();
+        $investor->investment_preferences = $data['investment_preferences'];
+        $investor->save();
+        return $investor;
+    }
 } 

@@ -15,10 +15,11 @@ class CreateAgreementsTable extends Migration
     {
         Schema::create('agreements', function (Blueprint $table) {
             $table->id();
-            $table->string('startup_agreement_path');
-            $table->string('investor_agreement_path');
-            $table->boolean('admin_approval');
+            $table->string('startup_agreement_path')->nullable();
+            $table->string('investor_agreement_path')->nullable();
             $table->longText('message')->nullable();
+            $table->boolean('needs_startup_reupload')->default(false);
+            $table->boolean('needs_investor_reupload')->default(false);
             $table->unsignedBigInteger('application_id');
             $table->timestamps();
 
