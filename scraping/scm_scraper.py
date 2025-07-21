@@ -54,7 +54,7 @@ def scrape_and_export():
                 print(f"Error processing name {i}: {e}", flush=True)
 
         # Write only names to CSV
-        with open("scm_investor_names.csv", "w", encoding="utf-8-sig", newline="") as f:
+        with open("scraping/scm_investor_names.csv", "w", encoding="utf-8-sig", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(["Investor Name"])  # header
             for name in names:
@@ -63,9 +63,9 @@ def scrape_and_export():
         print("Finished writing investor names to scm_investor_names.csv", flush=True)
         
         # Update database before returning
-        update_database_from_csv("scm_investor_names.csv")
+        update_database_from_csv("scraping/scm_investor_names.csv")
         
-        return {"success": True, "total": len(names), "file_path": "scm_investor_names.csv"}
+        return {"success": True, "total": len(names), "file_path": "scraping/scm_investor_names.csv"}
 
     except Exception as e:
         print(f"Error: {str(e)}", flush=True)
