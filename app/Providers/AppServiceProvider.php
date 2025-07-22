@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Services\UserService;
 use App\Services\InvestorService;
 use App\Services\StartupService;
-
+use App\Services\Neo4jService;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -27,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(StartupService::class, function ($app) {
             return new StartupService($app->make(UserService::class));
         });
+
+        $this->app->singleton(Neo4jService::class, function ($app) {
+            return new Neo4jService();
+        });
     }
 
     /**
@@ -36,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        \App\Models\Investor::observe(\App\Observers\InvestorObserver::class);
+        \App\Models\Startup::observe(\App\Observers\StartupObserver::class);
     }
 }
