@@ -32,6 +32,21 @@ class InvestorController extends Controller
         }
     }
 
+    public function getInvestorById(int $id): JsonResponse
+    {
+        try {
+            $investor = Investor::where('id', $id)->first();
+            return response()->json([
+                'data' => $investor
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Investor not found',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
