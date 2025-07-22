@@ -65,7 +65,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/application/{id}', [ApplicationController::class, 'getApplication']);
     
     // Investor routes
-    Route::get('/investor/profile', [InvestorController::class, 'show']);
+    Route::get('/investor/profile/', [InvestorController::class, 'show']);
+    Route::get('/investor/{id}', [InvestorController::class, 'getInvestorById']);
     Route::patch('/investor/update-preferences', [InvestorController::class, 'updatePreferences']);
     Route::get('/investor/applications', [ApplicationController::class, 'getApplicationsForInvestor']);
     Route::post('/investor/upload-agreement/{application_id}', [ApplicationController::class, 'uploadAgreement']);
@@ -77,7 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/startup/submit-funding', [ApplicationController::class, 'submitApplication']);
     Route::get('/startup/applications', [ApplicationController::class, 'getApplicationsForStartup']);
     Route::post('/startup/upload-agreement/{application_id}', [ApplicationController::class, 'uploadAgreement']);
-    Route::post('/dummy-transactions', [UserController::class, 'createDummyTransactions']);
+    Route::patch('/startup/select-investor/{application_id}', [ApplicationController::class, 'selectInvestor']);
 
     // Admin routes
     Route::get('/applications', [ApplicationController::class, 'getAllApplications']);
@@ -87,3 +88,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     
 });
+
+//Insert dummy transactions, This route needs to be manually executed
+Route::post('/dummy-transactions', [UserController::class, 'createDummyTransactions']);
+

@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
             ]);
         } catch (ValidationException $e) {
             return response()->json([
-                'message' => 'Invalid credentials',
+                'message' => 'Invalid credentials, please register first',
                 'errors' => $e->errors()
             ], 422);
         }
