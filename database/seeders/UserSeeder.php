@@ -30,10 +30,29 @@ class UserSeeder extends Seeder
         ]);
 
         // Create investor user
-        User::create([
+        User::create(
+        [
             'email' => 'investor@gmail.com',
             'password' => Hash::make('investor123'),
             'role' => 'investor'
         ]);
-    }
+
+        User::create([
+            'email' => 'investorfirm@gmail.com',
+            'password' => Hash::make('investor123'),
+            'role' => 'investor'
+        ]);
+
+        User::create([
+            'email' => 'investor2@gmail.com',
+            'password' => Hash::make('investor123'),
+            'role' => 'investor'
+        ]);
+
+        User::create([
+            'email' => 'investor3@gmail.com',
+            'password' => Hash::make('investor123'),
+            'role' => 'investor'
+        ]);
+    }  
 }

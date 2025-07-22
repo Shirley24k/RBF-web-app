@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Startup;
-
 class StartupSeeder extends Seeder
 {
     /**
@@ -20,7 +19,9 @@ class StartupSeeder extends Seeder
             'company_name' => 'Startup 1',
             'company_sector' => 'FinTech',
             'company_address' => '123, Jalan Merdeka, 56000 Kuala Lumpur',
+            'stripe_id' => 'acct_1RcP7M4YDZmtY5Om',
             'user_id' => 2
         ]);
+
     }
 }
