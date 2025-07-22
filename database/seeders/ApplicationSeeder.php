@@ -18,6 +18,8 @@ class ApplicationSeeder extends Seeder
         Application::create([
             'proposal_path' => 'proposal.pdf',
             'funding_amount' => 100000.00,
+            'funding_stage' => 'Seed',
+            'funding_purpose' => 'Product Development',
             'status' => 'Await Review',
             'startup_id' => 1,
             'investor_id' => 1,
@@ -27,6 +29,8 @@ class ApplicationSeeder extends Seeder
         Application::create([
             'proposal_path' => 'proposal.pdf',
             'funding_amount' => 200000.00,
+            'funding_stage' => 'Series A',
+            'funding_purpose' => 'Business Expansion',
             'status' => 'Await Review',
             'startup_id' => 1,
             'investor_id' => 1,
@@ -36,6 +40,8 @@ class ApplicationSeeder extends Seeder
         Application::create([
             'proposal_path' => 'proposal.pdf',
             'funding_amount' => 300000.00,
+            'funding_stage' => 'Series B',
+            'funding_purpose' => 'Marketing and Sales',
             'status' => 'Completed',
             'startup_id' => 1,
             'investor_id' => 1,

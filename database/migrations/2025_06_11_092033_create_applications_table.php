@@ -17,10 +17,12 @@ class CreateApplicationsTable extends Migration
             $table->id();
             $table->string('proposal_path');
             $table->decimal('funding_amount', 10, 2); 
+            $table->string('funding_stage')->nullable();
+            $table->string('funding_purpose')->nullable();
             $table->enum('status', ['Await Review', 'Pending', 'Rejected', 'In Progress', 'Active', 'Completed']);
             $table->longText('message')->nullable(); 
             $table->unsignedBigInteger('startup_id');
-            $table->unsignedBigInteger('investor_id');
+            $table->unsignedBigInteger('investor_id')->nullable();
             $table->timestamps();
             
             $table->foreign('startup_id')->references('id')->on('startups')->onDelete('cascade');
