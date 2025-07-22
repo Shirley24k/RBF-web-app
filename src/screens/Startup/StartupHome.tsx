@@ -1,44 +1,10 @@
 import { Button } from "@material-tailwind/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Sidenav } from "../../components/sidenav";
-import axios from "axios";
 
 export const StartupHome = (): JSX.Element => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [isStripeLinked, setIsStripeLinked] = useState(localStorage.getItem("isStripeLinked") === "true");
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('stripe_linked') === '1'){
-      localStorage.setItem('isStripeLinked', 'true');
-      setIsStripeLinked(true);
-
-      //Generate dummy sales transaction if startup has linked stripe account
-      axios.get(`${API_BASE_URL}/startup/profile`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-      .then((response) => {
-        const stripeId = response.data?.data?.stripe_id;
-        axios.post(`${API_BASE_URL}/dummy-transactions`, {'stripe_id': stripeId}, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        })
-        .then((response) => {
-          console.log(response.data);
-        })
-        .catch((error) => {
-          console.error("Error generating dummy transaction:", error);
-        });
-      })
-      .catch((error) => {
-        console.error("Error fetching startup profile:", error);
-      });
-    }
-  }, []);
 
   const handleStripeLinking = async() => {
     try {
