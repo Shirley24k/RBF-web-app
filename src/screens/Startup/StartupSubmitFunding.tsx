@@ -1,8 +1,9 @@
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { Button, Typography } from "@material-tailwind/react";
-import { useRef, useState } from "react";
-import { Sidenav } from "../../components/sidenav";
 import axios from "axios";
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Sidenav } from "../../components/sidenav";
 
 export const StartupSubmitFunding = (): JSX.Element => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -10,6 +11,7 @@ export const StartupSubmitFunding = (): JSX.Element => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const navigate = useNavigate();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -58,12 +60,14 @@ export const StartupSubmitFunding = (): JSX.Element => {
       // Submit proposal to backend, backend will perform risk assessment, analyse the proposal, store the proposal information in database, then perform startup-investor matching
       await axios.post(`${API_BASE_URL}/startup/submit-funding`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/pdf",
         },
       }).then((response)=>{
-        if(response.status === 201){
-          window.location.href = "/select-investor";
+        if(response.status === 201 && response.data) {
+          // Expecting response.data to be an array of { investor, score }
+          const investorMatches = response.data.matching_response.data;
+          navigate("/select-investor", { state: { investorMatches, applicationId: response.data.application_id } });
         }
       }).catch((error)=>{
         console.error("Error submitting funding application:", error);
