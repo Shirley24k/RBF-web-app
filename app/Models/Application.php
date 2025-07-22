@@ -11,6 +11,8 @@ class Application extends Model
         'investor_id',
         'proposal_path',
         'funding_amount',
+        'funding_stage',
+        'funding_purpose',
         'message',
         'status'
     ];
