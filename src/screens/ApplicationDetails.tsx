@@ -28,8 +28,20 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
   const [adminMessage, setAdminMessage] = useState<string>("");
+  const [agreement, setAgreement] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  // Helper to get agreement paths
+  const userAgreementPath = userRole === 'startup' ? application?.startup_agreement_url : application?.investor_agreement_url;
+  const otherAgreementPath = userRole === 'startup' ? application?.investor_agreement_url : application?.startup_agreement_url;
+  const otherPartyRole = userRole === 'startup' ? 'investor' : 'startup';
+
+  //Identify whether startup or investor need reupload agreement
+  const needStartupReupload = agreement ? agreement?.needs_startup_reupload : false
+  const needInvestorReupload = agreement ? agreement?.needs_investor_reupload : false
+  const userNeedReupload = userRole === 'startup' ? needStartupReupload : needInvestorReupload
+  const otherNeedReupload = userRole === 'startup' ? needInvestorReupload : needStartupReupload
+
 
   const fetchApplication = async () => {
     try {
@@ -53,12 +65,6 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       }
     } catch (error) {
       console.error("Error fetching application:", error);
-    }
-  };
-
-  const viewProposal = () => {
-    if (application?.proposal_path) {
-      window.open(application.proposal_path, '_blank');
     }
   };
 
@@ -99,7 +105,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
     try {
       const formData = new FormData();
-      formData.append("agreement", selectedFile);
+      formData.append("document", selectedFile);
 
       const endpoint = userRole === 'startup' 
         ? `${API_BASE_URL}/startup/upload-agreement/${id}`
@@ -107,8 +113,8 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
       const response = await axios.post(endpoint, formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/pdf",
         },
       });
 
@@ -225,8 +231,24 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
     }
   };
 
+  const getAgreement = async () => {
+    try{
+      const response = await axios.get(`${API_BASE_URL}/agreement/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setAgreement(response.data.data);
+    } catch (error) {
+      console.error("Error fetching rejected agreement:", error);
+    }
+  }
+
   useEffect(() => {
     fetchApplication().finally(() => setLoading(false));
+    getAgreement();
+    console.log('application',application);
+    console.log('agreement',agreement);
   }, [id]);
 
   if (loading || !application) {
@@ -258,13 +280,27 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   };
 
   const awaitReviewApplication = () => {
-    if (userRole === 'admin') return false;
     return application.status === "Await Review";
   }
 
   const rejectedApplication = () => {
-    if (userRole === 'admin' || userRole === 'investor') return false;
     return application.status === "Rejected"; 
+  }
+  
+  //for admin, in progress application that has no agreement yet
+  const inProgressApplication = () => {
+    if (userRole !== 'admin') return false;
+    return (application.status === "In Progress" && (!application.startup_agreement_url || !application.investor_agreement_url));
+  }
+
+  //for admin, in progress application that require reupload agreement
+  const inProgressReuploadAgreement = () => {
+    if (userRole !== 'admin') return false;
+    return (
+      application.status === "In Progress" &&
+      agreement &&
+      (agreement.needs_startup_reupload || agreement.needs_investor_reupload)
+    );
   }
 
   const pendingAgreement = () => {
@@ -274,7 +310,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
   const rejectedAgreement = () => {
     if (userRole === 'admin') return false;
-    return userAgreementPath !== null && otherAgreementPath !== null && application.status === "In Progress"; 
+    return application.status === "In Progress" && agreement !== null && userNeedReupload;
   }
 
   const activeAgreement = () => {
@@ -282,22 +318,17 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   }
 
   const completedApplication = () => {
-    if (userRole === 'admin') return false;
     return application.status === "Completed";
   }
 
-  // Helper to get agreement paths
-  const userAgreementPath = userRole === 'startup' ? application.startup_agreement_path : application.investor_agreement_path;
-  const otherAgreementPath = userRole === 'startup' ? application.investor_agreement_path : application.startup_agreement_path;
-  const otherPartyRole = userRole === 'startup' ? 'investor' : 'startup';
-
+  
   return (
     <div className="bg-white min-h-screen flex">
       <div className="fixed w-[311px] h-full left-0 top-0">
         <Sidenav active="application" />
       </div>
 
-      <div className="ml-[341px] flex flex-col flex-1">
+      <div className="ml-[341px] flex flex-col flex-1 pb-20">
         <div className="max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-2">
                 <div className="py-8 flex items-center">
@@ -341,13 +372,14 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                   <Typography variant="h6" color="blue-gray">Funding Amount</Typography>
                 </div>
                 <div className="flex flex-col gap-y-6">
-                  <Typography 
-                    color="gray" 
-                    className="underline font-[400] cursor-pointer" 
-                    onClick={viewProposal}
+                  <a 
+                    className="underline font-[400] cursor-pointer text-gray-500" 
+                    href={application.proposal_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     Business proposal.pdf
-                  </Typography>
+                  </a>
                   <Typography color="gray" className="font-[400]">
                     {application.status}
                   </Typography>
@@ -436,7 +468,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
           )}
 
         {/* Upload Agreement Section (only for in progress, active and completed) */}
-        {!(awaitReviewApplication() || rejectedApplication()) && (
+        {(!awaitReviewApplication() && !rejectedApplication() && !canReviewAgreements()) && (
             <div>
                 <span className="flex items-center gap-2">
                 <Typography variant="h5" color="blue-gray" className="mb-4">
@@ -458,7 +490,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
         )}
 
         {/* If user has uploaded agreement */}
-        {(userAgreementPath && rejectedAgreement() && canUploadAgreement()) && (
+        {(userAgreementPath && canUploadAgreement() && !userNeedReupload) && (
             <div>
             <Typography className="mb-2 font-[400]" color="gray">
                 You have uploaded your
@@ -471,7 +503,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                 agreement.
                 </a>
             </Typography>
-            {!otherAgreementPath && (
+            {(!otherAgreementPath || otherNeedReupload) && (
                 <Typography className="mb-2 font-[400]" color="gray">
                 Waiting for {otherPartyRole} to upload agreement.
                 </Typography>
@@ -549,14 +581,32 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
             </div>
             )}
 
-        {/* Await Review Section (Startup View) */}
-        {awaitReviewApplication() && (
+          {/* Await Review Section (Startup View) */}
+          {(awaitReviewApplication() && userRole !== 'investor') && (
+              <div>
+              <Typography className="mb-2 font-[400]" color="gray">
+                  Waiting for investor to review.
+              </Typography>
+              </div>
+          )}
+
+          {/* In Progress Section (Admin View) */}
+          {inProgressApplication() && (
             <div>
             <Typography className="mb-2 font-[400]" color="gray">
-                Waiting for investor to review.
+                Waiting for startup and investor to upload agreement.
             </Typography>
             </div>
-         )}
+          )}
+
+          {/* In Progress Section (Admin View) */}
+          {inProgressReuploadAgreement() && (
+            <div>
+            <Typography className="mb-2 font-[400]" color="gray">
+                Waiting for startup and investor to reupload agreement.
+            </Typography>
+            </div>
+          )}
 
           {/* Investor Review Section */}
           {canReviewApplication() && (
@@ -611,22 +661,22 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               </Typography>
 
               <div className="flex flex-col gap-2 mb-6">
-                <Typography
-                  as="a"
-                  href="#"
-                  className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
-                  onClick={() => window.open(application.startup_agreement_path, '_blank')}
+                <a
+                href={application.startup_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
                 >
                   Startup agreement
-                </Typography>
-                <Typography
-                  as="a"
-                  href="#"
-                  className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
-                  onClick={() => window.open(application.investor_agreement_path, '_blank')}
+                </a>
+                <a
+                href={application.investor_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
                 >
                   Investor agreement
-                </Typography>
+                </a>
               </div>
 
               <Textarea
@@ -663,22 +713,22 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               </Typography>
 
               <div className="flex flex-col gap-2 mb-6">
-                <Typography
-                  as="a"
-                  href="#"
-                  className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
-                  onClick={() => window.open(application.startup_agreement_path, '_blank')}
+              <a
+                href={application.startup_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
                 >
                   Startup agreement
-                </Typography>
-                <Typography
-                  as="a"
-                  href="#"
-                  className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
-                  onClick={() => window.open(application.investor_agreement_path, '_blank')}
+                </a>
+                <a
+                href={application.investor_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
                 >
                   Investor agreement
-                </Typography>
+                </a>
               </div>
             <Typography className="mb-2 font-[400]" color="gray">
                 Waiting for admin to review.
@@ -694,22 +744,22 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               </Typography>
 
               <div className="flex flex-col gap-2 mb-6">
-                <Typography
-                  as="a"
-                  href="#"
-                  className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
-                  onClick={() => window.open(application.startup_agreement_path, '_blank')}
+                <a
+                href={application.startup_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
                 >
                   Startup agreement
-                </Typography>
-                <Typography
-                  as="a"
-                  href="#"
-                  className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
-                  onClick={() => window.open(application.investor_agreement_path, '_blank')}
+                </a>
+                <a
+                href={application.investor_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-deep-purple-600 font-semibold underline text-sm cursor-pointer"
                 >
                   Investor agreement
-                </Typography>
+                </a>
               </div>
             </div>
           )}

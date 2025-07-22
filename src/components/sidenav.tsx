@@ -1,22 +1,22 @@
 import {
-  ArrowRightStartOnRectangleIcon,
-  Bars3Icon,
-  ClipboardDocumentListIcon,
-  CurrencyDollarIcon,
-  HomeIcon,
-  UserCircleIcon,
+    ArrowRightStartOnRectangleIcon,
+    Bars3Icon,
+    ClipboardDocumentListIcon,
+    CurrencyDollarIcon,
+    HomeIcon,
+    UserCircleIcon,
 } from "@heroicons/react/24/solid";
 import axios from "axios";
 import clsx from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
-  Card,
-  IconButton,
-  List,
-  ListItem,
-  ListItemPrefix,
-  Typography,
+    Card,
+    IconButton,
+    List,
+    ListItem,
+    ListItemPrefix,
+    Typography,
 } from "@material-tailwind/react";
 
 interface SidenavProps {
@@ -33,6 +33,38 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
   const role = localStorage.getItem("role");
   const isStripeLinked = localStorage.getItem("isStripeLinked") === "true";
   const shouldRestrict = role === "startup" || role === "investor";
+  const [hasApplicationNotification, setHasApplicationNotification] = useState(false);
+
+  useEffect(() => {
+    const fetchNotification = async () => {
+      try {
+        let url = "";
+        if (role === "investor") {
+          url = `${API_BASE_URL}/investor/applications-await-review`;
+        } else if (role === "admin") {
+          url = `${API_BASE_URL}/pending-applications`;
+        } else {
+          setHasApplicationNotification(false);
+          return;
+        }
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        console.log(response.data); 
+        // Assume response.data.count or response.data.length > 0 means notification
+        if ((Array.isArray(response.data.data) && response.data.data.length > 0) || response.data.data.count > 0) {
+          setHasApplicationNotification(true);
+        } else {
+          setHasApplicationNotification(false);
+        }
+      } catch (error) {
+        setHasApplicationNotification(false);
+      }
+    };
+    fetchNotification();
+  }, []);
 
   const handleNav = (path: string) => {
     window.location.href = path;
@@ -140,12 +172,16 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
                       : "",
                   !open ? "hover:bg-avocado-green w-14 rounded-md" : "",
                   !isRestricted && active === key && !open ? "bg-avocado-green w-14 rounded-md" : "",
-                  "transition-colors"
+                  "transition-colors",
+                  "relative"
                 )}
               >
                 <ListItemPrefix>
-                  <span className="flex items-center justify-center w-8 h-8">
+                  <span className="flex items-center justify-center w-8 h-8 relative">
                     {icon}
+                    {key === "application" && hasApplicationNotification && (
+                      <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-600 border-2 border-white" />
+                    )}
                   </span>
                 </ListItemPrefix>
                 {open && (
@@ -154,6 +190,9 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
                     className="font-semibold text-dark-plum"
                   >
                     {label}
+                    {key === "application" && hasApplicationNotification && (
+                      <span className="inline-block align-middle ml-2 h-2 w-2 rounded-full bg-red-600" />
+                    )}
                   </Typography>
                 )}
               </ListItem>

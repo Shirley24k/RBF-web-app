@@ -1,5 +1,5 @@
 import { FunnelIcon } from "@heroicons/react/24/solid";
-import { Button, Card, CardBody } from "@material-tailwind/react";
+import { Button, Card, CardBody, Spinner } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ export const StartupFunding = (): JSX.Element => {
   const navigate = useNavigate();
   const [fundingApplication, setFundingApplication] = useState<any>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [loading, setLoading] = useState(true);
 
   const fetchApplications = async () => {
     await axios.get(`${API_BASE_URL}/startup/applications`, {
@@ -19,6 +20,7 @@ export const StartupFunding = (): JSX.Element => {
     })
     .then((response) => {
       setFundingApplication(response.data.data);
+      setLoading(false);
     })
   }
   
@@ -26,6 +28,14 @@ export const StartupFunding = (): JSX.Element => {
     fetchApplications();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen w-full">
+        <Spinner />
+      </div>
+    );
+  }
+  
   return (
     <div className="bg-white flex flex-row justify-center w-full">
       <div className="bg-white w-full max-w-[1512px] relative flex flex-col min-h-screen">
