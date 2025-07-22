@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AgreementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,12 +67,13 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Investor routes
     Route::get('/investor/profile/', [InvestorController::class, 'show']);
-    Route::get('/investor/{id}', [InvestorController::class, 'getInvestorById']);
     Route::patch('/investor/update-preferences', [InvestorController::class, 'updatePreferences']);
     Route::get('/investor/applications', [ApplicationController::class, 'getApplicationsForInvestor']);
+    Route::get('/investor/applications-await-review', [ApplicationController::class, 'getInvestorAwaitReviewApplications']);
     Route::post('/investor/upload-agreement/{application_id}', [ApplicationController::class, 'uploadAgreement']);
     Route::patch('/application/{id}/accept', [ApplicationController::class, 'acceptApplication']);
     Route::patch('/application/{id}/reject', [ApplicationController::class, 'rejectApplication']);
+    Route::get('/investor/{id}', [InvestorController::class, 'getInvestorById']);
     
     // Startup routes
     Route::get('/startup/profile', [StartupController::class, 'show']);
@@ -85,8 +87,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pending-applications', [ApplicationController::class, 'getPendingApplications']);
     Route::patch('/application/{id}/admin-approve', [ApplicationController::class, 'adminApproveApplication']);
     Route::patch('/application/{id}/admin-decline', [ApplicationController::class, 'adminDeclineApplication']);
-
     
+    // Agreement routes
+    Route::get('/agreement/{application_id}', [AgreementController::class, 'getAgreement']);
 });
 
 //Insert dummy transactions, This route needs to be manually executed

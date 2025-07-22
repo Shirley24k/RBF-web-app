@@ -205,6 +205,24 @@ class ApplicationController extends Controller
         }
     }
 
+    public function getInvestorAwaitReviewApplications(): JsonResponse
+    {
+        try{
+            $applications = Application::where('investor_id', auth()->user()->investors()->first()->id)
+                            ->where('status', 'Await Review')
+                            ->get();
+
+            return response()->json([
+                'data' => $applications
+            ], 200);
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => 'Failed to get applications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function getAllApplications(): JsonResponse
     {
         try {
@@ -261,7 +279,7 @@ class ApplicationController extends Controller
         }
     }
 
-    public function getApplication(int $id): JsonResponse
+    public function getApplication($id): JsonResponse
     {
         try {
             $application = Application::find($id);

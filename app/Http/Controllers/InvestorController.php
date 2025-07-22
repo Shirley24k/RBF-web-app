@@ -32,7 +32,7 @@ class InvestorController extends Controller
         }
     }
 
-    public function getInvestorById(int $id): JsonResponse
+    public function getInvestorById($id): JsonResponse
     {
         try {
             $investor = Investor::where('id', $id)->first();

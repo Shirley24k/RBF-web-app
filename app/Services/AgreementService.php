@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Application;
 use App\Models\Agreement;
 use Illuminate\Support\Facades\DB;
+use App\Services\FileUploadService;
 
 class AgreementService
 {
@@ -19,23 +20,15 @@ class AgreementService
      * @return string The full path or URL to the uploaded agreement
      * @throws \Exception
      */
-    public function handleAgreementUpload(Request $request, $user, $application_id)
+    public function handleAgreementUpload(Request $request, $user, $application_id, FileUploadService $fileUploadService)
     {
-        // Validate input
-        // $validated = $request->validate([
-        //     'document' => 'required|file|mimes:pdf|max:10240'
-        // ]);
-
         // Start transaction for safety
-        return DB::transaction(function () use ($request, $user, $application_id) {
+        return DB::transaction(function () use ($request, $user, $application_id, $fileUploadService) {
             $application = Application::findOrFail($application_id);
 
-            // Handle file upload
-            // $file = $request->file('document');
-            // $filename = time() . '.' . uniqid() . '.' . $file->getClientOriginalExtension();
-            // $filePath = $file->storeAs('agreements', $filename, 'public');
-            // $fullPath = Storage::url($filePath);
-            $fullPath = "http://reupload.com";
+            // Handle file upload to Supabase
+            $uploadResult = $fileUploadService->uploadToSupabase($request, 'agreement');
+            $fullPath = $uploadResult['path'];
 
             // Find or create agreement
             $agreement = $application->agreement;
