@@ -24,7 +24,7 @@ class UserController extends Controller
             $response = Http::withOptions([
                 'verify' => false, // Disable SSL verification for development
             ])->asForm()->post('https://connect.stripe.com/oauth/token', [
-                'client_secret' => env('STRIPE_SECRET'),
+                'client_secret' => config('stripe.secret'),
                 'code' => $request->code,
                 'grant_type' => 'authorization_code',
             ]);
@@ -126,26 +126,44 @@ class UserController extends Controller
         }
     }
 
-    public function createDummyTransactions(Request $request)
+    public function createDummyTransactions()
     {
-        Stripe::setApiKey(env('STRIPE_SECRET'));
-        for ($i = 0; $i < 10; $i++) {
-            $charge = \Stripe\Charge::create([
-                'amount' => rand(1000, 10000),
-                'currency' => 'myr',
-                'source' => 'tok_visa',
-                'description' => 'Dummy sale from startup A',
-            ], [
-                'stripe_account' => $request->stripe_id,
-            ]);
+        Stripe::setApiKey(config('stripe.secret'));
+        $months = [
+            '2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06'
+        ];
+    
+        $charges = [];
+    
+        foreach ($months as $month) {
+            // Create 10 transactions per month
+            for ($i = 1; $i <= 10; $i++) {
+                $charge = \Stripe\Charge::create([
+                    'amount' => rand(1000, 10000) * 100, 
+                    'currency' => 'myr',
+                    'source' => 'tok_visa', // test token
+                    'description' => 'Dummy sale from startup A',
+                    'metadata' => [
+                        'simulated_month' => $month,
+                        'transaction_number' => $i
+                    ]
+                ], [
+                    'stripe_account' => 'acct_1RcP7M4YDZmtY5Om',
+                ]);
+        
+                $charges[] = $charge;
+            }
         }
 
-        return $charge;
+        return response()->json([
+            'message' => 'Dummy transactions created successfully',
+            'charges' => $charges
+        ]);
     }
 
     public function getTransactions(Request $request)
     {
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+        Stripe::setApiKey(config('stripe.secret'));
         
         $transactions = \Stripe\Charge::all([], [
             'stripe_account' => $request->stripe_id,
