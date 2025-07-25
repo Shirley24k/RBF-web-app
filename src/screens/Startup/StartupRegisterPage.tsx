@@ -33,6 +33,7 @@ export const StartupRegister = (): JSX.Element => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country>("MY");
+  const [registrationError, setRegistrationError] = useState("");
 
   const validatePhoneNumber = (number: string, country: Country): boolean => {
     const phone = parsePhoneNumberFromString(number, country);
@@ -135,7 +136,7 @@ export const StartupRegister = (): JSX.Element => {
     if (!validateForm() || isSubmitting) return;
 
     setIsSubmitting(true);
-    
+    setRegistrationError("");
     try {
       const formData = {
         name: fullName,
@@ -151,8 +152,28 @@ export const StartupRegister = (): JSX.Element => {
       if (response.status === 201) {
         navigate("/login");
       }
-    } catch (error) {
-      console.error("Registration failed:", error);
+    } catch (error: any) {
+      if (
+        error.response &&
+        error.response.status === 422 &&
+        error.response.data &&
+        error.response.data.errors
+      ) {
+        const errors = error.response.data.errors;
+        if (
+          (errors.contact_no && errors.contact_no[0].includes("not eligible")) ||
+          (errors.company_address && errors.company_address[0].includes("not eligible"))
+        ) {
+          setRegistrationError(`We are sorry, but you are not eligible to use our platform. 
+    We currently only accept startups that are based in Malaysia. 
+    If your company is based in Malaysia, please ensure that your contact number and company 
+    address is complete and accurate in your profile. 
+    For further assistance, feel free to contact us at rbfsupport@gmail.com.`);
+          return;
+        }
+      } else {
+        setRegistrationError("Registration failed. Please check your details and try again.");
+      }
     } finally {
       setIsSubmitting(false); 
     }
@@ -192,6 +213,11 @@ export const StartupRegister = (): JSX.Element => {
             </div>
 
             <div className="flex flex-wrap gap-[99px] w-full p-[30px] mt-[50px] mb-[50px] justify-center">
+              {registrationError && (
+                <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg w-[1000px] text-center">
+                  {registrationError}
+                </div>
+              )}
               {/* Left Column */}
               <div className="flex flex-col gap-[30px] w-96">
                 <div className="flex flex-col gap-2">
