@@ -22,33 +22,39 @@ import { StartupSubmitFunding } from "./screens/Startup/StartupSubmitFunding";
 import { SuccessSubmitFunding } from "./screens/Startup/SuccessSubmitFunding";
 import { StartupTransaction } from "./screens/Startup/Transaction";
 import { TransactionDetails } from "./screens/Startup/TransactionDetails";
+import { PrivateRoute } from "./PrivateRoute";
 
 function App() {
     return (
         <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/startup-register" element={<StartupRegister />} />
             <Route path="/investor-register" element={<InvestorRegister />} />
-            <Route path="/startup-home" element={<StartupHome />} />
-            <Route path="/startup-funding" element={<StartupFunding />} />
-            <Route path="/submit-funding" element={<StartupSubmitFunding />} />
-            <Route path="/select-investor" element={<SelectInvestor />} />
-            <Route path="/startup-transaction" element={<StartupTransaction />} />
-            <Route path="/application/:id" element={<ApplicationDetailsWrapper />} />
-            <Route path="/success-submit-funding" element={<SuccessSubmitFunding />} />
-            <Route path="/transaction-details" element={<TransactionDetails />} />
-            <Route path="/investor-home" element={<InvestorHome />} />
-            <Route path="/investor-funding" element={<InvestorFunding />} />
-            <Route path="/investor-profile" element={<InvestorProfile />} />
-            <Route path="/edit-profile" element={<EditProfile />} />
-            <Route path="/investor-transaction" element={<InvestorTransaction />} />
-            <Route path="/admin-home" element={<AdminHome />} />
-            <Route path="/admin-funding" element={<AdminFunding />} />
-            <Route path="/admin-transaction-details/:id" element={<AdminTransactionDetails />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/password-reset/:token" element={<ResetPassword />} />
+
+            {/* Private Routes */}
+            <Route element={<PrivateRoute />}>
+                <Route path="/startup-home" element={<StartupHome />} />
+                <Route path="/startup-funding" element={<StartupFunding />} />
+                <Route path="/submit-funding" element={<StartupSubmitFunding />} />
+                <Route path="/select-investor" element={<SelectInvestor />} />
+                <Route path="/startup-transaction" element={<StartupTransaction />} />
+                <Route path="/application/:id" element={<ApplicationDetailsWrapper />} />
+                <Route path="/success-submit-funding" element={<SuccessSubmitFunding />} />
+                <Route path="/transaction-details" element={<TransactionDetails />} />
+                <Route path="/investor-home" element={<InvestorHome />} />
+                <Route path="/investor-funding" element={<InvestorFunding />} />
+                <Route path="/investor-profile" element={<InvestorProfile />} />
+                <Route path="/edit-profile" element={<EditProfile />} />
+                <Route path="/investor-transaction" element={<InvestorTransaction />} />
+                <Route path="/admin-home" element={<AdminHome />} />
+                <Route path="/admin-funding" element={<AdminFunding />} />
+                <Route path="/admin-transaction-details/:id" element={<AdminTransactionDetails />} />
+            </Route>
         </Routes>
     );
 }
