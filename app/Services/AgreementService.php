@@ -8,6 +8,8 @@ use App\Models\Application;
 use App\Models\Agreement;
 use Illuminate\Support\Facades\DB;
 use App\Services\FileUploadService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Http;
 
 class AgreementService
 {
@@ -108,15 +110,29 @@ class AgreementService
                 $agreement = $application->agreement;
                 $agreement->message = $request->message;
                 $agreement->save();
-                $application->status = 'Active';
-                $application->save();
+                $extracted_data = $this->extractAgreementDetail($agreement->startup_agreement_path);
+                if($extracted_data->getStatusCode() == 200){
+                    $data = $extracted_data->getData(true);
+                    $revenue_share_percentage = $data['data']['revenue_share_percentage'];
+                    $repayment_cap = $data['data']['repayment_cap'];
+                    $cap_multiple = $data['data']['cap_multiple'];
+                    
+                    $application->revenue_share_percentage = $revenue_share_percentage;
+                    $application->repayment_cap = $repayment_cap;
+                    $application->cap_multiple = $cap_multiple;
+                    $application->status = 'Active';
+                    $application->save();
+                }else{
+                    throw new \Exception('Failed to extract agreement details');
+                }
+                
             }
 
             return $agreement;
         });
         
     }
-    public function declineAgreement(Request $request, $user, $application_id)
+    public function declineAgreement(Request $request, $user, $application_id): JsonResponse
     {
         $validate = $request->validate([
             'message' => 'required|string'
@@ -142,5 +158,53 @@ class AgreementService
 
             return $agreement;
         });
+    }
+
+    public function extractAgreementDetail($agreement_path): JsonResponse
+    {
+        try {
+            $response = Http::post(config('flask.url').'/agreement-analysis', [
+                'agreement_path' => $agreement_path
+            ]);
+
+            if($response->successful()) {
+                $data = $response->json();
+                
+                $revenue_share_percentage = $data['revenue_share_percentage'] ?? 0;
+                if (is_string($revenue_share_percentage)) {
+                    // convert 10% to 10, then convert to float
+                    $revenue_share_percentage = (float) str_replace('%', '', $revenue_share_percentage);
+                }
+                $repayment_cap = $data['repayment_cap'] ?? 0;
+                if (is_string($repayment_cap)) {
+                    // Remove currency symbols and commas, then convert to float
+                    $repayment_cap = (float) preg_replace('/[^0-9.]/', '', $repayment_cap);
+                }
+                $cap_multiple = $data['cap_multiple'] ?? 0;
+                if (is_string($cap_multiple)) {
+                    // Remove x, then convert to float
+                    $cap_multiple = (float) str_replace('x', '', $cap_multiple);
+                }
+                
+                return response()->json([
+                    'message' => 'Agreement details extracted successfully',
+                    'data' => [
+                        'revenue_share_percentage' => $revenue_share_percentage,
+                        'repayment_cap' => $repayment_cap,
+                        'cap_multiple' => $cap_multiple,
+                    ]
+                ], 200);
+            }
+
+            return response()->json([
+                'message' => 'Failed to extract agreement details',
+                'error' => 'Flask service returned unsuccessful response'
+            ], 500);
+        }catch(\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to extract agreement details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

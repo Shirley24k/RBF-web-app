@@ -19,6 +19,9 @@ class CreateApplicationsTable extends Migration
             $table->decimal('funding_amount', 10, 2); 
             $table->string('funding_stage')->nullable();
             $table->string('funding_purpose')->nullable();
+            $table->decimal('revenue_share_percentage', 10, 2)->nullable();
+            $table->decimal('repayment_cap', 10, 2)->nullable();
+            $table->decimal('cap_multiple', 10, 2)->nullable();
             $table->enum('status', ['Await Review', 'Pending', 'Rejected', 'In Progress', 'Active', 'Completed']);
             $table->longText('message')->nullable(); 
             $table->unsignedBigInteger('startup_id');

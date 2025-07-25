@@ -16,7 +16,7 @@ class ApplicationSeeder extends Seeder
     {
         // simulate successful application
         Application::create([
-            'proposal_path' => 'proposal.pdf',
+            'proposal_path' => 'Business proposal sample.pdf',
             'funding_amount' => 100000.00,
             'funding_stage' => 'Seed',
             'funding_purpose' => 'Product Development',
@@ -27,7 +27,7 @@ class ApplicationSeeder extends Seeder
 
         // simulate rejected application
         Application::create([
-            'proposal_path' => 'proposal.pdf',
+            'proposal_path' => 'Business proposal sample.pdf',
             'funding_amount' => 200000.00,
             'funding_stage' => 'Series A',
             'funding_purpose' => 'Business Expansion',
@@ -38,10 +38,13 @@ class ApplicationSeeder extends Seeder
 
         // simulate completed application
         Application::create([
-            'proposal_path' => 'proposal.pdf',
+            'proposal_path' => 'Business proposal sample.pdf',
             'funding_amount' => 300000.00,
             'funding_stage' => 'Series B',
             'funding_purpose' => 'Marketing and Sales',
+            'revenue_share_percentage' => 10.00,
+            'repayment_cap' => 450000.00,
+            'cap_multiple' => 1.50,
             'status' => 'Completed',
             'startup_id' => 1,
             'investor_id' => 1,

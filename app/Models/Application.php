@@ -13,6 +13,9 @@ class Application extends Model
         'funding_amount',
         'funding_stage',
         'funding_purpose',
+        'revenue_share_percentage',
+        'repayment_cap',
+        'cap_multiple',
         'message',
         'status'
     ];

@@ -373,57 +373,6 @@ class ApplicationController extends Controller
         }
     }
 
-    public function uploadAgreement(Request $request, AgreementService $service, int $application_id): JsonResponse
-    {
-        try {
-            $fullPath = $service->handleAgreementUpload($request, auth()->user(), $application_id, $this->fileUploadService);
-            
-            return response()->json([
-                'message' => 'Agreement uploaded successfully',
-                'data' => $fullPath
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to upload agreement',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function adminApproveApplication(int $id, Request $request, AgreementService $service): JsonResponse
-    {
-        try {
-            $agreement = $service->approveAgreement($request, auth()->user(), $id);
-
-            return response()->json([
-                'message' => 'Application approved successfully',
-                'data' => $agreement
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to approve application',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function adminDeclineApplication(int $id, Request $request, AgreementService $service): JsonResponse
-    {
-        try {
-            $agreement = $service->declineAgreement($request, auth()->user(), $id);            
-
-            return response()->json([
-                'message' => 'Application declined successfully',
-                'data' => $agreement
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to decline application',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
     private function validatePredictionBenchmarks($prediction_data, $stripe_data): void
     {
         // Calculate predicted growth rate
