@@ -202,7 +202,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
         window.history.back();
       }
     } catch (error) {
-      alert("Failed to approve application. Please try again.");
+      console.error("Failed to approve application. Please try again.");
     }
   };
 
@@ -313,7 +313,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
     return application.status === "In Progress" && agreement !== null && userNeedReupload;
   }
 
-  const activeAgreement = () => {
+  const activeApplication = () => {
     return application.status === "Active"; 
   }
 
@@ -370,6 +370,13 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                   <Typography variant="h6" color="blue-gray">Application Status</Typography>
                   <Typography variant="h6" color="blue-gray">Application Datetime</Typography>
                   <Typography variant="h6" color="blue-gray">Funding Amount</Typography>
+                  <Typography variant="h6" color="blue-gray">Funding Stage</Typography>
+                  <Typography variant="h6" color="blue-gray">Funding Purpose</Typography>
+                  {(activeApplication() || completedApplication()) && (
+                    <><Typography variant="h6" color="blue-gray">Revenue Share Percentage</Typography>
+                    <Typography variant="h6" color="blue-gray">Repayment Cap</Typography>
+                    <Typography variant="h6" color="blue-gray">Cap Multiple</Typography></>
+                  )}
                 </div>
                 <div className="flex flex-col gap-y-6">
                   <a 
@@ -387,8 +394,25 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                     {application.updated_at ? new Date(application.updated_at).toISOString().slice(0, 10) : ""}
                   </Typography>
                   <Typography color="gray" className="font-[400]">
-                    {application.funding_amount}
+                    RM{application.funding_amount}
                   </Typography>
+                  <Typography color="gray" className="font-[400]">
+                    {application.funding_stage}
+                  </Typography>
+                  <Typography color="gray" className="font-[400]">
+                    {application.funding_purpose}
+                  </Typography>
+                  {(activeApplication() || completedApplication()) && (
+                    <><Typography color="gray" className="font-[400]">
+                    {application.revenue_share_percentage}%
+                  </Typography>
+                  <Typography color="gray" className="font-[400]">
+                    RM{application.repayment_cap}
+                  </Typography>
+                  <Typography color="gray" className="font-[400]">
+                    {application.cap_multiple}x
+                  </Typography></>
+                  )}
                 </div>
               </div>
             </CardBody>
@@ -480,7 +504,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                     <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mb-3" />
                     </Tooltip>
                     )}
-                    {(activeAgreement() || completedApplication()) && (
+                    {(activeApplication() || completedApplication()) && (
                     <Tooltip content={application.admin_message}>
                         <ExclamationCircleIcon className="w-5 h-5 text-green-500 mb-3" />
                     </Tooltip>
@@ -737,7 +761,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
           )}
 
           {/* Completed Application Section */}
-          {(completedApplication() || activeAgreement()) && (
+          {(completedApplication() || activeApplication()) && (
             <div>
               <Typography variant="h6" className="text-gray-500 mb-2">
                 Click to view:
