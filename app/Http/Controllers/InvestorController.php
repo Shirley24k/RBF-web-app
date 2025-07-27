@@ -101,4 +101,20 @@ class InvestorController extends Controller
             'data' => $investor
         ], 200);
     }
+
+    public function getInvestorBalance(): JsonResponse
+    {
+        try{
+            $investor = Investor::where('user_id', auth()->user()->id)->first();
+            return response()->json([
+                'message' => 'Investor balance retrieved successfully',
+                'data' => $investor->balance,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Investor not found',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
 }

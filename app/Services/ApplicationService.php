@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Stripe\Stripe;
 use Stripe\Charge;
 use App\Models\Application;
+use App\Services\StripeService;
 
 class ApplicationService
 {
@@ -15,48 +16,17 @@ class ApplicationService
     public function getQuarterlyRevenue($stripe_id): JsonResponse
     {
         try {
-            
-            Stripe::setApiKey(config('stripe.secret'));
-
-            $charges = Charge::all([
-                'limit' => 60,
-            ], [
-                'stripe_account' => $stripe_id,
-            ]);
-
-            $monthly_revenue = [];
-
-            foreach($charges->data as $charge) {
-                if(isset($charge->metadata['simulated_month'])) {
-                    $month = $charge->metadata['simulated_month'];
-                    $amount = $charge->amount / 100; //convert from sen to rm
-                    if(!isset($monthly_revenue[$month])){
-                        $monthly_revenue[$month] = 0;
-                    }
-                    $monthly_revenue[$month] += $amount;
-                }
-            }
-
-            $revenue_q1 = 0;
-            $revenue_q2 = 0;
-            foreach($monthly_revenue as $month => $amount){
-                if(in_array($month, ['2025-01', '2025-02', '2025-03'])){
-                    $revenue_q1 += $amount;
-                }elseif(in_array($month, ['2025-04', '2025-05', '2025-06'])){
-                    $revenue_q2 += $amount;
-                }
-            }
-
-            $growth_rate = ($revenue_q2 - $revenue_q1) / $revenue_q1;
+            $stripeService = app(StripeService::class);
+            $revenueData = $stripeService->getQuarterlyRevenue($stripe_id);
 
             return response()->json([
                 'message' => 'Quarterly revenue retrieved successfully',
-                'revenue_q1' => $revenue_q1,
-                'revenue_q2' => $revenue_q2,
-                'growth_rate' => $growth_rate
+                'revenue_q1' => $revenueData['revenue_q1'],
+                'revenue_q2' => $revenueData['revenue_q2'],
+                'growth_rate' => $revenueData['growth_rate']
             ], 200);
 
-        }catch(\Exception $e) {
+        } catch(\Exception $e) {
             return response()->json([
                 'message' => 'Failed to get quarterly revenue',
                 'error' => $e->getMessage()

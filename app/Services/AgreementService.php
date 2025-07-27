@@ -10,9 +10,18 @@ use Illuminate\Support\Facades\DB;
 use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
+use App\Models\Investor;
+use App\Services\StripeService;
+use Illuminate\Support\Facades\Log;
 
 class AgreementService
 {
+    protected $stripeService;
+
+    public function __construct(StripeService $stripeService)
+    {
+        $this->stripeService = $stripeService;
+    }
     /**
      * Handle the upload and association of an agreement document.
      *
@@ -106,6 +115,12 @@ class AgreementService
 
         return DB::transaction(function () use ($request, $user, $application_id){
             $application = Application::findOrFail($application_id);
+            //validate investor balance against funding amount
+            $investor = Investor::findOrFail($application->investor_id);
+            if ($investor->balance < $application->funding_amount) {
+                throw new \Exception('Insufficient balance');
+            }
+            //extract agreement details and update database
             if ($application->status == 'Pending') {
                 $agreement = $application->agreement;
                 $agreement->message = $request->message;
@@ -125,13 +140,21 @@ class AgreementService
                 }else{
                     throw new \Exception('Failed to extract agreement details');
                 }
-                
             }
 
+            //Transfer funds to startup
+            $transfer = $this->stripeService->fundTransfer($application_id);
+            if($transfer && $transfer->id){
+                Log::info('Funds transferred to startup successfully');
+            }else{
+                throw new \Exception('Failed to transfer funds');
+            }
+            
             return $agreement;
         });
         
     }
+    
     public function declineAgreement(Request $request, $user, $application_id): JsonResponse
     {
         $validate = $request->validate([

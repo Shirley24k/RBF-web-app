@@ -20,6 +20,7 @@ class CreateTransactionsTable extends Migration
             $table->string('from_stripe_id');
             $table->string('to_stripe_id');
             $table->enum('status', ['Pending', 'Completed', 'Failed']);
+            $table->enum('type', ['FUND_TRANSFER', 'REPAYMENT']);
             $table->unsignedBigInteger('application_id');
             $table->timestamps();
 

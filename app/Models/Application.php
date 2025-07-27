@@ -15,6 +15,7 @@ class Application extends Model
         'funding_purpose',
         'revenue_share_percentage',
         'repayment_cap',
+        'total_repaid',
         'cap_multiple',
         'message',
         'status'
@@ -33,5 +34,10 @@ class Application extends Model
     public function agreement()
     {
         return $this->hasOne(Agreement::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 } 

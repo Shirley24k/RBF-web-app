@@ -7,9 +7,21 @@ use Illuminate\Support\Facades\Http;
 use App\Models\User;
 use Stripe\Stripe;
 use Stripe\Charge;
+use Stripe\Account;
+use App\Services\StripeService;
 
 class UserController extends Controller
 {
+    protected $stripeService;
+
+    public function __construct(StripeService $stripeService)
+    {
+        $this->stripeService = $stripeService;
+    }
+
+    /**
+     * Handle OAuth callback for Standard accounts
+     */
     public function handleOAuthCallback(Request $request)
     {
         // Validate request
@@ -47,46 +59,33 @@ class UserController extends Controller
                 ], 400);
             }
 
-            // Try to get user from authentication first
-            $user = auth()->user();
+            // Get user from state parameter (since OAuth callback doesn't have auth)
+            $user = null;
+            $state = $request->get('state');
             
-            // If user is not authenticated, try to get from state parameter
-            if (!$user) {
-                $state = $request->get('state');
-                
-                if ($state && $state !== 'secure-random-state') {
-                    // Decode user info from state parameter
-                    try {
-                        $stateData = json_decode(base64_decode($state), true);
-                        if (isset($stateData['user_id'])) {
-                            $user = User::find($stateData['user_id']);
-                        }
-                    } catch (\Exception $e) {
-                        // State parameter is not valid JSON, ignore
+            if ($state) {
+                try {
+                    $stateData = json_decode(base64_decode($state), true);
+                    if (isset($stateData['user_id'])) {
+                        $user = User::find($stateData['user_id']);
                     }
-                }
-                
-                // For now, let's try to get user from email in Stripe parameters
-                // This is a temporary solution until you update the frontend
-                if (!$user && $request->has('stripe_user')) {
-                    $stripeUserEmail = $request->get('stripe_user')['email'] ?? null;
-                    if ($stripeUserEmail) {
-                        $user = User::where('email', $stripeUserEmail)->first();
-                    }
-                }
-                
-                // If still no user found, redirect to login
-                if (!$user) {
-                    return redirect('http://localhost:5173/login')->with('error', 'Please log in to complete Stripe connection.');
+                } catch (\Exception $e) {
+                    // State parameter is not valid JSON, ignore
                 }
             }
+            
+            // If no user found from state, redirect to login
+            if (!$user) {
+                return redirect(config('app.frontend_url') . '/login?error=Please log in to complete Stripe connection.');
+            }
 
+            // Save the Stripe account ID to the appropriate profile
             if ($user->role === 'startup') {
                 $startup = $user->startups()->first();
                 if ($startup) {
                     $startup->stripe_id = $data['stripe_user_id'];
                     $startup->save();
-                    return redirect('http://localhost:5173/startup-home?stripe_linked=1');
+                    return redirect(config('app.frontend_url') . '/startup-home?stripe_linked=1');
                 } else {
                     return response()->json([
                         'message' => 'Startup profile not found.',
@@ -98,7 +97,7 @@ class UserController extends Controller
                 if ($investor) {
                     $investor->stripe_id = $data['stripe_user_id'];
                     $investor->save();
-                    return redirect('http://localhost:5173/investor-home?stripe_linked=1');
+                    return redirect(config('app.frontend_url') . '/investor-home?stripe_linked=1');
                 } else {
                     return response()->json([
                         'message' => 'Investor profile not found.',
@@ -124,51 +123,5 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
-
-    public function createDummyTransactions()
-    {
-        Stripe::setApiKey(config('stripe.secret'));
-        $months = [
-            '2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06'
-        ];
-    
-        $charges = [];
-    
-        foreach ($months as $month) {
-            // Create 10 transactions per month
-            for ($i = 1; $i <= 10; $i++) {
-                $charge = \Stripe\Charge::create([
-                    'amount' => rand(1000, 10000) * 100, 
-                    'currency' => 'myr',
-                    'source' => 'tok_visa', // test token
-                    'description' => 'Dummy sale from startup A',
-                    'metadata' => [
-                        'simulated_month' => $month,
-                        'transaction_number' => $i
-                    ]
-                ], [
-                    'stripe_account' => 'acct_1RcP7M4YDZmtY5Om',
-                ]);
-        
-                $charges[] = $charge;
-            }
-        }
-
-        return response()->json([
-            'message' => 'Dummy transactions created successfully',
-            'charges' => $charges
-        ]);
-    }
-
-    public function getTransactions(Request $request)
-    {
-        Stripe::setApiKey(config('stripe.secret'));
-        
-        $transactions = \Stripe\Charge::all([], [
-            'stripe_account' => $request->stripe_id,
-        ]);
-
-        return $transactions;
     }
 }

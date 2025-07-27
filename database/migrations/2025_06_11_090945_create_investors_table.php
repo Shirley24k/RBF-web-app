@@ -23,6 +23,7 @@ class CreateInvestorsTable extends Migration
             $table->json('investment_preferences');
             $table->boolean('validation_status')->default(false);
             $table->string('stripe_id')->nullable();
+            $table->decimal('balance', 10, 2)->default(0);
             $table->unsignedBigInteger('user_id');
             $table->timestamps();
 

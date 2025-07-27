@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AgreementController;
+use App\Http\Controllers\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,8 +29,14 @@ use App\Http\Controllers\AgreementController;
 Route::post('/register/investor', [InvestorController::class, 'store']);
 Route::post('/register/startup', [StartupController::class, 'store']);
 
-// Stripe OAuth callback route (no authentication required)
+// Stripe OAuth callback route (no authentication required) - for Standard accounts
 Route::get('/stripe/oauth/callback', [UserController::class, 'handleOAuthCallback']);
+
+// Stripe webhook route (no authentication required)
+Route::post('/stripe/webhook', [TransactionController::class, 'handleStripeWebhook']);
+
+// Process monthly repayment
+Route::post('/transactions/repayment', [TransactionController::class, 'processMonthlyRepayment']);
 
 // Authentication routes
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
@@ -67,31 +74,34 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Investor routes
     Route::get('/investor/profile/', [InvestorController::class, 'show']);
+    Route::get('/investor/balance', [InvestorController::class, 'getInvestorBalance']);
+    Route::post('/investor/top-up', [TransactionController::class, 'topUpAccount']);
+    // Route::post('/investor/update-balance', [TransactionController::class, 'updateInvestorBalance']);
+    
+    // Transaction routes
     Route::patch('/investor/update-preferences', [InvestorController::class, 'updatePreferences']);
     Route::get('/investor/applications', [ApplicationController::class, 'getApplicationsForInvestor']);
     Route::get('/investor/applications-await-review', [ApplicationController::class, 'getInvestorAwaitReviewApplications']);
-    Route::post('/investor/upload-agreement/{application_id}', [ApplicationController::class, 'uploadAgreement']);
+    Route::post('/investor/upload-agreement/{application_id}', [AgreementController::class, 'uploadAgreement']);
     Route::patch('/application/{id}/accept', [ApplicationController::class, 'acceptApplication']);
     Route::patch('/application/{id}/reject', [ApplicationController::class, 'rejectApplication']);
     Route::get('/investor/{id}', [InvestorController::class, 'getInvestorById']);
-    
     // Startup routes
     Route::get('/startup/profile', [StartupController::class, 'show']);
     Route::post('/startup/submit-funding', [ApplicationController::class, 'submitApplication']);
     Route::get('/startup/applications', [ApplicationController::class, 'getApplicationsForStartup']);
-    Route::post('/startup/upload-agreement/{application_id}', [ApplicationController::class, 'uploadAgreement']);
+    Route::post('/startup/upload-agreement/{application_id}', [AgreementController::class, 'uploadAgreement']);
     Route::patch('/startup/select-investor/{application_id}', [ApplicationController::class, 'selectInvestor']);
 
     // Admin routes
     Route::get('/applications', [ApplicationController::class, 'getAllApplications']);
     Route::get('/pending-applications', [ApplicationController::class, 'getPendingApplications']);
-    Route::patch('/application/{id}/admin-approve', [ApplicationController::class, 'adminApproveApplication']);
-    Route::patch('/application/{id}/admin-decline', [ApplicationController::class, 'adminDeclineApplication']);
+    Route::patch('/application/{id}/admin-approve', [AgreementController::class, 'adminApproveApplication']);
+    Route::patch('/application/{id}/admin-decline', [AgreementController::class, 'adminDeclineApplication']);
     
     // Agreement routes
     Route::get('/agreement/{application_id}', [AgreementController::class, 'getAgreement']);
 });
 
 //Insert dummy transactions, This route needs to be manually executed
-Route::post('/dummy-transactions', [UserController::class, 'createDummyTransactions']);
-
+Route::post('/dummy-transactions', [TransactionController::class, 'createDummyTransactions']);
