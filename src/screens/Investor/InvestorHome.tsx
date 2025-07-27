@@ -13,7 +13,7 @@ export const InvestorHome = (): JSX.Element => {
       setIsStripeLinked(true);
     }
   }, []);
-
+  
   const handleStripeLinking = async() => {
     try {
       const clientId = import.meta.env.VITE_STRIPE_CLIENT_ID; // Replace with your real client ID
@@ -32,7 +32,7 @@ export const InvestorHome = (): JSX.Element => {
       `&state=${state}`;
 
       window.location.href = stripeUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Stripe linking failed:", error);
     }
   }

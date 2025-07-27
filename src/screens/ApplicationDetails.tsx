@@ -1,4 +1,4 @@
-import { ArrowUpTrayIcon, ChevronLeftIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { ArrowUpTrayIcon, BellAlertIcon, ChevronLeftIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import {
   Button,
   Card,
@@ -244,6 +244,11 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
     }
   }
 
+  const handleNotifyInvestor = () => {
+    // TODO: Implement notification logic (e.g., send email or in-app notification)
+    alert("Investor has been notified about insufficient balance.");
+  };
+
   useEffect(() => {
     fetchApplication().finally(() => setLoading(false));
     getAgreement();
@@ -313,6 +318,11 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
     return application.status === "In Progress" && agreement !== null && userNeedReupload;
   }
 
+  const insufficientBalance = () => {
+    if (userRole !== 'admin' || application.status !== "Pending") return false;
+    return (Number(otherParty.investor?.balance) < Number(application.funding_amount));
+  }
+
   const activeApplication = () => {
     return application.status === "Active"; 
   }
@@ -320,7 +330,6 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   const completedApplication = () => {
     return application.status === "Completed";
   }
-
   
   return (
     <div className="bg-white min-h-screen flex">
@@ -356,7 +365,6 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                     )}
                 </div>
             </div>
-          
 
           {/* Application Information Card (always shown) */}
           <Card className="mb-8">
@@ -433,6 +441,11 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                     <Typography variant="h6" color="blue-gray">
                       {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual" ? "Country" : "Company Name"}
                     </Typography>
+                    {(userRole === 'admin') && (
+                      <Typography variant="h6" color="blue-gray">
+                        Balance
+                      </Typography>
+                    )}
                   </div>
                   <div className="flex flex-col gap-y-6">
                     <Typography color="gray" className="font-[400]">{userRole === 'admin' ? otherParty.investor?.name : otherParty?.name}</Typography>
@@ -443,6 +456,11 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                         ? (userRole === 'admin' ? otherParty.investor?.country : otherParty?.country)
                         : (userRole === 'admin' ? otherParty.investor?.company_address : otherParty?.company_address)}
                     </Typography>
+                    {(userRole === 'admin') && (
+                      <Typography color="gray" className="font-[400]">
+                        RM {otherParty.investor?.balance}
+                      </Typography>
+                    )}
                   </div>
                 </div>
               </CardBody>
@@ -488,6 +506,35 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               <Typography className="mb-2 font-[400] border border-gray-400 rounded-[5px] p-2 h-[100px]" color="gray">
                 {application.message}
               </Typography>
+            </div>
+          )}
+
+        {/* Insufficient Balance Notification (Admin Only) */}
+        {insufficientBalance() && (
+            <div className="flex items-center mb-6 p-4 bg-red-50 border border-red-200 rounded-lg justify-between">
+              <div className="flex items-center gap-4">
+                <ExclamationTriangleIcon className="w-8 h-8 text-red-500" />
+                <div className="flex flex-col">
+                  <span className="text-red-700 font-semibold text-lg flex items-center gap-2">
+                    Insufficient Investor Balance
+                  </span>
+                  <span className="text-gray-700 text-sm mt-1">
+                    Investor Balance: <span className="font-bold">RM {otherParty.investor?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00'}</span> <br/>
+                    Required Funding Amount: <span className="font-bold">RM {application.funding_amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </span>
+                  <span className="text-red-600 text-sm mt-1">
+                    The investor's balance is insufficient to fund this application. Please notify the investor to top up their balance.
+                  </span>
+                </div>
+              </div>
+              <Button
+                className="flex items-center gap-2 bg-dark-plum hover:bg-light-purple text-white font-bold px-5 py-2 rounded-lg shadow-md ml-6"
+                onClick={handleNotifyInvestor}
+                title="Notify Investor to Top Up Balance"
+              >
+                <BellAlertIcon className="w-6 h-6" />
+                Notify Investor
+              </Button>
             </div>
           )}
 
@@ -715,6 +762,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                 <Button
                   className="bg-dark-plum text-white hover:bg-light-purple capitalize"
                   onClick={handleAdminApprove}
+                  disabled={insufficientBalance()}
                 >
                   Approve
                 </Button>

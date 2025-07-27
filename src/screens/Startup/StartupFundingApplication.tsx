@@ -46,13 +46,13 @@ export const StartupFunding = (): JSX.Element => {
 
         {/* Main content area */}
         <div className="ml-[200px] flex flex-col flex-1">
-          <div className="flex justify-between items-center px-8 py-6">
-            <h1 className="text-3xl font-medium text-black font-text-3xl-font-medium ml-24">
+          <div className="flex justify-between items-center py-6 w-full max-w-[943px] ml-[150px]">
+            <h1 className="text-3xl font-medium text-black font-text-3xl-font-medium">
               Funding Application
             </h1>
             <Button
               variant="filled"
-              className="bg-dark-plum hover:bg-light-purple text-white capitalize mr-[200px]"
+              className="bg-dark-plum hover:bg-light-purple text-white capitalize mr-[20px]"
               onClick={() => {
                 window.location.href = "/submit-funding";
               }}

@@ -1,11 +1,19 @@
 import { Button } from "@material-tailwind/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidenav } from "../../components/sidenav";
 
 export const StartupHome = (): JSX.Element => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [isStripeLinked, setIsStripeLinked] = useState(localStorage.getItem("isStripeLinked") === "true");
-
+  
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('stripe_linked') === '1'){
+      localStorage.setItem('isStripeLinked', 'true');
+      setIsStripeLinked(true);
+    }
+  }, []);
+  
   const handleStripeLinking = async() => {
     try {
       const clientId = import.meta.env.VITE_STRIPE_CLIENT_ID; // Replace with your real client ID
@@ -24,10 +32,10 @@ export const StartupHome = (): JSX.Element => {
       `&state=${state}`;
 
       window.location.href = stripeUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Stripe linking failed:", error);
     }
-  }
+  } 
 
   return (
     <div className="bg-white flex flex-row justify-center w-full min-h-screen">

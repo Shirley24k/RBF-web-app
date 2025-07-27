@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import { PrivateRoute } from "./PrivateRoute";
 import { AdminFunding } from "./screens/Admin/AdminFundingApplication";
 import { AdminHome } from "./screens/Admin/AdminHome";
 import { AdminTransactionDetails } from "./screens/Admin/TransactionDetails";
@@ -14,6 +15,7 @@ import { LandingPage } from "./screens/LandingPage";
 import { Login } from "./screens/LoginPage";
 import { Register } from "./screens/RegisterPage";
 import { ResetPassword } from "./screens/ResetPasswordPage";
+import { ProcessingFundingPage } from "./screens/Startup/ProcessingFundingPage";
 import { SelectInvestor } from "./screens/Startup/SelectInvestor";
 import { StartupFunding } from "./screens/Startup/StartupFundingApplication";
 import { StartupHome } from "./screens/Startup/StartupHome";
@@ -22,7 +24,6 @@ import { StartupSubmitFunding } from "./screens/Startup/StartupSubmitFunding";
 import { SuccessSubmitFunding } from "./screens/Startup/SuccessSubmitFunding";
 import { StartupTransaction } from "./screens/Startup/Transaction";
 import { TransactionDetails } from "./screens/Startup/TransactionDetails";
-import { PrivateRoute } from "./PrivateRoute";
 
 function App() {
     return (
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/startup-home" element={<StartupHome />} />
                 <Route path="/startup-funding" element={<StartupFunding />} />
                 <Route path="/submit-funding" element={<StartupSubmitFunding />} />
+                <Route path="/processing-funding" element={<ProcessingFundingPage />} />
                 <Route path="/select-investor" element={<SelectInvestor />} />
                 <Route path="/startup-transaction" element={<StartupTransaction />} />
                 <Route path="/application/:id" element={<ApplicationDetailsWrapper />} />
