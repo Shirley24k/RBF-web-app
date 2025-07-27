@@ -23,7 +23,7 @@ def get_supabase_client() -> Client:
     return create_client(supabase_url, supabase_key)
 
 #1. Get the proposal from storage
-def get_proposal_from_storage(proposal_path: str) -> bytes:
+def get_document_from_storage(document_path: str, storage_name: str) -> bytes:
     """
     Retrieve PDF file from Supabase storage.
     
@@ -37,10 +37,10 @@ def get_proposal_from_storage(proposal_path: str) -> bytes:
         supabase = get_supabase_client()
         
         # Download the file from storage
-        response = supabase.storage.from_('business-proposal').download(proposal_path)
+        response = supabase.storage.from_(storage_name).download(document_path)
         
         if response is None:
-            raise FileNotFoundError(f"File not found in storage: {proposal_path}")
+            raise FileNotFoundError(f"File not found in storage: {document_path}")
         
         return response
         
@@ -49,7 +49,7 @@ def get_proposal_from_storage(proposal_path: str) -> bytes:
         raise
 
 #2. Preprocess document text
-def preprocess_document(proposal_bytes: bytes) -> str:
+def preprocess_document(document_bytes: bytes) -> str:
     """
     Convert PDF bytes to text for processing.
     
@@ -61,7 +61,7 @@ def preprocess_document(proposal_bytes: bytes) -> str:
     """
     try:
         # Create a file-like object from bytes
-        pdf_file = io.BytesIO(proposal_bytes)
+        pdf_file = io.BytesIO(document_bytes)
         
         # Read PDF using PyPDF2
         reader = PyPDF2.PdfReader(pdf_file)
@@ -78,7 +78,7 @@ def preprocess_document(proposal_bytes: bytes) -> str:
         raise
 
 #3. Craft the prompt
-def craft_prompt(document_text):
+def craft_prompt_for_proposal_analysis(document_text):
     prompt = f"""
     Analyze the following investment proposal document and extract the following details in JSON format:
     {{
@@ -111,7 +111,7 @@ def craft_prompt(document_text):
     return prompt
 
 #4. Make the gemini API call
-async def make_api_call(proposal_path: str) -> dict:
+async def extract_proposal_details(proposal_path: str) -> dict:
     """
     Complete pipeline to analyze investment proposal from Supabase storage.
     
@@ -123,13 +123,13 @@ async def make_api_call(proposal_path: str) -> dict:
     """
     try:
         # Get PDF from Supabase storage
-        proposal_bytes = get_proposal_from_storage(proposal_path)
+        proposal_bytes = get_document_from_storage(proposal_path, "business-proposal")
         
         # Convert PDF to text
         preprocessed_text = preprocess_document(proposal_bytes)
         
         # Craft the prompt
-        prompt = craft_prompt(preprocessed_text)
+        prompt = craft_prompt_for_proposal_analysis(preprocessed_text)
         chatHistory = []
         chatHistory.append({ "role": "user", "parts": [{ "text": prompt }] })
         payload = {
@@ -192,11 +192,93 @@ async def make_api_call(proposal_path: str) -> dict:
             "funding_purpose": "Null"
         }
 
+def craft_prompt_for_agreement_analysis(document_text):
+    prompt = f"""
+    Analyze the following funding agreement document and extract the following details in JSON format:
+    {{
+        "revenue_share_percentage": "number",
+        "repayment_cap": "number",
+        "cap_multiple": "number"
+    }}
+
+    If a detail is not explicitly mentioned or cannot be determined, return "N/A" for that field.
+
+    Document:
+    ---
+    {document_text}
+    ---
+    """
+    return prompt
+
+async def extract_agreement_details(agreement_path: str) -> dict:
+    try:
+        # Get PDF from Supabase storage
+        agreement_bytes = get_document_from_storage(agreement_path, "agreement")
+        
+        # Convert PDF to text
+        preprocessed_text = preprocess_document(agreement_bytes)
+        
+        # Craft the prompt
+        prompt = craft_prompt_for_agreement_analysis(preprocessed_text)
+        chatHistory = []
+        chatHistory.append({ "role": "user", "parts": [{ "text": prompt }] })
+        payload = {
+            "contents": chatHistory,
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "responseSchema": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "revenue_share_percentage": { "type": "NUMBER" },
+                        "repayment_cap": { "type": "NUMBER" },
+                        "cap_multiple": { "type": "NUMBER" }
+                    },
+                    "propertyOrdering": [
+                        "revenue_share_percentage", "repayment_cap", "cap_multiple"
+                    ]
+                }
+            }
+        }
+
+        apiKey = os.getenv("GEMINI_API_KEY")
+        apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}"
+
+        response = requests.post(apiUrl, json=payload)
+        result = response.json()
+
+        if 'candidates' in result and len(result['candidates']) > 0 and \
+           'content' in result['candidates'][0] and len(result['candidates'][0]['content']['parts']) > 0:
+            
+            # The response is already structured JSON due to responseSchema
+            extracted_data_str = result['candidates'][0]['content']['parts'][0]['text']
+            extracted_data = json.loads(extracted_data_str) # Parse the JSON string
+
+            print("Extracted Details:")
+            for key, value in extracted_data.items():
+                print(f"- {key.replace('_', ' ').title()}: {value}")
+            return extracted_data
+        else:
+            print("Could not extract details. Unexpected API response structure.")
+            print(result) # Print full result for debugging
+            return {
+                "revenue_share_percentage": "Null",
+                "repayment_cap": "Null", 
+                "cap_multiple": "Null"
+            }
+            
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return {
+            "revenue_share_percentage": "Null",
+            "repayment_cap": "Null", 
+            "cap_multiple": "Null"
+        }
+
 if __name__ == "__main__":
     # Example usage with a file stored in Supabase storage
     # The path should be relative to your storage bucket
-    storage_path = "Business proposal sample.pdf"  # Adjust this path
-    response = asyncio.run(make_api_call(storage_path))
+    storage_path = "Agreement sample.pdf"  # Adjust this path
+    response = asyncio.run(extract_agreement_details(storage_path))
     print(response)
-    print(response['funding_stage'])
+    print(response['revenue_share_percentage'])
     

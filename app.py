@@ -2,7 +2,7 @@ import asyncio
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import joblib
-from proposal_analysis.proposal_analysis import make_api_call
+from proposal_analysis.proposal_analysis import extract_agreement_details, extract_proposal_details
 from scraping.scm_scraper import scrape_and_export
 import numpy as np
 from matching.matching import insert_investor, insert_startup, insert_application, match_investor_application, update_investor
@@ -74,7 +74,20 @@ def proposal_analysis():
     
     try: 
         proposal_path = data['proposal_path']
-        response =asyncio.run(make_api_call(proposal_path))
+        response =asyncio.run(extract_proposal_details(proposal_path))
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/agreement-analysis', methods=['POST'])
+def agreement_analysis():
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    try:
+        agreement_path = data['agreement_path']
+        response = asyncio.run(extract_agreement_details(agreement_path))
         return jsonify(response)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
