@@ -19,6 +19,7 @@ use Stripe\Account;
 use Stripe\Webhook;
 use Stripe\PaymentMethod;
 use Stripe\Balance;
+use Stripe\BalanceTransaction;
 
 class StripeService
 {
@@ -141,6 +142,7 @@ class StripeService
             'metadata' => [
                 'investor_id' => auth()->user()->id,
                 'topup_amount' => $amountInCents,
+                'type' => 'fund transfer'
             ],
             'success_url' => config('app.frontend_url') . '/investor-transaction?status=success&session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => config('app.frontend_url') . '/investor-transaction?status=cancel',
@@ -166,25 +168,24 @@ class StripeService
 
         if ($event->type === 'checkout.session.completed') {
             $session = $event->data->object;
-            $investorId = $session->metadata->investor_id ?? null;
-            $amount = $session->metadata->topup_amount ?? 0;
+            
+            // Handle investor top-up
+            $transactionType = $session->metadata->type ?? null;
 
-            if ($investorId && $amount) {
-                $amountMyr = $amount / 100; // Convert from cents to MYR
-                $investor = Investor::where('user_id', $investorId)->first();
+            if ($transactionType === 'fund transfer') {
+                $amountMyr = $session->metadata->topup_amount / 100; // Convert from cents to MYR
+                $investor = Investor::where('user_id', $session->metadata->investor_id)->first();
                 if ($investor) {
                     $investor->balance += $amountMyr;
                     $investor->save();
-                    
-                    \Log::info('Investor balance updated via webhook', [
-                        'investor_id' => $investorId,
-                        'amount' => $amountMyr,
-                        'new_balance' => $investor->balance
-                    ]);
                 } else {
                     \Log::warning('Investor not found for webhook', ['investor_id' => $investorId]);
                 }
+            } else if ($transactionType === 'monthly_repayment') {
+                //Handle monthly repayment
+                $this->handleMonthlyRepaymentWebhook($session);
             }
+            
         }
 
         return response('Webhook handled', 200);
@@ -247,6 +248,11 @@ class StripeService
                 'status' => 'Completed',
                 'application_id' => $application->id,
             ]);
+
+            //Update repayment date to application table
+            $firstRepaymentDate = now()->addDays(30);
+            $application->repayment_date = $firstRepaymentDate->day; // Store only the day of month (1-31)
+            $application->save();
             
             \Log::info('Transfer completed successfully', [
                 'transfer_id' => $transfer->id,
@@ -260,122 +266,68 @@ class StripeService
 
     public function processMonthlyRepayment($application_id, $month)
     {
-        return DB::transaction(function () use ($application_id, $month) {
-            $application = Application::with('startup', 'investor')->findOrFail($application_id);
-            $startup = $application->startup;
-            $investor = $application->investor;
-            $revenue = $this->getMonthlyRevenue($startup->stripe_id, $month);
+        $application = Application::with('startup', 'investor')->findOrFail($application_id);
+        $startup = $application->startup;
+        $investor = $application->investor;
+        $revenue = $this->getMonthlyRevenue($startup->stripe_id, $month);
 
-            // Check if startup has stripe account
-            if (!$startup->stripe_id) {
-                throw new \Exception('Startup does not have a stripe account');
-            }
+        // Check if startup has stripe account
+        if (!$startup->stripe_id) {
+            throw new \Exception('Startup does not have a stripe account');
+        }
 
-            // Check if investor has stripe account
-            if (!$investor->stripe_id) {
-                throw new \Exception('Investor does not have a stripe account');
-            }
+        // Check if investor has stripe account
+        if (!$investor->stripe_id) {
+            throw new \Exception('Investor does not have a stripe account');
+        }
 
-            if(!$revenue){
-                throw new \Exception('No revenue found for the month');
-            }
+        // Calculate the monthly repayment amount
+        $monthlyRepayment = $revenue * $application->revenue_share_percentage;
 
-            //Calculate the monthly repayment amount
-            $monthlyRepayment = $revenue * $application->revenue_share_percentage;
+        // Check if monthly repayment + total repaid is greater than the repayment cap
+        if ($monthlyRepayment + $application->total_repaid > $application->repayment_cap) {
+            $monthlyRepayment = $application->repayment_cap - $application->total_repaid;
+        }
 
-            //Check if monthly repayment + total repaid is greater than the repayment cap
-            if ($monthlyRepayment + $application->total_repaid > $application->repayment_cap) {
-                $monthlyRepayment = $application->repayment_cap - $application->total_repaid;
-            }
+        // Calculate the amount to charge startup (including processing fee)
+        $grossAmount = $this->calculateGrossAmount($monthlyRepayment);
 
-            Stripe::setApiKey(config('stripe.secret'));
+        Stripe::setApiKey(config('stripe.secret'));
 
-            try {
-                // Step 1: Create PaymentIntent (startup pays to platform)
-                $paymentIntent = PaymentIntent::create([
-                    'amount' => $monthlyRepayment * 100,
-                    'currency' => 'myr',
-                    'payment_method_types' => ['card'],
-                    'payment_method' => 'pm_card_visa',
-                    'confirm' => true,
-                    'description' => 'Monthly repayment from startup to platform',
-                    'on_behalf_of' => $startup->stripe_id,
-                    'application_fee_amount' => 0,
-                    'metadata' => [
-                        'application_id' => $application->id,
-                        'startup_id' => $startup->id,
-                        'repayment_type' => 'monthly_repayment',
-                        'month' => $month
+        try {
+            // Create checkout session for manual payment (like topUpAccount)
+            $session = Session::create([
+                'payment_method_types' => ['card'],
+                'mode' => 'payment',
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'myr',
+                        'product_data' => [
+                            'name' => 'Monthly Repayment',
+                            'description' => "Repayment for application #{$application->id} - {$month}",
+                        ],
+                        'unit_amount' => $grossAmount * 100, // Use gross amount including fees
                     ],
-                ], [
-                    'stripe_account' => $startup->stripe_id, // Acts on behalf of startup
-                ]);
-
-                // Check if payment was successful
-                if (!$paymentIntent) {
-                    throw new \Exception('Payment failed: ' . $paymentIntent);
-                }
-
-                // Step 2: Get actual available balance and transfer
-                $platformBalance = $this->getPlatformBalance();
-                $availableBalance = $platformBalance['available_balance'];
-                
-                if ($availableBalance <= 0) {
-                    throw new \Exception('Insufficient platform balance for transfer. Available: ' . $availableBalance);
-                }
-                
-                $transfer = Transfer::create([
-                    'amount' => $availableBalance * 100, // Use actual available amount
-                    'currency' => 'myr',
-                    'destination' => $investor->stripe_id,
-                    'description' => 'Monthly repayment to investor',
-                    'metadata' => [
-                        'application_id' => $application->id,
-                        'startup_id' => $startup->id,
-                        'payment_intent_id' => $paymentIntent->id,
-                        'repayment_type' => 'monthly_repayment'
-                    ]
-                ]);
-
-                // Update application total_repaid immediately
-                $application->total_repaid = $this->getTotalRepaid($application_id);
-                $application->save();
-
-                // Update application status if completed
-                if ($application->total_repaid >= $application->repayment_cap) {
-                    $application->status = 'Completed';
-                    $application->save();
-                }
-
-                // Insert transaction record
-                Transaction::create([
-                    'amount' => $availableBalance, // Actual amount transferred
-                    'type' => 'REPAYMENT',
-                    'transaction_datetime' => now(),
-                    'from_stripe_id' => $startup->stripe_id,
-                    'to_stripe_id' => $investor->stripe_id,
-                    'status' => 'Completed',
+                    'quantity' => 1,
+                ]],
+                'metadata' => [
                     'application_id' => $application->id,
-                ]);
+                    'startup_id' => $startup->id,
+                    'investor_id' => $investor->id,
+                    'type' => 'monthly_repayment',
+                    'month' => $month,
+                    'target_repayment_amount' => $monthlyRepayment,
+                    'gross_amount' => $grossAmount
+                ],
+                'success_url' => config('app.frontend_url') . '/application-transaction-details/' . $application->id . '?status=success&session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => config('app.frontend_url') . '/application-transaction-details/' . $application->id . '?status=cancel',
+            ]);
 
-                \Log::info('Monthly repayment processed successfully', [
-                    'payment_intent_id' => $paymentIntent->id,
-                    'transfer_id' => $transfer->id,
-                    'amount' => $availableBalance,
-                    'application_id' => $application->id,
-                    'status' => 'completed'
-                ]);
+            return response()->json(['checkout_url' => $session->url]);
 
-                return [
-                    'payment_intent' => $paymentIntent,
-                    'transfer' => $transfer,
-                    'status' => 'completed'
-                ];
-
-            } catch (\Exception $e) {
-                throw new \Exception('Stripe repayment transfer failed: ' . $e->getMessage());
-            }
-        });
+        } catch (\Exception $e) {
+            throw new \Exception('Stripe repayment checkout failed: ' . $e->getMessage());
+        }
     }
 
     public function getTotalRepaid($application_id)
@@ -386,28 +338,73 @@ class StripeService
             ->sum('amount');
     }
 
-    public function getPlatformBalance()
+    /**
+     * Calculate the gross amount needed to achieve a target net amount after Stripe fees
+     */
+    private function calculateGrossAmount($targetNetAmount)
     {
-        Stripe::setApiKey(config('stripe.secret'));
+        $stripeFeePercentage = 0.04; // 4%
+        $stripeFeeFixed = 1; // RM 1
         
+        // Calculate the gross amount needed to get the desired net amount
+        // Formula: gross_amount = (net_amount + fixed_fee) / (1 - percentage_fee)
+        $grossAmount = ($targetNetAmount + $stripeFeeFixed) / (1 - $stripeFeePercentage);
+        
+        // Round up to nearest cent to ensure we have enough
+        return ceil($grossAmount * 100) / 100;
+    }
+
+    /**
+     * Handle monthly repayment webhook when checkout session is completed
+     */
+    public function handleMonthlyRepaymentWebhook($session)
+    {
         try {
-            $balance = Balance::retrieve();
-            
-            $availableBalance = 0;
-            foreach ($balance->available as $balanceItem) {
-                if ($balanceItem->currency === 'myr') {
-                    $availableBalance += $balanceItem->amount / 100; // Convert from cents
-                }
+            $applicationId = $session->metadata->application_id ?? null;
+            $startupId = $session->metadata->startup_id ?? null;
+            $investorId = $session->metadata->investor_id ?? null;
+            $month = $session->metadata->month ?? null;
+            $targetAmount = $session->metadata->target_repayment_amount ?? 0;
+
+            if (!$applicationId || !$startupId || !$investorId) {
+                \Log::error('Missing metadata for monthly repayment webhook', [
+                    'session_id' => $session->id,
+                    'metadata' => $session->metadata
+                ]);
+                return;
             }
-            
-            return [
-                'available_balance' => $availableBalance,
-                'pending_balance' => $balance->pending,
-                'instant_available' => $balance->instant_available,
-                'raw_balance' => $balance
-            ];
+
+            $application = Application::with(['startup', 'investor'])->find($applicationId);
+            if (!$application) {
+                \Log::error('Application not found for monthly repayment webhook', ['application_id' => $applicationId]);
+                return;
+            }
+
+            // Insert transaction record with Pending status
+            Transaction::create([
+                'amount' => $targetAmount,
+                'type' => 'REPAYMENT',
+                'transaction_datetime' => now(),
+                'from_stripe_id' => $application->startup->stripe_id,
+                'to_stripe_id' => $application->investor->stripe_id,
+                'status' => 'Pending', // Mark as pending until transfer completes
+                'application_id' => $applicationId,
+            ]);
+
+            \Log::info('Monthly repayment webhook processed - transaction created with Pending status', [
+                'application_id' => $applicationId,
+                'amount' => $targetAmount,
+                'session_id' => $session->id,
+                'note' => 'Run: php artisan transfers:process-delayed to process transfer after 3 minutes'
+            ]);
+
         } catch (\Exception $e) {
-            throw new \Exception('Failed to retrieve platform balance: ' . $e->getMessage());
+            \Log::error('Error processing monthly repayment webhook', [
+                'session_id' => $session->id,
+                'error' => $e->getMessage()
+            ]);
         }
     }
+
+
 } 

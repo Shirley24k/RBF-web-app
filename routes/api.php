@@ -35,9 +35,6 @@ Route::get('/stripe/oauth/callback', [UserController::class, 'handleOAuthCallbac
 // Stripe webhook route (no authentication required)
 Route::post('/stripe/webhook', [TransactionController::class, 'handleStripeWebhook']);
 
-// Process monthly repayment
-Route::post('/transactions/repayment', [TransactionController::class, 'processMonthlyRepayment']);
-
 // Authentication routes
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
     ->middleware('guest')
@@ -68,10 +65,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    // Process monthly repayment
+    Route::post('/transactions/repayment', [TransactionController::class, 'processMonthlyRepayment']);
 
-    // Application routes
-    Route::get('/application/{id}', [ApplicationController::class, 'getApplication']);
-    
     // Investor routes
     Route::get('/investor/profile/', [InvestorController::class, 'show']);
     Route::get('/investor/balance', [InvestorController::class, 'getInvestorBalance']);
@@ -82,25 +78,33 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/investor/update-preferences', [InvestorController::class, 'updatePreferences']);
     Route::get('/investor/applications', [ApplicationController::class, 'getApplicationsForInvestor']);
     Route::get('/investor/applications-await-review', [ApplicationController::class, 'getInvestorAwaitReviewApplications']);
+    Route::get('/investor/transaction-applications', [ApplicationController::class, 'getTransactionApplicationsForInvestor']);
     Route::post('/investor/upload-agreement/{application_id}', [AgreementController::class, 'uploadAgreement']);
     Route::patch('/application/{id}/accept', [ApplicationController::class, 'acceptApplication']);
     Route::patch('/application/{id}/reject', [ApplicationController::class, 'rejectApplication']);
     Route::get('/investor/{id}', [InvestorController::class, 'getInvestorById']);
+    
     // Startup routes
     Route::get('/startup/profile', [StartupController::class, 'show']);
     Route::post('/startup/submit-funding', [ApplicationController::class, 'submitApplication']);
     Route::get('/startup/applications', [ApplicationController::class, 'getApplicationsForStartup']);
+    Route::get('/startup/transaction-applications', [ApplicationController::class, 'getTransactionApplicationsForStartup']);
     Route::post('/startup/upload-agreement/{application_id}', [AgreementController::class, 'uploadAgreement']);
     Route::patch('/startup/select-investor/{application_id}', [ApplicationController::class, 'selectInvestor']);
 
     // Admin routes
     Route::get('/applications', [ApplicationController::class, 'getAllApplications']);
     Route::get('/pending-applications', [ApplicationController::class, 'getPendingApplications']);
+    Route::get('/transaction-applications', [ApplicationController::class, 'getTransactionApplications']);
     Route::patch('/application/{id}/admin-approve', [AgreementController::class, 'adminApproveApplication']);
     Route::patch('/application/{id}/admin-decline', [AgreementController::class, 'adminDeclineApplication']);
     
     // Agreement routes
     Route::get('/agreement/{application_id}', [AgreementController::class, 'getAgreement']);
+
+    // Application routes
+    Route::get('/application/{id}', [ApplicationController::class, 'getApplication']);
+    Route::get('/transaction-details/{application_id}', [ApplicationController::class, 'getTransactionDetails']);
 });
 
 //Insert dummy transactions, This route needs to be manually executed

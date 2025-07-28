@@ -66,10 +66,7 @@ class TransactionController extends Controller
 
             return response()->json([
                 'message' => 'Monthly repayment processed successfully',
-                'payment_intent_id' => $result['payment_intent']->id ?? 'null',
-                'transfer_id' => $result['transfer']->id ?? 'null',
-                'status' => $result['status'] ?? 'null',
-                'month' => $request->month
+                'checkout_url' => $result->getData(true)['checkout_url'],
             ]);
 
         } catch (\Exception $e) {

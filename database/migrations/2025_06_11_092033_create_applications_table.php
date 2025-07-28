@@ -23,6 +23,7 @@ class CreateApplicationsTable extends Migration
             $table->decimal('repayment_cap', 10, 2)->nullable();
             $table->decimal('cap_multiple', 10, 2)->nullable();
             $table->decimal('total_repaid', 10, 2)->default(0.00);
+            $table->unsignedTinyInteger('repayment_date')->nullable();
             $table->enum('status', ['Await Review', 'Pending', 'Rejected', 'In Progress', 'Active', 'Completed']);
             $table->longText('message')->nullable(); 
             $table->unsignedBigInteger('startup_id');

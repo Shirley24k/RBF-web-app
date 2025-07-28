@@ -168,6 +168,34 @@ class ApplicationController extends Controller
         }
     }
 
+    public function getTransactionApplicationsForStartup(): JsonResponse
+    {
+        try {
+            $applications = Application::where('startup_id', auth()->user()->startups()->first()->id)
+                            ->whereIn('status', ['Active', 'Completed'])
+                            ->with('investor')
+                            ->get();
+            
+            $data = $applications->map(function ($application) {
+                return [
+                    'id' => $application->id,
+                    'investor_name' => $application->investor ? $application->investor->name : null,
+                    'date' => $application->updated_at ? $application->updated_at->format('Y-m-d') : null,
+                    'status' => $application->status,
+                ];
+            });
+            return response()->json([
+                'data' => $data
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to get applications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function getApplicationsForInvestor(): JsonResponse
     {
         try {
@@ -214,6 +242,34 @@ class ApplicationController extends Controller
 
             return response()->json([
                 'data' => $applications
+            ], 200);
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => 'Failed to get applications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getTransactionApplicationsForInvestor(): JsonResponse
+    {
+        try{
+            $applications = Application::where('investor_id', auth()->user()->investors()->first()->id)
+                            ->whereIn('status', ['Active', 'Completed'])
+                            ->get();
+
+            $data = $applications->map(function ($application) {
+                
+                return [
+                    'id' => $application->id,
+                    'startup_name' => $application->startup ? $application->startup->name : null,
+                    'date' => $application->updated_at ? $application->updated_at->format('Y-m-d') : null,
+                    'status' => $application->status,
+                ];
+            });
+                
+            return response()->json([
+                'data' => $data
             ], 200);
         }catch(\Exception $e){
             return response()->json([
@@ -411,6 +467,33 @@ class ApplicationController extends Controller
             if ($prediction_data['confidence_score'] < $min_confidence) {
                 throw new \Exception('Low prediction confidence: ' . round($prediction_data['confidence_score'] * 100, 1) . '% (minimum: ' . ($min_confidence * 100) . '%)');
             }
+        }
+    }
+
+    public function getTransactionDetails($application_id): JsonResponse
+    {
+        try{
+            $application = Application::find($application_id);
+            $startup = $application->startup;
+            $investor = $application->investor;
+            $transactions = $application->transactions()->orderBy('transaction_datetime', 'desc')->get();
+            $next_repayment_date = $application->getNextRepaymentDate();
+            $overdue_details = $application->getOverduePaymentDetails();
+            
+            return response()->json([
+                'application' => $application,
+                'startup' => $startup,
+                'investor' => $investor,
+                'transactions' => $transactions,
+                'next_repayment_date' => $next_repayment_date,
+                'overdue_details' => $overdue_details,
+                'repayment_amount' => $application->calculateRepaymentAmount() ? $application->calculateRepaymentAmount() : 0,
+            ], 200);
+        }catch(\Exception $e){
+            return response()->json([
+                'message' => 'Failed to get transaction details',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }
