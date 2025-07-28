@@ -29,6 +29,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   const [message, setMessage] = useState<string>("");
   const [adminMessage, setAdminMessage] = useState<string>("");
   const [agreement, setAgreement] = useState<any>(null);
+  const [notifyInvestor, setNotifyInvestor] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Helper to get agreement paths
@@ -245,8 +246,17 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   }
 
   const handleNotifyInvestor = () => {
-    // TODO: Implement notification logic (e.g., send email or in-app notification)
-    alert("Investor has been notified about insufficient balance.");
+    axios.post(`${API_BASE_URL}/investor-topup-reminder/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    })
+    .then((response)=>{
+      setNotifyInvestor(true);
+    })
+    .catch((error)=>{
+      console.error('Failed to send reminder:', error);
+    });
   };
 
   useEffect(() => {
@@ -528,12 +538,13 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                 </div>
               </div>
               <Button
-                className="flex items-center gap-2 bg-dark-plum hover:bg-light-purple text-white font-bold px-5 py-2 rounded-lg shadow-md ml-6"
+                className="flex items-center gap-2 bg-dark-plum hover:bg-light-purple text-white font-bold capitalize px-5 py-2 rounded-lg shadow-md ml-6"
                 onClick={handleNotifyInvestor}
+                disabled={notifyInvestor}
                 title="Notify Investor to Top Up Balance"
               >
                 <BellAlertIcon className="w-6 h-6" />
-                Notify Investor
+                {notifyInvestor ? 'Notification Sent' : 'Notify Investor'}
               </Button>
             </div>
           )}

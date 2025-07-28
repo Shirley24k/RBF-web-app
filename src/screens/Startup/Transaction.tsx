@@ -1,25 +1,33 @@
 import { FunnelIcon } from "@heroicons/react/24/solid";
 import { Button, Typography } from "@material-tailwind/react";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 import { StatusBadge } from "../../components/StatusBadge";
 
-// Transaction data for mapping
-const transactions = [
-  {
-    id: 1,
-    investor: "InvestCo",
-    datetime: "2024-06-19 08:00:00",
-    status: "Active",
-  },
-  {
-    id: 2,
-    investor: "InvestCo",
-    datetime: "2023-02-23 08:00:00",
-    status: "Completed",
-  },
-];
-
 export const StartupTransaction = (): JSX.Element => {
+  const [applications, setApplications] = useState<any>(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const navigate = useNavigate();
+
+  //fetch active and completed applications
+  const fetchApplications = async () => {
+    await axios.get(`${API_BASE_URL}/startup/transaction-applications`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      }
+    })
+    .then((response) => {
+      setApplications(response.data.data)
+      console.log('Applications', response.data.data)
+    })
+  }
+
+  useEffect(() => {
+    fetchApplications()
+  }, [])
+
   return (
     <div className="relative flex h-screen w-full">
       {/* Sidebar */}
@@ -51,23 +59,24 @@ export const StartupTransaction = (): JSX.Element => {
               </tr>
             </thead>
             <tbody className="text-gray-800">
-              {transactions.map((transaction) => (
-                <tr key={transaction.id} className="border-b border-gray-300">
-                  <td className="px-4 py-3">{transaction.id}</td>
-                  <td className="px-4 py-3">{transaction.investor}</td>
-                  <td className="px-4 py-3">{transaction.datetime}</td>
+              {applications && applications.map((application: any) => (
+                <tr key={application.id} className="border-b border-gray-300">
+                  <td className="px-4 py-3">{application.id}</td>
+                  <td className="px-4 py-3">{application.investor_name}</td>
+                  <td className="px-4 py-3">{application.date}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={transaction.status}></StatusBadge>
+                    <StatusBadge status={application.status}></StatusBadge>
                   </td>
                   <td className="px-4 py-3">
-                    <a href="/transaction-details">
                       <Button
                         variant="outlined"
                         className="border-dark-plum border-2 capitalize text-sm font-bold text-dark-plum"
+                        onClick={() => {
+                          navigate(`/application-transaction-details/${application.id}`);
+                        }}
                       >
                         View Transaction
                       </Button>
-                    </a>
                   </td>
                 </tr>
               ))}

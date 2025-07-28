@@ -2,27 +2,10 @@ import { FunnelIcon } from "@heroicons/react/24/solid";
 import { Alert, Button, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 import { StatusBadge } from "../../components/StatusBadge";
 
-// Transaction data for mapping
-const transactions = [
-  {
-    id: 1,
-    application: "Startup A",
-    datetime: "2024-06-19 08:00:00",
-    status: "Active",
-    statusColor: "green",
-  },
-  {
-    id: 2,
-    application: "Startup B",
-    datetime: "2023-02-23 08:00:00",
-    status: "Completed",
-    statusColor: "brown",
-  },
-];
 
 
 export const InvestorTransaction = (): JSX.Element => {
@@ -32,8 +15,27 @@ export const InvestorTransaction = (): JSX.Element => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState("");
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [balance, setBalance] = useState(0);
+  const navigate = useNavigate();
+  const [applications, setApplications] = useState<any>(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  //fetch active and completed applications
+  const fetchApplications = async () => {
+    await axios.get(`${API_BASE_URL}/investor/transaction-applications`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      }
+    })
+    .then((response) => {
+      setApplications(response.data.data)
+      console.log('Applications', response.data.data)
+    })
+  }
+
+  useEffect(() => {
+    fetchApplications()
+  }, [])
 
   const handleTopUp = () => {
     axios.post(`${API_BASE_URL}/investor/top-up`, {
@@ -156,23 +158,24 @@ export const InvestorTransaction = (): JSX.Element => {
               </tr>
             </thead>
             <tbody className="text-gray-800">
-              {transactions.map((transaction) => (
-                <tr key={transaction.id} className="border-b border-gray-300">
-                  <td className="px-4 py-3">{transaction.id}</td>
-                  <td className="px-4 py-3">{transaction.application}</td>
-                  <td className="px-4 py-3">{transaction.datetime}</td>
+              {applications && applications.map((application: any) => (
+                <tr key={application.id} className="border-b border-gray-300">
+                  <td className="px-4 py-3">{application.id}</td>
+                  <td className="px-4 py-3">{application.startup_name}</td>
+                  <td className="px-4 py-3">{application.date}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={transaction.status}></StatusBadge>
+                    <StatusBadge status={application.status}></StatusBadge>
                   </td>
                   <td className="px-4 py-3">
-                    <a href="/transaction-details">
-                      <Button
-                        variant="outlined"
-                        className="border-dark-plum border-2 capitalize text-sm font-bold text-dark-plum"
-                      >
-                        View Transaction
-                      </Button>
-                    </a>
+                    <Button
+                      variant="outlined"
+                      className="border-dark-plum border-2 capitalize text-sm font-bold text-dark-plum"
+                      onClick={() => {
+                        navigate(`/application-transaction-details/${application.id}`);
+                      }}
+                    >
+                      View Transaction
+                    </Button>
                   </td>
                 </tr>
               ))}
