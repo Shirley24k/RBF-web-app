@@ -48,6 +48,8 @@ class ApplicationSeeder extends Seeder
             'status' => 'Completed',
             'startup_id' => 1,
             'investor_id' => 1,
+            'total_repaid' => 450000.00,
+            'repayment_date' => 28
         ]);
     }
 }

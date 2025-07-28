@@ -32,6 +32,10 @@ class Application extends Model
 
     public function getNextRepaymentDate()
     {
+        if ($this->status != 'Active') {
+            return null;
+        }
+
         if (!$this->repayment_date) {
             return null;
         }
@@ -121,6 +125,10 @@ class Application extends Model
      */
     public function getOverduePaymentDetails()
     {
+        if ($this->status != 'Active') {
+            return null;
+        }
+
         if (!$this->hasOverduePayments()) {
             return null;
         }
