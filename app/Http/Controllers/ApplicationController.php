@@ -14,7 +14,7 @@ use App\Services\ApplicationService;
 use Illuminate\Support\Facades\DB;
 use App\Services\Neo4jService;
 use Illuminate\Support\Facades\Log;
-
+use App\Services\MailService;
 class ApplicationController extends Controller
 {
     private $fileUploadService;
@@ -492,6 +492,42 @@ class ApplicationController extends Controller
         }catch(\Exception $e){
             return response()->json([
                 'message' => 'Failed to get transaction details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function sendRepaymentReminder(int $application_id): JsonResponse
+    {
+        try {
+            $application = Application::with(['startup.user', 'investor'])->findOrFail($application_id);
+            $mailService = new MailService();
+            
+            $result = $mailService->sendRepaymentReminder($application);
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send repayment reminder',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function sendInvestorTopupReminder(int $application_id): JsonResponse
+    {
+        try {
+            $application = Application::with(['startup.user', 'investor.user'])->findOrFail($application_id);
+            $mailService = new MailService();
+            
+            $result = $mailService->sendInvestorTopupReminder($application);
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send investor top-up reminder',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -109,3 +109,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 //Insert dummy transactions, This route needs to be manually executed
 Route::post('/dummy-transactions', [TransactionController::class, 'createDummyTransactions']);
+
+// Test repayment reminder route
+Route::post('/repayment-reminder/{application_id}', [ApplicationController::class, 'sendRepaymentReminder']);
+
+// Test investor top-up reminder route
+Route::post('/investor-topup-reminder/{application_id}', [ApplicationController::class, 'sendInvestorTopupReminder']);
