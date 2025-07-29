@@ -2,7 +2,7 @@ import asyncio
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import joblib
-from proposal_analysis.proposal_analysis import extract_agreement_details, extract_proposal_details
+from proposal_analysis.openai_document_analysis import extract_agreement_details, extract_proposal_details
 from scraping.scm_scraper import scrape_and_export
 import numpy as np
 from matching.matching import insert_investor, insert_startup, insert_application, match_investor_application, update_investor
