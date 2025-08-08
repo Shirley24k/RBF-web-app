@@ -74,11 +74,11 @@ export const Login = (): JSX.Element => {
   };
 
   return (
-    <div className="bg-[#fdfaf6] flex flex-row justify-center w-full">
+    <div className="bg-[#fdfaf6] flex flex-row justify-center w-full min-h-screen">
       <div className="bg-beige overflow-x-hidden w-full max-w-[1512px] min-h-screen relative">
         {/* Header */}
-        <header className="w-full h-[164px] flex items-center justify-between px-20">
-          <div className="font-['Irish_Grover'] font-normal text-5xl leading-[72px]">
+        <header className="w-full flex items-center justify-between px-20 max-md:px-8 max-sm:px-4 h-[164px] max-md:h-[120px] max-sm:h-20">
+          <div className="font-['Irish_Grover'] font-normal text-5xl max-md:text-4xl max-sm:text-2xl leading-[72px] max-md:leading-[64px] max-sm:leading-[48px]">
             <span className="text-[#073b1d]">R</span>
             <span className="text-[#574964c7]">B</span>
             <span className="text-[#073b1d]">F</span>
@@ -86,7 +86,7 @@ export const Login = (): JSX.Element => {
 
           <Button
             variant="outlined"
-            className="h-12 px-6 py-[5px] rounded-lg border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm hover:bg-light-purple hover:text-white capitalize"
+            className="h-12 max-md:h-10 max-sm:h-8 px-6 max-md:px-4 max-sm:px-3 py-[5px] rounded-lg border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm max-md:text-xs bg-transparent hover:bg-light-purple hover:text-white capitalize"
             onClick={() => navigate("/")}
           >
             Home
@@ -94,30 +94,30 @@ export const Login = (): JSX.Element => {
         </header>
 
         {/* Main Content */}
-        <main className="flex flex-col items-center">
+        <main className="flex flex-col items-center px-0 max-md:px-4">
           {/* Heading */}
-          <div className="flex flex-col w-[435px] items-center gap-5 mb-10">
-            <h1 className="font-heading font-[600] text-black text-[45px] text-center tracking-[0] leading-[52px]">
+          <div className="flex flex-col w-full max-w-lg max-md:max-w-md max-sm:max-w-xs items-center gap-5 max-md:gap-3 mb-10 max-md:mb-6">
+            <h1 className="font-heading font-[600] text-black text-[45px] max-md:text-3xl max-sm:text-2xl text-center tracking-[0] leading-[52px] max-md:leading-[44px] max-sm:leading-[36px]">
               Sign In
             </h1>
-            <p className="font-['Roboto',Helvetica] font-normal text-[#79747e] text-2xl text-center tracking-[0] leading-8">
+            <p className="font-['Roboto',Helvetica] font-normal text-[#79747e] text-2xl max-md:text-lg max-sm:text-base text-center tracking-[0] leading-8 max-md:leading-6">
               Enter your email and password to sign in
             </p>
           </div>
 
           {/* Login Form */}
-          <div className="w-[382px] border-none bg-transparent shadow-none p-0 space-y-6">
+          <div className="w-full max-w-lg max-md:max-w-md max-sm:max-w-xs border-none bg-transparent shadow-none p-0 space-y-6 max-md:space-y-4">
             {error && (
-              <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+              <div className="p-4 max-md:p-3 mb-4 text-sm max-md:text-xs text-red-700 bg-red-100 rounded-lg">
                 {error}
               </div>
             )}
 
             {/* Email Field */}
-            <div className="space-y-2">
+            <div className="space-y-2 max-md:space-y-1">
               <Label
                 htmlFor="email"
-                className="font-text-sm-font-medium font-[500] text-[#263238] text-[14px] tracking-[0] leading-[150%]"
+                className="font-text-sm-font-medium font-[500] text-[#263238] text-sm max-md:text-xs tracking-[0] leading-[150%]"
               >
                 Your Email
               </Label>
@@ -126,15 +126,15 @@ export const Login = (): JSX.Element => {
                 label="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 px-3 py-3 rounded-lg bg-white border border-solid text-[#90a4ae] placeholder:text-[#90a4ae]"
+                className="h-12 max-md:h-10 max-sm:h-8 px-3 max-md:px-2 py-3 max-md:py-2 rounded-lg bg-white border border-solid text-[#90a4ae] placeholder:text-[#90a4ae]"
               />
             </div>
 
             {/* Password Field */}
-            <div className="space-y-2">
+            <div className="space-y-2 max-md:space-y-1">
               <Label
                 htmlFor="password"
-                className="font-text-sm-font-medium font-[500] text-[#263238] text-[14px] tracking-[0] leading-[150%]"
+                className="font-text-sm-font-medium font-[500] text-[#263238] text-sm max-md:text-xs tracking-[0] leading-[150%]"
               >
                 Password
               </Label>
@@ -144,16 +144,16 @@ export const Login = (): JSX.Element => {
                 label="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-12 px-3 py-3 rounded-lg bg-white border border-solid text-[#90a4ae] placeholder:text-[#90a4ae]"
+                className="h-12 max-md:h-10 max-sm:h-8 px-3 max-md:px-2 py-3 max-md:py-2 rounded-lg bg-white border border-solid text-[#90a4ae] placeholder:text-[#90a4ae]"
               />
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   label={
-                    <Typography className="font-normal text-md">
+                    <Typography className="font-normal text-md max-md:text-sm max-sm:text-xs">
                       Remember Me
                     </Typography>
                   }
@@ -162,7 +162,7 @@ export const Login = (): JSX.Element => {
               </div>
               <p 
                 onClick={() => navigate("/forgot-password")}
-                className="font-['Roboto',Helvetica] font-medium text-gray-600 text-sm p-0 h-auto cursor-pointer hover:text-dark-plum"
+                className="font-['Roboto',Helvetica] font-medium text-gray-600 text-sm max-md:text-xs p-0 h-auto cursor-pointer hover:text-dark-plum"
               >
                 Forgot password
               </p>
@@ -170,7 +170,7 @@ export const Login = (): JSX.Element => {
 
             {/* Sign In Button */}
             <Button
-              className="w-full h-12 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-sm rounded-lg capitalize hover:bg-light-purple"
+              className="w-full h-12 max-md:h-10 max-sm:h-8 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-sm max-md:text-xs rounded-lg capitalize hover:bg-light-purple"
               onClick={() => login(email, password)}
               disabled={isLoading}
             >
@@ -178,12 +178,12 @@ export const Login = (): JSX.Element => {
             </Button>
 
             {/* Create Account Link */}
-            <div className="text-center font-['Roboto',Helvetica] font-normal text-gray-600 text-sm tracking-[0] leading-[21px]">
+            <div className="text-center font-['Roboto',Helvetica] font-normal text-gray-600 text-sm max-md:text-xs tracking-[0] leading-[21px]">
               <span className="text-[#757575]">Not registered?</span>
               <span className="font-medium text-[#757575]">&nbsp;</span>
               <span
                 onClick={() => navigate("/register")}
-                className="p-0 h-auto font-medium text-[#212121] capitalize text-sm cursor-pointer hover:text-dark-plum"
+                className="p-0 h-auto font-medium text-[#212121] capitalize text-sm max-md:text-xs cursor-pointer hover:text-dark-plum"
               >
                 Create account
               </span>

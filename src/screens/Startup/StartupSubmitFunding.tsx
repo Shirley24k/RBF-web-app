@@ -65,9 +65,7 @@ export const StartupSubmitFunding = (): JSX.Element => {
         },
       }).then((response)=>{
         if(response.status === 201 && response.data) {
-          // Expecting response.data to be an array of { investor, score }
-          const investorMatches = response.data.matching_response.data;
-          navigate("/select-investor", { state: { investorMatches, applicationId: response.data.application_id } });
+          navigate("/processing-funding", { state: { proposal_path: response.data.proposal_path } });
         }
       }).catch((error)=>{
         console.error("Error submitting funding application:", error);
@@ -80,28 +78,31 @@ export const StartupSubmitFunding = (): JSX.Element => {
   };
 
   return (
-    <div className="bg-[#ffffff] flex flex-row justify-center w-full">
-      <div className="bg-white w-full h-[982px] relative">
-        {/* Sidebar */}
-        <div className="fixed w-[311px] h-full left-0 top-0">
-          <Sidenav active="application" />
-        </div>
-
+    <div className="bg-white flex flex-row justify-center w-full">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+        <Sidenav active="application" />
+      </div>
+      {/* Mobile Layout */}
+      <div className="lg:hidden">
+        <Sidenav active="application" />
+      </div>
+      <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
         {/* Main Content */}
-        <div className="ml-[311px] p-12 flex flex-col items-start">
+        <div className="p-6 max-md:p-4 max-sm:p-3 flex flex-col items-start max-w-2xl">
           {/* Heading */}
-          <Typography variant="h4" color="blue-gray">
+          <Typography variant="h4" color="blue-gray" className="text-3xl max-md:text-2xl max-sm:text-xl mb-6 max-md:mb-4 max-sm:mb-3">
             Submit Funding Application
           </Typography>
 
           {/* Instructions */}
-          <Typography variant="h6" className="my-4 font-normal">
-            <span className="leading-[30px]">
+          <Typography variant="h6" className="mb-6 max-md:mb-4 max-sm:mb-3 font-normal text-base max-md:text-sm max-sm:text-sm">
+            <span className="leading-relaxed">
               Kindly upload your business proposal for application. Please
               convert into
             </span>
-            <span className="font-bold leading-[30px]"> .pdf </span>
-            <span className="leading-[30px]">format for submission. </span>
+            <span className="font-bold leading-relaxed"> .pdf </span>
+            <span className="leading-relaxed">format for submission. </span>
           </Typography>
 
           {/* Hidden file input */}
@@ -115,13 +116,13 @@ export const StartupSubmitFunding = (): JSX.Element => {
 
           {/* Upload Button */}
           <Button 
-            className="border border-solid border-[#574964c7] rounded-[5px] bg-transparent shadow-none w-auto"
+            className="border border-solid border-[#574964c7] rounded-[5px] bg-transparent shadow-none w-auto mb-4 max-md:mb-3 max-sm:mb-2"
             onClick={handleUploadClick}
             disabled={isUploading}
           >
-            <div className="flex items-center justify-center gap-[19px]">
-              <ArrowUpTrayIcon className="w-5 h-5 text-gray-500" />
-              <span className="font-text-sm-font-medium text-gray-500 text-sm capitalize">
+            <div className="flex items-center justify-center gap-2 max-md:gap-1.5 max-sm:gap-1">
+              <ArrowUpTrayIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-gray-500" />
+              <span className="font-text-sm-font-medium text-gray-500 text-sm max-md:text-xs capitalize">
                 {selectedFile ? selectedFile.name : "Upload document"}
               </span>
             </div>
@@ -129,7 +130,7 @@ export const StartupSubmitFunding = (): JSX.Element => {
 
           <Typography
             variant="small"
-            className="text-gray-500 font-[380] mt-2 mb-2"
+            className="text-gray-500 font-[380] mb-4 max-md:mb-3 max-sm:mb-2 text-xs max-md:text-xs"
           >
             Accepted file type: PDF (Max size: 10MB)
           </Typography>
@@ -138,7 +139,7 @@ export const StartupSubmitFunding = (): JSX.Element => {
           {uploadError && (
             <Typography
               variant="small"
-              className="text-red-500 font-[380] mb-4"
+              className="text-red-500 font-[380] mb-4 max-md:mb-3 max-sm:mb-2 text-xs max-md:text-xs"
             >
               {uploadError}
             </Typography>
@@ -148,15 +149,15 @@ export const StartupSubmitFunding = (): JSX.Element => {
           {selectedFile && !uploadError && (
             <Typography
               variant="small"
-              className="text-green-500 font-[380] mb-4"
+              className="text-green-500 font-[380] mb-4 max-md:mb-3 max-sm:mb-2 text-xs max-md:text-xs"
             >
               ✓ File selected: {selectedFile.name}
             </Typography>
           )}
 
-          <div className="flex gap-4">
+          <div className="flex flex-row gap-3 max-md:gap-2 max-sm:gap-2 w-full">
             <Button
-              className="bg-dark-plum text-white hover:bg-light-purple capitalize"
+              className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4 w-auto"
               onClick={handleSubmit}
               disabled={!selectedFile || isUploading}
             >
@@ -164,7 +165,7 @@ export const StartupSubmitFunding = (): JSX.Element => {
             </Button>
 
             <Button
-              className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize"
+              className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4 w-auto"
               variant="outlined"
               onClick={(e) => {
                 e.preventDefault();

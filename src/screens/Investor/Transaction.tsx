@@ -1,12 +1,10 @@
 import { FunnelIcon } from "@heroicons/react/24/solid";
-import { Alert, Button, Typography } from "@material-tailwind/react";
+import { Alert, Button, Card, CardBody, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 import { StatusBadge } from "../../components/StatusBadge";
-
-
 
 export const InvestorTransaction = (): JSX.Element => {
   const [searchParams] = useSearchParams();
@@ -84,119 +82,191 @@ export const InvestorTransaction = (): JSX.Element => {
   }, [])
 
   return (
-    <div className="relative flex h-screen w-full">
-      {/* Sidebar */}
-      <div className="fixed w-[311px] h-full left-0 top-0">
+    <div className="bg-white flex flex-row justify-center w-full">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+        <Sidenav active="transactions" />
+      </div>
+      
+      {/* Mobile Layout */}
+      <div className="lg:hidden">
         <Sidenav active="transactions" />
       </div>
 
       {/* Main Content */}
-      <div className="ml-[255px] p-10 w-full overflow-auto">
-        <div className="space-y-6 max-w-[1200px] ml-[20px]">
-          <div className="flex justify-between">
-            <div className="px-4 py-8 mx-10">
-              <Typography variant="h4" color="blue-gray">
-                Transaction History
-              </Typography>
-            </div>
-            <div className="flex items-center mx-20 gap-x-5">
-              <Typography variant="h5" color="blue-gray">
-                Balance: RM {balance.toFixed(2)}
-              </Typography>
-              <button
-                className="bg-dark-plum text-white px-4 py-2 rounded-md hover:bg-light-purple font-bold cursor-pointer"
-                onClick={() => setShowTopUpModal(true)}
-              >
-                Top Up
-              </button>
+      <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
+        <div className="flex flex-row justify-between items-center py-6 max-md:py-4 w-full max-w-2xl md:max-w-3xl mx-auto">
+          <h1 className="text-3xl max-md:text-2xl max-sm:text-base font-medium text-black w-fit">
+            Transaction History
+          </h1>
+          <div className="flex flex-col gap-1">
+            <Typography variant="h5" className="text-lg max-md:text-xl max-sm:text-sm max-sm:font-light">
+              Balance: RM {balance.toFixed(2)}
+            </Typography>
+            <button
+              className="bg-dark-plum text-white px-3 max-md:px-4 max-sm:px-3 py-2 rounded-md hover:bg-light-purple font-bold cursor-pointer text-sm"
+              onClick={() => setShowTopUpModal(true)}
+            >
+              Top Up
+            </button>
+          </div>
+        </div>
+
+        {/* Top Up Modal */}
+        {showTopUpModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 p-4">
+            <div className="bg-white rounded-lg shadow-lg p-4 max-md:p-6 max-sm:p-4 w-full max-w-xs max-md:max-w-sm max-sm:max-w-xs">
+              <h2 className="text-lg max-md:text-xl max-sm:text-lg font-bold mb-4">Top Up Amount</h2>
+              <input
+                type="number"
+                min="1"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-dark-plum text-sm max-md:text-base max-sm:text-sm"
+                placeholder="Enter amount (RM)"
+                value={topUpAmount}
+                onChange={e => setTopUpAmount(e.target.value)}
+              />
+              <div className="flex flex-col sm:flex-row justify-end gap-2">
+                <button
+                  className="px-3 max-md:px-4 max-sm:px-3 py-2 rounded-md bg-white border border-light-purple text-dark-plum cursor-pointer hover:text-light-purple text-sm max-md:text-base max-sm:text-sm"
+                  onClick={() => setShowTopUpModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-3 max-md:px-4 max-sm:px-3 py-2 rounded-md bg-dark-plum text-white hover:bg-light-purple cursor-pointer text-sm max-md:text-base max-sm:text-sm"
+                  onClick={handleTopUp}
+                  disabled={!topUpAmount || Number(topUpAmount) <= 0}
+                >
+                  Top Up
+                </button>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Top Up Modal */}
-          {showTopUpModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-              <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm">
-                <h2 className="text-xl font-bold mb-4">Top Up Amount</h2>
-                <input
-                  type="number"
-                  min="1"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-dark-plum"
-                  placeholder="Enter amount (RM)"
-                  value={topUpAmount}
-                  onChange={e => setTopUpAmount(e.target.value)}
-                />
-                <div className="flex justify-end gap-2">
-                  <button
-                    className="px-4 py-2 rounded-md bg-white border border-light-purple text-dark-plum cursor-pointer hover:text-light-purple"
-                    onClick={() => setShowTopUpModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-md bg-dark-plum text-white hover:bg-light-purple cursor-pointer"
-                    onClick={handleTopUp}
-                    disabled={!topUpAmount || Number(topUpAmount) <= 0}
-                  >
-                    Top Up
-                  </button>
-                </div>
+        {/* Main content section */}
+        <div className="mt-10 max-md:mt-6 max-sm:mt-4 w-full">
+          {applications && applications.length === 0 ? (
+            <div className="flex justify-center">
+              <div className="text-center text-gray-600 text-lg max-md:text-base">
+                No transactions found.
+              </div>
+            </div>
+          ) : (
+            <div className="w-full max-w-2xl md:max-w-3xl mx-auto">
+              {/* Desktop/Tablet Table View */}
+              <div className="hidden md:block">
+                <table className="w-full table-auto text-left">
+                  <thead className="border-b border-gray-300">
+                    <tr>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left">
+                        No.
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left pl-6 max-md:pl-4">
+                        Application
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left">
+                        Datetime
+                      </th>
+                      <th>
+                        <div className="flex items-center gap-2">
+                          <FunnelIcon className="w-4 h-4 max-md:w-3 max-md:h-3 text-light-purple" />
+                          <span className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap">
+                            Status
+                          </span>
+                        </div>
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-center">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(applications || []).map((application: any) => (
+                      <tr key={application.id} className="border-b border-gray-300">
+                        <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap py-4 max-md:py-3">
+                          {application.id}
+                        </td>
+                        <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-6 max-md:pl-4">
+                          {application.startup_name}
+                        </td>
+                        <td className="font-normal text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap">
+                          {application.date}
+                        </td>
+                        <td>
+                          <StatusBadge status={application.status} />
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            variant="outlined"
+                            className="h-8 max-md:h-7 px-4 max-md:px-3 py-1.5 rounded-[5px] border border-solid border-light-purple font-bold text-dark-plum text-sm max-md:text-xs tracking-[0] leading-[21px] capitalize"
+                            onClick={() => {
+                              navigate(`/application-transaction-details/${application.id}`);
+                            }}
+                          >
+                            View Transaction
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4 mb-4">
+                {(applications || []).map((application: any) => (
+                  <Card key={application.id} className="w-full border border-gray-200 rounded-sm">
+                    <CardBody className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-light-purple text-sm">ID: #{application.id}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600">
+                        Application: {application.startup_name}
+                        <br />
+                        Status: <StatusBadge status={application.status} />
+                        <br />
+                        Date: {application.date}
+                        <br />
+                      </div>
+                    </CardBody>
+                    
+                    {/* Card Footer Button */}
+                    <div className="border-t border-gray-200">
+                      <Button
+                        variant="text"
+                        className="bg-light-purple w-full h-12 rounded-b-sm rounded-t-none border-0 border-t border-light-purple font-bold text-white text-sm tracking-[0] leading-[21px] capitalize"
+                        onClick={() => {
+                          navigate(`/application-transaction-details/${application.id}`);
+                        }}
+                      >
+                        View Transaction
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
               </div>
             </div>
           )}
-
-          {/* Table */}
-          <table className="w-[90%] table-auto text-left mx-10">
-            <thead>
-              <tr className="text-gray-600 border-b border-gray-300">
-                <th className="px-4 py-3">No.</th>
-                <th className="px-4 py-3">Application</th>
-                <th className="px-4 py-3">Datetime</th>
-                <th className="px-4 py-3 flex items-center gap-2">
-                  <FunnelIcon className="h-4 w-4" /> Status
-                </th>
-                <th className="px-4 py-3">Action</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-800">
-              {applications && applications.map((application: any) => (
-                <tr key={application.id} className="border-b border-gray-300">
-                  <td className="px-4 py-3">{application.id}</td>
-                  <td className="px-4 py-3">{application.startup_name}</td>
-                  <td className="px-4 py-3">{application.date}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={application.status}></StatusBadge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Button
-                      variant="outlined"
-                      className="border-dark-plum border-2 capitalize text-sm font-bold text-dark-plum"
-                      onClick={() => {
-                        navigate(`/application-transaction-details/${application.id}`);
-                      }}
-                    >
-                      View Transaction
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {snackbarMessage && (
-            <div className="mx-auto mt-8 flex items-center justify-center fixed bottom-10 left-0 right-0">
-              {/* Alert at the bottom */}
-              <Alert
-                open={snackbarMessage !== ""}
-                variant="ghost"
-                color="gray"
-                onClose={() => setSnackbarMessage("")}
-                className="w-fit rounded-lg border-none flex items-center justify-between px-3 py-4 font-medium"
-              >
-                {snackbarMessage}
-              </Alert>
-            </div>
-          )}
         </div>
+
+        {snackbarMessage && (
+          <div className="mx-auto mt-4 max-md:mt-8 flex items-center justify-center fixed bottom-4 max-md:bottom-10 left-0 right-0 px-4">
+            {/* Alert at the bottom */}
+            <Alert
+              open={snackbarMessage !== ""}
+              variant="ghost"
+              color="gray"
+              onClose={() => setSnackbarMessage("")}
+              className="w-fit rounded-lg border-none flex items-center justify-between px-3 py-2 max-md:py-4 font-medium text-sm max-md:text-base"
+            >
+              {snackbarMessage}
+            </Alert>
+          </div>
+        )}
       </div>
     </div>
   );

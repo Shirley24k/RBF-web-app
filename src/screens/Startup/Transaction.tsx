@@ -1,5 +1,5 @@
 import { FunnelIcon } from "@heroicons/react/24/solid";
-import { Button, Typography } from "@material-tailwind/react";
+import { Button, Card, CardBody } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,59 +29,132 @@ export const StartupTransaction = (): JSX.Element => {
   }, [])
 
   return (
-    <div className="relative flex h-screen w-full">
-      {/* Sidebar */}
-      <div className="fixed w-[311px] h-full left-0 top-0">
+    <div className="bg-white flex flex-row justify-center w-full">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+        <Sidenav active="transactions" />
+      </div>
+      
+      {/* Mobile Layout */}
+      <div className="lg:hidden">
         <Sidenav active="transactions" />
       </div>
 
       {/* Main Content */}
-      <div className="ml-[255px] p-10 w-full overflow-auto">
-        <div className="space-y-6 max-w-[1200px] ml-[20px]">
-          {/* Title */}
-          <div className="px-4 py-8 mx-10">
-            <Typography variant="h4" color="blue-gray">
-              Transaction History
-            </Typography>
-          </div>
+      <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
+        <div className="flex flex-row justify-between items-center py-6 max-md:py-4 w-full max-w-2xl md:max-w-3xl mx-auto">
+          <h1 className="text-3xl max-md:text-2xl max-sm:text-lg font-medium text-black font-text-3xl-font-medium">
+            Transaction History
+          </h1>
+        </div>
 
-          {/* Table */}
-          <table className="w-[90%] table-auto text-left mx-10">
-            <thead>
-              <tr className="text-gray-600 border-b border-gray-300">
-                <th className="px-4 py-3">No.</th>
-                <th className="px-4 py-3">Investor</th>
-                <th className="px-4 py-3">Datetime</th>
-                <th className="px-4 py-3 flex items-center gap-2">
-                  <FunnelIcon className="h-4 w-4" /> Status
-                </th>
-                <th className="px-4 py-3">Action</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-800">
-              {applications && applications.map((application: any) => (
-                <tr key={application.id} className="border-b border-gray-300">
-                  <td className="px-4 py-3">{application.id}</td>
-                  <td className="px-4 py-3">{application.investor_name}</td>
-                  <td className="px-4 py-3">{application.date}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={application.status}></StatusBadge>
-                  </td>
-                  <td className="px-4 py-3">
+        {/* Main content section */}
+        <div className="mt-10 max-md:mt-6 max-sm:mt-4 w-full">
+          {applications && applications.length === 0 ? (
+            <div className="flex justify-center">
+              <div className="text-center text-gray-600 text-lg max-md:text-base">
+                No transactions found.
+              </div>
+            </div>
+          ) : (
+            <div className="w-full max-w-2xl md:max-w-3xl mx-auto">
+              {/* Desktop/Tablet Table View */}
+              <div className="hidden md:block">
+                <table className="w-full table-auto text-left">
+                  <thead className="border-b border-gray-300">
+                    <tr>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left">
+                        ID
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left pl-6 max-md:pl-4">
+                        Investor
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left">
+                        Datetime
+                      </th>
+                      <th>
+                        <div className="flex items-center gap-2">
+                          <FunnelIcon className="w-4 h-4 max-md:w-3 max-md:h-3 text-light-purple" />
+                          <span className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap">
+                            Status
+                          </span>
+                        </div>
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-center">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(applications || []).map((application: any, idx: number) => (
+                      <tr key={application.id} className="border-b border-gray-300">
+                        <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap py-4 max-md:py-3">
+                          {application.id}
+                        </td>
+                        <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-6 max-md:pl-4">
+                          {application.investor_name}
+                        </td>
+                        <td className="font-normal text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap">
+                          {application.date}
+                        </td>
+                        <td>
+                          <StatusBadge status={application.status} />
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            variant="outlined"
+                            className="h-8 max-md:h-7 px-4 max-md:px-3 py-1.5 rounded-[5px] border border-solid border-light-purple font-bold text-dark-plum text-sm max-md:text-xs tracking-[0] leading-[21px] capitalize"
+                            onClick={() => {
+                              navigate(`/application-transaction-details/${application.id}`);
+                            }}
+                          >
+                            View Transaction
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4 mb-4">
+                {(applications || []).map((application: any, idx: number) => (
+                  <Card key={application.id} className="w-full border border-gray-200 rounded-sm">
+                    <CardBody className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-light-purple text-sm">ID: #{application.id}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600">
+                        Investor: {application.investor_name}
+                        <br />
+                        Status: <StatusBadge status={application.status} />
+                        <br />
+                        Date: {application.date}
+                        <br />
+                      </div>
+                    </CardBody>
+                    
+                    {/* Card Footer Button */}
+                    <div className="border-t border-gray-200">
                       <Button
-                        variant="outlined"
-                        className="border-dark-plum border-2 capitalize text-sm font-bold text-dark-plum"
+                        variant="text"
+                        className="bg-light-purple w-full h-12 rounded-b-sm rounded-t-none border-0 border-t border-light-purple font-bold text-white text-sm tracking-[0] leading-[21px] capitalize"
                         onClick={() => {
                           navigate(`/application-transaction-details/${application.id}`);
                         }}
                       >
                         View Transaction
                       </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

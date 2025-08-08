@@ -38,104 +38,142 @@ export const StartupFunding = (): JSX.Element => {
   
   return (
     <div className="bg-white flex flex-row justify-center w-full">
-      <div className="bg-white w-full max-w-[1512px] relative flex flex-col min-h-screen">
-        {/* Left sidebar navigation */}
-        <div className="fixed w-[311px] h-full left-0 top-0">
-          <Sidenav active="application" />
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+        <Sidenav active="application" />
+      </div>
+      {/* Mobile Layout */}
+      <div className="lg:hidden">
+        <Sidenav active="application" />
+      </div>
+      <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
+        <div className="flex flex-row justify-between items-center py-6 max-md:py-4 w-full max-w-2xl md:max-w-3xl mx-auto">
+          <h1 className="text-3xl max-md:text-2xl max-sm:text-lg font-medium text-black font-text-3xl-font-medium">
+            Funding Application
+          </h1>
+          <Button
+            variant="filled"
+            className="bg-dark-plum hover:bg-light-purple text-white capitalize mt-4 max-md:mt-4 sm:mt-0 px-6 max-md:px-4 max-sm:px-2"
+            onClick={() => {
+              window.location.href = "/submit-funding";
+            }}
+          >
+            Get Funded
+          </Button>
         </div>
 
-        {/* Main content area */}
-        <div className="ml-[200px] flex flex-col flex-1">
-          <div className="flex justify-between items-center py-6 w-full max-w-[943px] ml-[150px]">
-            <h1 className="text-3xl font-medium text-black font-text-3xl-font-medium">
-              Funding Application
-            </h1>
-            <Button
-              variant="filled"
-              className="bg-dark-plum hover:bg-light-purple text-white capitalize mr-[20px]"
-              onClick={() => {
-                window.location.href = "/submit-funding";
-              }}
-            >
-              Get Funded
-            </Button>
-          </div>
-
-          {/* Main content section */}
-          <div className="flex-1 mt-10 w-full">
-            {/* No Applications Card */}
-            {fundingApplication && fundingApplication.length === 0 ? (
-            <Card className="w-[948px] h-[152px] absolute top-[185px] left-[443px] rounded-[10px] border border-solid border-[#574964c7]">
-            <CardBody className="flex items-center justify-center h-full p-0">
-              <div className="font-text-xl-font-normal font-[400] text-gray-600 text-[20px] text-center tracking-[0px] leading-[150%] whitespace-nowrap [font-style: normal]">
-                No applications found — it looks like you haven&apos;t applied
-                for funding yet.
-              </div>
-            </CardBody>
-          </Card>
+        {/* Main content section */}
+        <div className="mt-10 max-md:mt-6 max-sm:mt-4 w-full">
+          {/* No Applications Card */}
+          {fundingApplication && fundingApplication.length === 0 ? (
+            <div className="flex justify-center">
+              <Card className="w-full max-w-xl sm:max-w-2xl h-auto rounded-[10px] border border-solid border-[#574964c7]">
+                <CardBody className="flex items-center justify-center h-full p-4 max-md:p-3">
+                  <div className="font-text-xl-font-normal font-[400] text-gray-600 text-[20px] max-md:text-lg max-sm:text-base text-center tracking-[0px] leading-[150%] whitespace-normal [font-style: normal]">
+                    No applications found — it looks like you haven&apos;t applied for funding yet.
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
           ) : (
-            <div className="w-full max-w-[943px] ml-[150px]">
-              <table className="table-borderless w-full">
-                <thead className="border-b border-gray-300">
-                  <tr>
-                    <th className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap text-left">
-                      No.
-                    </th>
-                    <th className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap text-left pl-12">
-                      Investor
-                    </th>
-                    <th className="w-[200px]"></th>
-                    <th className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap text-left">
-                      Date
-                    </th>
-                    <th>
-                      <div className="flex items-center gap-2">
-                        <FunnelIcon className="w-[15px] h-[15px] text-light-purple" />
-                        <span className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap">
-                          Status
-                        </span>
-                      </div>
-                    </th>
-                    <th className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-[15px] tracking-[0] leading-[21px] whitespace-nowrap text-center">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(fundingApplication || []).map((application:any, idx:number) => (
-                    <tr key={application.id} className="border-b border-gray-300">
-                      <td className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap py-4">
-                        {idx + 1}
-                      </td>
-                      <td className="[font-family:'Roboto',Helvetica] font-bold text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-12">
-                        {application.investor_name}
-                      </td>
-                      <th className="w-[200px]"></th>
-                      <td className="[font-family:'Roboto',Helvetica] font-normal text-light-purple text-sm tracking-[0] leading-[19.6px] whitespace-nowrap">
-                        {application.date}
-                      </td>
-                      <td>
-                        <StatusBadge status={application.status} />
-                      </td>
-
-                      <td className="text-center">
-                        <Button
-                          variant="outlined"
-                          className="h-8 px-[5px] py-1.5 rounded-[5px] border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm tracking-[0] leading-[21px] capitalize"
-                          onClick={() =>
-                            navigate(`/application/${application.id}`)
-                          }
-                        >
-                          View Details
-                        </Button>
-                      </td>
+            <div className="w-full max-w-2xl md:max-w-3xl mx-auto">
+              {/* Desktop/Tablet Table View */}
+              <div className="hidden md:block">
+                <table className="w-full table-auto text-left">
+                  <thead className="border-b border-gray-300">
+                    <tr>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left">
+                        ID
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left pl-6 max-md:pl-4">
+                        Investor
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left">
+                        Date
+                      </th>
+                      <th>
+                        <div className="flex items-center gap-2">
+                          <FunnelIcon className="w-4 h-4 max-md:w-3 max-md:h-3 text-light-purple" />
+                          <span className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap">
+                            Status
+                          </span>
+                        </div>
+                      </th>
+                      <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-center">
+                        Action
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {(fundingApplication || []).map((application:any, idx:number) => (
+                      <tr key={application.id} className="border-b border-gray-300">
+                        <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap py-4 max-md:py-3">
+                          {application.id}
+                        </td>
+                        <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-6 max-md:pl-4">
+                          {application.investor_name}
+                        </td>
+                        <td className="font-normal text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap">
+                          {application.date}
+                        </td>
+                        <td>
+                          <StatusBadge status={application.status} />
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            variant="outlined"
+                            className="h-8 max-md:h-7 px-4 max-md:px-3 py-1.5 rounded-[5px] border border-solid border-light-purple font-bold text-dark-plum text-sm max-md:text-xs tracking-[0] leading-[21px] capitalize"
+                            onClick={() =>
+                              navigate(`/application/${application.id}`)
+                            }
+                          >
+                            View Details
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4 mb-4">
+                {(fundingApplication || []).map((application:any, idx:number) => (
+                  <Card key={application.id} className="w-full border border-gray-200 rounded-sm">
+                    <CardBody className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-light-purple text-sm">ID: #{application.id}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600">
+                        Investor: {application.investor_name}
+                        <br />
+                        Status: <StatusBadge status={application.status} />
+                        <br />
+                        Date: {application.date}
+                        <br />
+                      </div>
+                    </CardBody>
+                    
+                    {/* Card Footer Button */}
+                    <div className="border-t border-gray-200">
+                      <Button
+                        variant="text"
+                        className="bg-light-purple w-full h-12 rounded-b-sm rounded-t-none border-0 border-t border-light-purple font-bold text-white text-sm tracking-[0] leading-[21px] capitalize"
+                        onClick={() =>
+                          navigate(`/application/${application.id}`)
+                        }
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             </div>
           )}
-          </div>
         </div>
       </div>
     </div>

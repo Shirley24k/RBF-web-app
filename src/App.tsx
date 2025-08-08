@@ -2,7 +2,6 @@ import { Route, Routes } from "react-router-dom";
 import { PrivateRoute } from "./PrivateRoute";
 import { AdminFunding } from "./screens/Admin/AdminFundingApplication";
 import { AdminHome } from "./screens/Admin/AdminHome";
-import { AdminTransactionDetails } from "./screens/Admin/TransactionDetails";
 import { ApplicationDetails } from "./screens/ApplicationDetails";
 import { ForgotPassword } from "./screens/ForgotPasswordPage";
 import { InvestorFunding } from "./screens/Investor/InvestorFundingApplication";
@@ -23,7 +22,7 @@ import { StartupRegister } from "./screens/Startup/StartupRegisterPage";
 import { StartupSubmitFunding } from "./screens/Startup/StartupSubmitFunding";
 import { SuccessSubmitFunding } from "./screens/Startup/SuccessSubmitFunding";
 import { StartupTransaction } from "./screens/Startup/Transaction";
-import { TransactionDetails } from "./screens/Startup/TransactionDetails";
+import { TransactionDetails } from "./screens/TransactionDetails";
 
 function App() {
     return (
@@ -45,9 +44,9 @@ function App() {
                 <Route path="/processing-funding" element={<ProcessingFundingPage />} />
                 <Route path="/select-investor" element={<SelectInvestor />} />
                 <Route path="/startup-transaction" element={<StartupTransaction />} />
+                <Route path="/application-transaction-details/:id" element={<TransactionDetails />} />
                 <Route path="/application/:id" element={<ApplicationDetailsWrapper />} />
                 <Route path="/success-submit-funding" element={<SuccessSubmitFunding />} />
-                <Route path="/transaction-details" element={<TransactionDetails />} />
                 <Route path="/investor-home" element={<InvestorHome />} />
                 <Route path="/investor-funding" element={<InvestorFunding />} />
                 <Route path="/investor-profile" element={<InvestorProfile />} />
@@ -55,7 +54,6 @@ function App() {
                 <Route path="/investor-transaction" element={<InvestorTransaction />} />
                 <Route path="/admin-home" element={<AdminHome />} />
                 <Route path="/admin-funding" element={<AdminFunding />} />
-                <Route path="/admin-transaction-details/:id" element={<AdminTransactionDetails />} />
             </Route>
         </Routes>
     );

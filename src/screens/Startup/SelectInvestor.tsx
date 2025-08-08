@@ -52,25 +52,30 @@ export const SelectInvestor = (): JSX.Element => {
   }
 
   return (
-    <div className="bg-white flex h-screen">
-      <div className="fixed w-[311px] h-full left-0 top-0">
+    <div className="bg-white flex flex-row justify-center w-full">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+        <Sidenav active="application" />
+      </div>
+      {/* Mobile Layout */}
+      <div className="lg:hidden">
         <Sidenav active="application" />
       </div>
       {loading ? (
-        <div className="ml-[200px] flex flex-col flex-1 justify-center items-center h-screen">
+        <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 justify-center items-center min-h-screen">
           <Spinner />
         </div>
       ) : (
-        <div className="ml-[200px] flex flex-col flex-1 ">
-          <div className="flex-1 p-8 overflow-y-auto">
-            <div className="max-w-[1014px] mx-auto mt-8">
-              <Typography variant="h4" className="font-medium text-black mb-4">
+        <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
+          <div className="flex-1 p-6 max-md:p-4 max-sm:p-3 overflow-y-auto">
+            <div className="max-w-lg max-md:max-w-md max-sm:max-w-sm mx-auto mt-4 max-md:mt-2 max-sm:mt-1">
+              <Typography variant="h4" className="font-medium text-black mb-2 max-md:mb-1 max-sm:mb-1 text-3xl max-md:text-2xl max-sm:text-xl">
                 Recommended Investors
               </Typography>
 
               <Typography
                 variant="h6"
-                className="text-gray-600 font-normal mb-12"
+                className="text-gray-600 font-normal mb-6 max-md:mb-4 max-sm:mb-3 text-base max-md:text-sm max-sm:text-sm"
               >
                 Congratulations! We have found some investors that fit your
                 funding requirements. You can proceed to send your application to
@@ -81,43 +86,43 @@ export const SelectInvestor = (): JSX.Element => {
                 {investors.map((investor, index) => (
                   <Card
                     key={investor.id}
-                    className={`w-[650px] shadow-shadow-lg bg-warm-off-white transition-all duration-200 ${
+                    className={`w-full shadow-shadow-lg bg-warm-off-white transition-all duration-200 ${
                       selectedInvestorIndex === index
                         ? "border-2 border-dark-plum"
                         : "border border-none"
                     }`}
                   >
-                    <CardBody className="p-6">
-                      <div className="flex justify-between items-center">
-                        <div className="space-y-3">
+                    <CardBody className="p-6 max-md:p-4 max-sm:p-3">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 max-md:gap-3 max-sm:gap-2">
+                        <div className="space-y-2 max-md:space-y-1.5 max-sm:space-y-1 flex-1">
                           <Typography
                             variant="h3"
-                            className="text-xl font-normal text-black tracking-[-0.40px] font-['Lora']"
+                            className="text-xl max-md:text-lg max-sm:text-base font-normal text-black tracking-[-0.40px] font-['Lora']"
                           >
                             {investor?.name}
                           </Typography>
-                          <div>
+                          <div className="space-y-1 max-md:space-y-1 max-sm:space-y-0.5">
                             <Typography
                               variant="h6"
-                              className="text-gray-600 font-normal"
+                              className="text-gray-600 font-normal text-sm max-md:text-xs max-sm:text-xs"
                             >
                               Investment amount range: {investor?.investment_preferences.investment_amount_range}
                             </Typography>
                             <Typography
                               variant="h6"
-                              className="text-gray-600 font-normal"
+                              className="text-gray-600 font-normal text-sm max-md:text-xs max-sm:text-xs"
                             >
                               Preferred funding stage: {investor?.investment_preferences.preferred_funding_stage.join(", ")}
                             </Typography>
                             <Typography
                               variant="h6"
-                              className="text-gray-600 font-normal"
+                              className="text-gray-600 font-normal text-sm max-md:text-xs max-sm:text-xs"
                             >
                               Preferred industry: {investor?.investment_preferences.preferred_industry.join(", ")}
                             </Typography>
                             <Typography
                               variant="h6"
-                              className="text-gray-600 font-normal"
+                              className="text-gray-600 font-normal text-sm max-md:text-xs max-sm:text-xs"
                             >
                               Revenue share percentage: {investor?.investment_preferences.revenue_share_percentage}%
                             </Typography>
@@ -126,7 +131,7 @@ export const SelectInvestor = (): JSX.Element => {
 
                         <Button
                           onClick={() => setSelectedInvestorIndex(index)}
-                          className={`px-6 py-3 capitalize font-bold rounded-lg ${
+                          className={`px-6 max-md:px-4 max-sm:px-3 py-3 max-md:py-2.5 max-sm:py-2 capitalize font-bold rounded-lg text-sm max-md:text-xs w-full sm:w-auto ${
                             selectedInvestorIndex === index
                               ? "bg-light-purple text-white"
                               : "bg-dark-plum text-white hover:bg-light-purple"
@@ -142,7 +147,7 @@ export const SelectInvestor = (): JSX.Element => {
 
               <div>
                 <Button
-                  className="bg-dark-plum hover:bg-light-purple text-white font-bold text-sm rounded-lg px-8 py-4 capitalize"
+                  className="bg-dark-plum hover:bg-light-purple text-white font-bold text-sm max-md:text-xs rounded-lg px-8 py-4 max-sm:py-3 capitalize"
                   onClick={() => {
                     selectedInvestorIndex !== null && sendSelectedInvestor(investors[selectedInvestorIndex].id);
                   }}
