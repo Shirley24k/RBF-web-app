@@ -5,7 +5,6 @@ import {
   ClockIcon,
   CurrencyDollarIcon,
   DocumentTextIcon,
-  UserGroupIcon,
   XCircleIcon
 } from "@heroicons/react/24/outline";
 import { Button, Spinner } from "@material-tailwind/react";
@@ -28,8 +27,7 @@ export const StartupHome = (): JSX.Element => {
     ongoingApplications: 0,
     completedApplications: 0,
     failedApplications: 0,
-    totalFundingReceived: 0,
-    successRate: 0
+    totalFundingReceived: 0
   });
   const [recentApplications, setRecentApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -96,8 +94,7 @@ export const StartupHome = (): JSX.Element => {
           ongoingApplications: data.stats.ongoing || 0,
           completedApplications: data.stats.completed || 0,
           failedApplications: data.stats.failed || 0,
-          totalFundingReceived: data.stats.total_funding_received || 0,
-          successRate: data.stats.success_rate || 0
+          totalFundingReceived: data.stats.total_funding_received || 0
         });
       }
     } catch (error) {
@@ -234,7 +231,9 @@ export const StartupHome = (): JSX.Element => {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-base max-md:text-sm max-sm:text-xs text-gray-600">Success Rate</span>
-                          <span className="font-semibold text-lg max-md:text-base max-sm:text-sm text-green-600">{analytics.successRate}%</span>
+                          <span className="font-semibold text-lg max-md:text-base max-sm:text-sm text-green-600">
+                            {analytics.totalApplications > 0 ? Math.round((analytics.completedApplications / analytics.totalApplications) * 100) : 0}%
+                          </span>
                         </div>
                       </div>
                     </div>
