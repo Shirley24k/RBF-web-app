@@ -105,13 +105,13 @@ export const StartupFunding = (): JSX.Element => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(fundingApplication || []).map((application:any, idx:number) => (
+                    {(fundingApplication || []).map((application:any) => (
                       <tr key={application.id} className="border-b border-gray-300">
                         <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap py-4 max-md:py-3">
                           {application.id}
                         </td>
                         <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap pl-6 max-md:pl-4">
-                          {application.investor_name}
+                          {application.investor_name || "N/A"}
                         </td>
                         <td className="font-normal text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap">
                           {application.date}
@@ -138,7 +138,7 @@ export const StartupFunding = (): JSX.Element => {
 
               {/* Mobile Card View */}
               <div className="md:hidden space-y-4 mb-4">
-                {(fundingApplication || []).map((application:any, idx:number) => (
+                {(fundingApplication || []).map((application:any) => (
                   <Card key={application.id} className="w-full border border-gray-200 rounded-sm">
                     <CardBody className="p-4 space-y-3">
                       <div className="flex justify-between items-start">
@@ -148,7 +148,7 @@ export const StartupFunding = (): JSX.Element => {
                       </div>
                       
                       <div className="text-sm text-gray-600">
-                        Investor: {application.investor_name}
+                        Investor: {application.investor_name || "N/A"}
                         <br />
                         Status: <StatusBadge status={application.status} />
                         <br />

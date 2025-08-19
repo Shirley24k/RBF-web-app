@@ -30,6 +30,10 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   const [adminMessage, setAdminMessage] = useState<string>("");
   const [agreement, setAgreement] = useState<any>(null);
   const [notifyInvestor, setNotifyInvestor] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidenavOpen");
+    return saved === null ? true : saved === "true";
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Helper to get agreement paths
@@ -43,6 +47,40 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   const userNeedReupload = userRole === 'startup' ? needStartupReupload : needInvestorReupload
   const otherNeedReupload = userRole === 'startup' ? needInvestorReupload : needStartupReupload
 
+  // Listen for sidebar state changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("sidenavOpen");
+      setSidebarOpen(saved === null ? true : saved === "true");
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events if needed
+    const handleSidebarToggle = () => {
+      handleStorageChange();
+    };
+    
+    window.addEventListener('sidebarToggle', handleSidebarToggle);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('sidebarToggle', handleSidebarToggle);
+    };
+  }, []);
+
+  // Poll for sidebar state changes (fallback)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const saved = localStorage.getItem("sidenavOpen");
+      const currentState = saved === null ? true : saved === "true";
+      if (currentState !== sidebarOpen) {
+        setSidebarOpen(currentState);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [sidebarOpen]);
 
   const fetchApplication = async () => {
     try {
@@ -301,6 +339,10 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   const rejectedApplication = () => {
     return application.status === "Rejected"; 
   }
+
+  const failedApplication = () => {
+    return application.status === "Failed"; 
+  }
   
   //for admin, in progress application that has no agreement yet
   const inProgressApplication = () => {
@@ -355,7 +397,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
       {/* Main Content */}
       <div className="flex flex-col flex-1">
-        <div className="ml-32 max-md:ml-24 max-sm:ml-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 max-sm:gap-2">
+        <div className={`${sidebarOpen ? 'ml-64' : 'ml-32'} max-md:ml-24 max-sm:ml-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 max-sm:gap-2 transition-all duration-300`}>
           <div className="py-8 max-md:py-6 max-sm:py-4 flex items-center">
             <IconButton
               variant="text"
@@ -381,7 +423,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
             )}
           </div>
         </div>
-        <div className="ml-40 max-md:ml-24 max-sm:ml-20 max-w-7xl px-4 max-md:px-6 max-sm:px-4">
+        <div className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-20 max-w-7xl px-4 max-md:px-6 max-sm:px-4 transition-all duration-300`}>
           {/* Application Information Card (always shown) */}
           <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
             <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
@@ -391,53 +433,53 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-md:gap-3 max-sm:gap-2">
                 {/* Desktop/Tablet: Two-column layout */}
                 <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Business Proposal</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Application Status</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Application Datetime</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Funding Amount</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Funding Stage</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Funding Purpose</Typography>
+                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Business Proposal</Typography>
+                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Application Status</Typography>
+                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Application Datetime</Typography>
+                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Amount</Typography>
+                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Stage</Typography>
+                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Purpose</Typography>
                   {(activeApplication() || completedApplication()) && (
                     <>
-                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Revenue Share Percentage</Typography>
-                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Repayment Cap</Typography>
-                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Cap Multiple</Typography>
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Revenue Share Percentage</Typography>
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Repayment Cap</Typography>
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Cap Multiple</Typography>
                     </>
                   )}
                 </div>
                 <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
                   <a 
-                    className="underline font-[400] cursor-pointer text-gray-500 text-sm max-md:text-xs" 
+                    className="underline font-[400] cursor-pointer text-gray-500 text-sm max-md:text-xs h-6 flex items-center" 
                     href={application.proposal_url}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     Business proposal.pdf
                   </a>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                     {application.status}
                   </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                     {application.updated_at ? new Date(application.updated_at).toISOString().slice(0, 10) : ""}
                   </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                     RM{application.funding_amount}
                   </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                     {application.funding_stage}
                   </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                     {application.funding_purpose}
                   </Typography>
                   {(activeApplication() || completedApplication()) && (
                     <>
-                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                         {application.revenue_share_percentage}%
                       </Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                         RM{application.repayment_cap}
                       </Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                         {application.cap_multiple}x
                       </Typography>
                     </>
@@ -523,7 +565,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
           </Card>
 
           {/* Investor Information Card (admin & startup) */}
-          {(userRole === 'admin' || userRole === 'startup') && (
+          {((userRole === 'admin' || userRole === 'startup') && !failedApplication()) && (
             <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
               <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
                 <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
@@ -532,29 +574,29 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 max-md:gap-x-3 max-sm:gap-x-2">
                   {/* Desktop/Tablet: Two-column layout */}
                   <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Name</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Phone Number</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Email Address</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Name</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Phone Number</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Email Address</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">
                       {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual" ? "Country" : "Company Name"}
                     </Typography>
                     {(userRole === 'admin') && (
-                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">
                         Balance
                       </Typography>
                     )}
                   </div>
                   <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.investor?.name : otherParty?.name}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.investor?.contact_no : otherParty?.contact_no}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.investor?.email : otherParty?.email}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.name : otherParty?.name}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.contact_no : otherParty?.contact_no}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.email : otherParty?.email}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                       {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual"
                         ? (userRole === 'admin' ? otherParty.investor?.country : otherParty?.country)
                         : (userRole === 'admin' ? otherParty.investor?.company_address : otherParty?.company_address)}
                     </Typography>
                     {(userRole === 'admin') && (
-                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs">
+                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                         RM {otherParty.investor?.balance}
                       </Typography>
                     )}
@@ -612,20 +654,20 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 max-md:gap-x-3 max-sm:gap-x-2">
                   {/* Desktop/Tablet: Two-column layout */}
                   <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Applicant Name</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Phone Number</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Company Name</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Business Email Address</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Company Sector</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">Company Address</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Applicant Name</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Phone Number</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Name</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Business Email Address</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Sector</Typography>
+                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Address</Typography>
                   </div>
                   <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.startup?.name : otherParty?.name}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.startup?.contact_no : otherParty?.contact_no}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.startup?.company_name : otherParty?.company_name}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.startup?.email : otherParty?.email}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.startup?.company_sector : otherParty?.company_sector}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs">{userRole === 'admin' ? otherParty.startup?.company_address : otherParty?.company_address}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.name : otherParty?.name}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.contact_no : otherParty?.contact_no}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_name : otherParty?.company_name}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.email : otherParty?.email}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_sector : otherParty?.company_sector}</Typography>
+                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_address : otherParty?.company_address}</Typography>
                   </div>
 
                   {/* Mobile: Label-value pairs */}
@@ -665,14 +707,24 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
             </Card>
           )}
 
+          {failedApplication() && (
+            <div className="mb-8 max-md:mb-6 max-sm:mb-4 bg-gray-100 p-4 rounded-lg">
+              <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                Admin Message
+              </Typography>
+              <Typography className="mb-2 font-[400] h-fit text-sm max-md:text-xs" color="gray">
+                {application.message}
+              </Typography>
+            </div>
+          )}
+
           {/* Investor message section (only for in progress and rejected application) */}
           {(rejectedApplication() || canUploadAgreement()) && (
-            <div className="mb-8 max-md:mb-6 max-sm:mb-4">
+            <div className="mb-8 max-md:mb-6 max-sm:mb-4 bg-gray-100 p-4 rounded-lg h-fit">
               <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
                 Investor Message
               </Typography>
-              {/* Display message */}
-              <Typography className="mb-2 font-[400] border border-gray-400 rounded-[5px] p-2 h-[100px] max-md:h-[80px] max-sm:h-[60px] text-sm max-md:text-xs" color="gray">
+              <Typography className="mb-2 font-[400] h-[100px] max-md:h-[80px] max-sm:h-[60px] text-sm max-md:text-xs" color="gray">
                 {application.message}
               </Typography>
             </div>
@@ -709,7 +761,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
           )}
 
           {/* Upload Agreement Section (only for in progress, active and completed) */}
-          {(!awaitReviewApplication() && !rejectedApplication() && !canReviewAgreements()) && (
+          {(!awaitReviewApplication() && !rejectedApplication() && !failedApplication() && !canReviewAgreements()) && (
             <div>
               <span className="flex items-center gap-2">
                 <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">

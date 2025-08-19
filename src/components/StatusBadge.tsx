@@ -8,6 +8,11 @@ interface StatusBadgeProps {
 
 // Define status types and their styling
 const statusTypes = {
+  Failed: {
+    bgColor: "bg-gray-300",
+    dotColor: "bg-gray-900",
+    textColor: "text-gray-900",
+  },
   "Await Review": {
     bgColor: "bg-[var(--amber-50)]",
     dotColor: "bg-[var(--amber-800)]",

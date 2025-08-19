@@ -8,10 +8,50 @@ export const SelectInvestor = (): JSX.Element => {
   const [selectedInvestorIndex, setSelectedInvestorIndex] = useState<number | null>(null);
   const [investors, setInvestors] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidenavOpen");
+    return saved === null ? true : saved === "true";
+  });
   const location = useLocation();
   const investorMatches = location.state?.investorMatches || [];
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const applicationId = location.state?.applicationId;
+
+  // Listen for sidebar state changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("sidenavOpen");
+      setSidebarOpen(saved === null ? true : saved === "true");
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events if needed
+    const handleSidebarToggle = () => {
+      handleStorageChange();
+    };
+    
+    window.addEventListener('sidebarToggle', handleSidebarToggle);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('sidebarToggle', handleSidebarToggle);
+    };
+  }, []);
+
+  // Poll for sidebar state changes (fallback)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const saved = localStorage.getItem("sidenavOpen");
+      const currentState = saved === null ? true : saved === "true";
+      if (currentState !== sidebarOpen) {
+        setSidebarOpen(currentState);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [sidebarOpen]);
+
   useEffect(() => {
     const fetchInvestors = async () => {
       if (investorMatches.length === 0) { setLoading(false); return; }
@@ -62,12 +102,12 @@ export const SelectInvestor = (): JSX.Element => {
         <Sidenav active="application" />
       </div>
       {loading ? (
-        <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 justify-center items-center min-h-screen">
+        <div className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 justify-center items-center min-h-screen transition-all duration-300`}>
           <Spinner />
         </div>
       ) : (
-        <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
-          <div className="flex-1 p-6 max-md:p-4 max-sm:p-3 overflow-y-auto">
+        <div className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300`}>
+          <div className="p-6 max-md:p-4 max-sm:p-3 flex flex-col items-start max-w-2xl">
             <div className="max-w-lg max-md:max-w-md max-sm:max-w-sm mx-auto mt-4 max-md:mt-2 max-sm:mt-1">
               <Typography variant="h4" className="font-medium text-black mb-2 max-md:mb-1 max-sm:mb-1 text-3xl max-md:text-2xl max-sm:text-xl">
                 Recommended Investors

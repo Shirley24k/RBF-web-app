@@ -1,7 +1,7 @@
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { Button, Typography } from "@material-tailwind/react";
 import axios from "axios";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 
@@ -9,9 +9,48 @@ export const StartupSubmitFunding = (): JSX.Element => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string>("");
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidenavOpen");
+    return saved === null ? true : saved === "true";
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
+
+  // Listen for sidebar state changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("sidenavOpen");
+      setSidebarOpen(saved === null ? true : saved === "true");
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events if needed
+    const handleSidebarToggle = () => {
+      handleStorageChange();
+    };
+    
+    window.addEventListener('sidebarToggle', handleSidebarToggle);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('sidebarToggle', handleSidebarToggle);
+    };
+  }, []);
+
+  // Poll for sidebar state changes (fallback)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const saved = localStorage.getItem("sidenavOpen");
+      const currentState = saved === null ? true : saved === "true";
+      if (currentState !== sidebarOpen) {
+        setSidebarOpen(currentState);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [sidebarOpen]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -80,14 +119,14 @@ export const StartupSubmitFunding = (): JSX.Element => {
   return (
     <div className="bg-white flex flex-row justify-center w-full">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0 z-50">
         <Sidenav active="application" />
       </div>
       {/* Mobile Layout */}
       <div className="lg:hidden">
         <Sidenav active="application" />
       </div>
-      <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
+      <div className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300`}>
         {/* Main Content */}
         <div className="p-6 max-md:p-4 max-sm:p-3 flex flex-col items-start max-w-2xl">
           {/* Heading */}
@@ -157,7 +196,7 @@ export const StartupSubmitFunding = (): JSX.Element => {
 
           <div className="flex flex-row gap-3 max-md:gap-2 max-sm:gap-2 w-full">
             <Button
-              className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4 w-auto"
+              className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4"
               onClick={handleSubmit}
               disabled={!selectedFile || isUploading}
             >
@@ -165,7 +204,7 @@ export const StartupSubmitFunding = (): JSX.Element => {
             </Button>
 
             <Button
-              className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4 w-auto"
+              className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4"
               variant="outlined"
               onClick={(e) => {
                 e.preventDefault();

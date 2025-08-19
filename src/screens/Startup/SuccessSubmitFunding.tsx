@@ -1,10 +1,50 @@
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { Alert, Button, Typography } from "@material-tailwind/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidenav } from "../../components/sidenav";
 
 export const SuccessSubmitFunding = (): JSX.Element => {
   const [open, setOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidenavOpen");
+    return saved === null ? true : saved === "true";
+  });
+
+  // Listen for sidebar state changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("sidenavOpen");
+      setSidebarOpen(saved === null ? true : saved === "true");
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events if needed
+    const handleSidebarToggle = () => {
+      handleStorageChange();
+    };
+    
+    window.addEventListener('sidebarToggle', handleSidebarToggle);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('sidebarToggle', handleSidebarToggle);
+    };
+  }, []);
+
+  // Poll for sidebar state changes (fallback)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const saved = localStorage.getItem("sidenavOpen");
+      const currentState = saved === null ? true : saved === "true";
+      if (currentState !== sidebarOpen) {
+        setSidebarOpen(currentState);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [sidebarOpen]);
+
   return (
     <div className="bg-white flex flex-row justify-center w-full">
       {/* Desktop Sidebar */}
@@ -17,7 +57,7 @@ export const SuccessSubmitFunding = (): JSX.Element => {
       </div>
 
       {/* Main Content */}
-      <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 h-screen">
+      <div className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 h-screen transition-all duration-300`}>
         {/* Main content area */}
         <div className="flex-1 p-8 overflow-y-auto">
           <div className="max-w-[1014px] mx-auto mt-8">
