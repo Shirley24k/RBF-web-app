@@ -1,13 +1,13 @@
 import { ArrowUpTrayIcon, BellAlertIcon, ChevronLeftIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import {
-  Button,
-  Card,
-  CardBody,
-  IconButton,
-  Spinner,
-  Textarea,
-  Tooltip,
-  Typography,
+    Button,
+    Card,
+    CardBody,
+    IconButton,
+    Spinner,
+    Textarea,
+    Tooltip,
+    Typography,
 } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
@@ -389,7 +389,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
         <Sidenav active="application" />
       </div>
-      
+
       {/* Mobile Layout */}
       <div className="lg:hidden">
         <Sidenav active="application" />
@@ -399,28 +399,28 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       <div className="flex flex-col flex-1">
         <div className={`${sidebarOpen ? 'ml-64' : 'ml-32'} max-md:ml-24 max-sm:ml-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 max-sm:gap-2 transition-all duration-300`}>
           <div className="py-8 max-md:py-6 max-sm:py-4 flex items-center">
-            <IconButton
+              <IconButton
               variant="text"
               className="mr-4 max-md:mr-3 max-sm:mr-0 max-sm:px-0 flex items-center justify-center"
               onClick={() => window.history.back()}
-            >
-              <ChevronLeftIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
-            </IconButton>
-            <Typography variant="h4" color="blue-gray" className="text-2xl max-md:text-xl max-sm:text-lg">
-              Application Details
-            </Typography>
+              >
+                <ChevronLeftIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
+              </IconButton>
+              <Typography variant="h4" color="blue-gray" className="text-2xl max-md:text-xl max-sm:text-lg">
+                Application Details
+              </Typography>
           </div>
           <div className="flex justify-end items-center">
-            {canViewTransaction() && (
+          {canViewTransaction() && (
               <Button
                 className="bg-dark-plum hover:bg-light-purple text-white font-bold text-sm max-md:text-xs py-3 max-md:py-2 px-6 max-md:px-4 rounded-lg capitalize"
                 onClick={() => {
-                  window.location.href = `/application-transaction-details/${id}`;
+                window.location.href = `/application-transaction-details/${id}`;
                 }}
               >
                 View Transaction
               </Button>
-            )}
+          )}
           </div>
         </div>
         <div className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-20 max-w-7xl px-4 max-md:px-6 max-sm:px-4 transition-all duration-300`}>
@@ -474,13 +474,13 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                   {(activeApplication() || completedApplication()) && (
                     <>
                       <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                        {application.revenue_share_percentage}%
-                      </Typography>
+                    {application.revenue_share_percentage}%
+                  </Typography>
                       <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                        RM{application.repayment_cap}
-                      </Typography>
+                    RM{application.repayment_cap}
+                  </Typography>
                       <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                        {application.cap_multiple}x
+                    {application.cap_multiple}x
                       </Typography>
                     </>
                   )}
@@ -730,8 +730,8 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
             </div>
           )}
 
-          {/* Insufficient Balance Notification (Admin Only) */}
-          {insufficientBalance() && (
+        {/* Insufficient Balance Notification (Admin Only) */}
+        {insufficientBalance() && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6 p-4 max-md:p-3 max-sm:p-2 bg-red-50 border border-red-200 rounded-lg justify-between gap-4 max-sm:gap-2">
               <div className="flex items-center gap-4 max-md:gap-3 max-sm:gap-2">
                 <ExclamationTriangleIcon className="w-8 h-8 max-md:w-6 max-md:h-6 max-sm:w-5 max-sm:h-5 text-red-500" />
@@ -760,127 +760,127 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
             </div>
           )}
 
-          {/* Upload Agreement Section (only for in progress, active and completed) */}
+        {/* Upload Agreement Section (only for in progress, active and completed) */}
           {(!awaitReviewApplication() && !rejectedApplication() && !failedApplication() && !canReviewAgreements()) && (
             <div>
-              <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2">
                 <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                  Agreement
+                    Agreement
                 </Typography>
                 {/* add a tooltip to show admin message */}
-                {rejectedAgreement() && (
-                  <Tooltip content={application.admin_message}>
+                    {rejectedAgreement() && (
+                    <Tooltip content={application.admin_message}>
                     <ExclamationTriangleIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-red-500 mb-3" />
-                  </Tooltip>
-                )}
-                {(activeApplication() || completedApplication()) && (
-                  <Tooltip content={application.admin_message}>
+                    </Tooltip>
+                    )}
+                    {(activeApplication() || completedApplication()) && (
+                    <Tooltip content={application.admin_message}>
                     <ExclamationCircleIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-green-500 mb-3" />
-                  </Tooltip>
-                )}
-              </span>
+                    </Tooltip>
+                    )}
+                </span>
             </div>
-          )}
+        )}
 
-          {/* If user has uploaded agreement */}
-          {(userAgreementPath && canUploadAgreement() && !userNeedReupload) && (
+        {/* If user has uploaded agreement */}
+        {(userAgreementPath && canUploadAgreement() && !userNeedReupload) && (
             <div>
               <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
                 You have uploaded your
                 <a
-                  href={userAgreementPath}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-deep-purple-600 underline ml-1"
+                href={userAgreementPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-deep-purple-600 underline ml-1"
                 >
-                  agreement.
+                agreement.
                 </a>
-              </Typography>
-              {(!otherAgreementPath || otherNeedReupload) && (
+            </Typography>
+            {(!otherAgreementPath || otherNeedReupload) && (
                 <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
-                  Waiting for {otherPartyRole} to upload agreement.
+                Waiting for {otherPartyRole} to upload agreement.
                 </Typography>
-              )}
+            )}
             </div>
-          )}
+        )}
 
-          {((canUploadAgreement() && !userAgreementPath) || rejectedAgreement()) && (
+        {((canUploadAgreement() && !userAgreementPath) || rejectedAgreement()) && (
             // Show upload UI to upload agreement
             <div>
-              {rejectedAgreement() && (
+            {rejectedAgreement() && (
                 <Typography className="mb-4 font-[400] text-sm max-md:text-xs" color="red">
-                  !! Your application has been rejected. Please hover over the tooltip icon to view the admin message.
+                    !! Your application has been rejected. Please hover over the tooltip icon to view the admin message.
                 </Typography>
-              )}
+            )}
               <Typography className="mb-4 font-[400] text-sm max-md:text-xs" color="gray">
                 Kindly {rejectedAgreement() ? "re-upload" : "upload"} a copy of signed agreement between you and the {otherPartyRole}. 
                 Please convert into <span className="font-bold">.pdf</span> format for submission.
-              </Typography>
+                </Typography>
 
-              <input
+                <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileSelect}
                 accept=".pdf,application/pdf"
                 className="hidden"
-              />
+                />
 
-              <Button 
+                <Button 
                 className="border border-solid border-[#574964c7] rounded-[5px] bg-transparent shadow-none w-auto mb-2"
                 onClick={handleUploadClick}
                 disabled={isUploading}
-              >
+                >
                 <div className="flex items-center justify-center gap-[19px] max-md:gap-3 max-sm:gap-2">
                   <ArrowUpTrayIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-gray-500" />
                   <span className="text-sm max-md:text-xs text-gray-500 font-medium capitalize">
                     {selectedFile ? selectedFile.name : "Upload agreement"}
-                  </span>
+                    </span>
                 </div>
-              </Button>
+                </Button>
 
               <Typography variant="small" className="text-gray-500 font-[380] mt-2 mb-2 text-xs max-md:text-xs">
                 Accepted file type: PDF (Max size: 10MB)
-              </Typography>
+                </Typography>
 
-              {uploadError && (
+                {uploadError && (
                 <Typography variant="small" className="text-red-500 font-[380] mb-4 text-xs max-md:text-xs">
-                  {uploadError}
+                    {uploadError}
                 </Typography>
-              )}
+                )}
 
-              {selectedFile && !uploadError && (
+                {selectedFile && !uploadError && (
                 <Typography variant="small" className="text-green-500 font-[380] mb-4 text-xs max-md:text-xs">
-                  ✓ File selected: {selectedFile.name}
+                    ✓ File selected: {selectedFile.name}
                 </Typography>
-              )}
+                )}
 
               <div className="flex flex-col sm:flex-row gap-4 max-md:gap-3 max-sm:gap-2">
                 <Button
                   className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-2"
-                  onClick={handleSubmit}
-                  disabled={!selectedFile || isUploading}
+                    onClick={handleSubmit}
+                    disabled={!selectedFile || isUploading}
                 >
-                  {isUploading ? "Uploading..." : "Submit"}
+                    {isUploading ? "Uploading..." : "Submit"}
                 </Button>
                 <Button
                   className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-2"
-                  variant="outlined"
-                  onClick={() => window.history.back()}
-                  disabled={isUploading}
+                    variant="outlined"
+                    onClick={() => window.history.back()}
+                    disabled={isUploading}
                 >
-                  Back
+                    Back
                 </Button>
-              </div>
+                </div>
             </div>
-          )}
+            )}
 
           {/* Await Review Section (Startup View) */}
           {(awaitReviewApplication() && userRole !== 'investor') && (
-            <div>
+              <div>
               <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
-                Waiting for investor to review.
+                  Waiting for investor to review.
               </Typography>
-            </div>
+              </div>
           )}
 
           {/* In Progress Section (Admin View) */}
@@ -888,7 +888,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
             <div>
               <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
                 Waiting for startup and investor to upload agreement.
-              </Typography>
+            </Typography>
             </div>
           )}
 
@@ -897,7 +897,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
             <div>
               <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
                 Waiting for startup and investor to reupload agreement.
-              </Typography>
+            </Typography>
             </div>
           )}
 
@@ -955,17 +955,17 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
               <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
                 <a
-                  href={application.startup_agreement_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                href={application.startup_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
                   className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
                 >
                   Startup agreement
                 </a>
                 <a
-                  href={application.investor_agreement_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                href={application.investor_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
                   className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
                 >
                   Investor agreement
@@ -1007,18 +1007,18 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               </Typography>
 
               <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
-                <a
-                  href={application.startup_agreement_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <a
+                href={application.startup_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
                   className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
                 >
                   Startup agreement
                 </a>
                 <a
-                  href={application.investor_agreement_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                href={application.investor_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
                   className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
                 >
                   Investor agreement
@@ -1026,8 +1026,8 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               </div>
               <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
                 Waiting for admin to review.
-              </Typography>
-            </div>
+            </Typography>
+          </div>
           )}
 
           {/* Completed Application Section */}
@@ -1039,17 +1039,17 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
               <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
                 <a
-                  href={application.startup_agreement_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                href={application.startup_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
                   className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
                 >
                   Startup agreement
                 </a>
                 <a
-                  href={application.investor_agreement_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                href={application.investor_agreement_url}
+                target="_blank"
+                rel="noopener noreferrer"
                   className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
                 >
                   Investor agreement
