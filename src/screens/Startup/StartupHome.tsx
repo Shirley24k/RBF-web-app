@@ -24,6 +24,7 @@ export const StartupHome = (): JSX.Element => {
   });
   const [analytics, setAnalytics] = useState({
     totalApplications: 0,
+    awaitReviewApplications: 0,
     ongoingApplications: 0,
     completedApplications: 0,
     failedApplications: 0,
@@ -91,6 +92,7 @@ export const StartupHome = (): JSX.Element => {
         // Map backend stats to frontend analytics format
         setAnalytics({
           totalApplications: data.stats.total || 0,
+          awaitReviewApplications: data.stats.await_review || 0,
           ongoingApplications: data.stats.ongoing || 0,
           completedApplications: data.stats.completed || 0,
           failedApplications: data.stats.failed || 0,
@@ -250,7 +252,7 @@ export const StartupHome = (): JSX.Element => {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-base max-md:text-sm max-sm:text-xs text-gray-600">Pending Reviews</span>
-                          <span className="font-semibold text-lg max-md:text-base max-sm:text-sm text-yellow-600">{analytics.ongoingApplications}</span>
+                          <span className="font-semibold text-lg max-md:text-base max-sm:text-sm text-yellow-600">{analytics.awaitReviewApplications}</span>
                         </div>
                       </div>
                     </div>

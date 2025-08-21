@@ -1,13 +1,13 @@
-import { FunnelIcon } from "@heroicons/react/24/solid";
 import { Button, Card, CardBody, Spinner } from "@material-tailwind/react";
 import axios from "axios";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 import { StatusBadge } from "../../components/StatusBadge";
 
 export const AdminFunding = (): JSX.Element => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [fundingApplication, setFundingApplication] = useState<any>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [loading, setLoading] = useState(true);
@@ -27,6 +27,19 @@ export const AdminFunding = (): JSX.Element => {
   useEffect(() => {
     fetchApplications();
   }, []);
+
+  const statusFilter = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("status");
+  }, [location.search]);
+
+  const filteredApplications = useMemo(() => {
+    if (!fundingApplication) return [];
+    if (!statusFilter) return fundingApplication;
+    return (fundingApplication || []).filter((app: any) => {
+      return (app.status || "").toLowerCase() === statusFilter.toLowerCase();
+    });
+  }, [fundingApplication, statusFilter]);
 
   if (loading) {
     return (
@@ -56,15 +69,11 @@ export const AdminFunding = (): JSX.Element => {
         {/* Main content section */}
         <div className="mt-10 max-md:mt-6 max-sm:mt-4 w-full">
           {/* No Applications Card */}
-          {fundingApplication && fundingApplication.length === 0 ? (
+          {fundingApplication && filteredApplications.length === 0 ? (
             <div className="flex justify-center">
-              <Card className="w-full max-w-xl sm:max-w-2xl h-auto rounded-[10px] border border-solid border-[#574964c7]">
-                <CardBody className="flex items-center justify-center h-full p-4">
-                  <div className="font-text-xl-font-normal font-[400] text-gray-600 text-base sm:text-lg md:text-[20px] text-center tracking-[0px] leading-[150%] whitespace-normal [font-style: normal]">
-                    No applications found — it looks like you haven&apos;t applied for funding yet.
-                  </div>
-                </CardBody>
-              </Card>
+              <div className="text-center text-gray-600 text-lg max-md:text-base">
+                No applications found for the selected filter.
+              </div>
             </div>
           ) : (
             <div className="w-full max-w-2xl md:max-w-4xl mx-auto">
@@ -96,7 +105,7 @@ export const AdminFunding = (): JSX.Element => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(fundingApplication || []).map((application: any) => (
+                    {(filteredApplications || []).map((application: any) => (
                       <tr key={application.id} className="border-b border-gray-300">
                         <td className="font-bold text-light-purple text-sm max-md:text-sm tracking-[0] leading-[19.6px] whitespace-nowrap py-4 max-md:py-3">
                           {application.id}
@@ -132,7 +141,7 @@ export const AdminFunding = (): JSX.Element => {
 
               {/* Mobile Card View */}
               <div className="md:hidden space-y-4 mb-4">
-                {(fundingApplication || []).map((application: any) => (
+                {(filteredApplications || []).map((application: any) => (
                   <Card key={application.id} className="w-full border border-gray-200 rounded-sm">
                     <CardBody className="p-4 space-y-3">
                       <div className="flex justify-between items-start">
