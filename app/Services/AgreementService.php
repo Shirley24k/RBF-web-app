@@ -13,32 +13,45 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Investor;
 use App\Services\StripeService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\UploadedFile;
 
 class AgreementService
 {
     protected $stripeService;
+    protected $documentAnalysisService;
+    protected $fileUploadService;
 
-    public function __construct(StripeService $stripeService)
+    public function __construct(StripeService $stripeService, DocumentAnalysisService $documentAnalysisService, FileUploadService $fileUploadService)
     {
         $this->stripeService = $stripeService;
+        $this->documentAnalysisService = $documentAnalysisService;
+        $this->fileUploadService = $fileUploadService;
+    }
+
+    /**
+     * Retrieve agreement by application id.
+     */
+    public function getAgreementByApplicationId(int $applicationId): ?Agreement
+    {
+        return Agreement::where('application_id', $applicationId)->first();
     }
     /**
      * Handle the upload and association of an agreement document.
      *
-     * @param Request $request
+     * @param UploadedFile $file
      * @param \App\Models\User $user
      * @param int $application_id
      * @return string The full path or URL to the uploaded agreement
      * @throws \Exception
      */
-    public function handleAgreementUpload(Request $request, $user, $application_id, FileUploadService $fileUploadService)
+    public function handleAgreementUpload(UploadedFile $file, $user, $application_id)
     {
         // Start transaction for safety
-        return DB::transaction(function () use ($request, $user, $application_id, $fileUploadService) {
+        return DB::transaction(function () use ($file, $user, $application_id) {
             $application = Application::findOrFail($application_id);
 
             // Handle file upload to Supabase
-            $uploadResult = $fileUploadService->uploadToSupabase($request, 'agreement');
+            $uploadResult = $this->fileUploadService->uploadToSupabase($file, 'agreement');
             $fullPath = $uploadResult['path'];
 
             // Find or create agreement
@@ -125,12 +138,11 @@ class AgreementService
                 $agreement = $application->agreement;
                 $agreement->message = $request->message;
                 $agreement->save();
-                $extracted_data = $this->extractAgreementDetail($agreement->startup_agreement_path);
-                if($extracted_data->getStatusCode() == 200){
-                    $data = $extracted_data->getData(true);
-                    $revenue_share_percentage = $data['data']['revenue_share_percentage'];
-                    $repayment_cap = $data['data']['repayment_cap'];
-                    $cap_multiple = $data['data']['cap_multiple'];
+                $extracted_data = $this->documentAnalysisService->extractAgreementDetail($agreement->startup_agreement_path);
+                if(!isset($extracted_data['error'])){
+                    $revenue_share_percentage = $extracted_data['revenue_share_percentage'];
+                    $repayment_cap = $extracted_data['repayment_cap'];
+                    $cap_multiple = $extracted_data['cap_multiple'];
                     
                     $application->revenue_share_percentage = $revenue_share_percentage;
                     $application->repayment_cap = $repayment_cap;
@@ -183,51 +195,5 @@ class AgreementService
         });
     }
 
-    public function extractAgreementDetail($agreement_path): JsonResponse
-    {
-        try {
-            $response = Http::post(config('flask.url').'/agreement-analysis', [
-                'agreement_path' => $agreement_path
-            ]);
-
-            if($response->successful()) {
-                $data = $response->json();
-                
-                $revenue_share_percentage = $data['revenue_share_percentage'] ?? 0;
-                if (is_string($revenue_share_percentage)) {
-                    // convert 10% to 10, then convert to float
-                    $revenue_share_percentage = (float) str_replace('%', '', $revenue_share_percentage);
-                }
-                $repayment_cap = $data['repayment_cap'] ?? 0;
-                if (is_string($repayment_cap)) {
-                    // Remove currency symbols and commas, then convert to float
-                    $repayment_cap = (float) preg_replace('/[^0-9.]/', '', $repayment_cap);
-                }
-                $cap_multiple = $data['cap_multiple'] ?? 0;
-                if (is_string($cap_multiple)) {
-                    // Remove x, then convert to float
-                    $cap_multiple = (float) str_replace('x', '', $cap_multiple);
-                }
-                
-                return response()->json([
-                    'message' => 'Agreement details extracted successfully',
-                    'data' => [
-                        'revenue_share_percentage' => $revenue_share_percentage,
-                        'repayment_cap' => $repayment_cap,
-                        'cap_multiple' => $cap_multiple,
-                    ]
-                ], 200);
-            }
-
-            return response()->json([
-                'message' => 'Failed to extract agreement details',
-                'error' => 'Flask service returned unsuccessful response'
-            ], 500);
-        }catch(\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to extract agreement details',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+    
 }

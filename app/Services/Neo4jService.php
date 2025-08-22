@@ -71,7 +71,7 @@ class Neo4jService
         }
     }
 
-    public function insertApplicationToNeo4j($application_id)
+    public function insertApplicationToNeo4j($application_id): array
     {
         try{
             $application = Application::find($application_id);
@@ -89,23 +89,24 @@ class Neo4jService
                 'company_sector' => $startup->company_sector
             ]);
 
-            if($response->getStatusCode() !== 200) {
-                throw new \Exception('Failed to insert application to Neo4j: ' . $response->json()['error']);
+            if($response->failed()) {
+                throw new \Exception('Failed to insert application to Neo4j: ' . ($response->json()['error'] ?? $response->body()));
             }
 
-            return response()->json([
+            return [
                 'message' => 'Application inserted successfully',
                 'data' => $response->json()
-            ], 200);
+            ];
         }catch(\Exception $e){
-            return response()->json([
-                'message' => 'Failed to insert application to Neo4j',
+            Log::error('Failed to insert application to Neo4j', [
+                'application_id' => $application_id,
                 'error' => $e->getMessage()
-            ], 500);
+            ]);
+            throw $e;
         }
     }
 
-    public function matchStartupToInvestor($application_id)
+    public function matchStartupToInvestor($application_id): array
     {
         try{
             $response = Http::post(config('flask.url').'/matching', [
@@ -113,32 +114,23 @@ class Neo4jService
             ]);
 
             if ($response->failed()) {
-                // log the error from Flask response
                 Log::error('Flask matching API failed', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
-    
-                return response()->json([
-                    'message' => 'Failed to match startup to investor',
-                    'error' => $response->json()
-                ], $response->status());
+                throw new \Exception('Failed to match startup to investor');
             }
 
-            return response()->json([
+            return [
                 'message' => 'Startup matched to investor successfully',
                 'data' => $response->json()
-            ], 200);
+            ];
         }catch(\Exception $e){
             Log::error('Failed to match startup to investor', [
                 'application_id' => $application_id,
                 'error' => $e->getMessage()
             ]);
-
-            return response()->json([
-                'message' => 'Failed to match startup to investor',
-                'error' => $e->getMessage()
-            ], 500);
+            throw $e;
         }
     }
 

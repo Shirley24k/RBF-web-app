@@ -3,18 +3,18 @@
 namespace App\Observers;
 
 use App\Models\Startup;
-use App\Services\Neo4jService;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SyncStartupToNeo4j;
 
 class StartupObserver
 {
     public function created(Startup $startup)
     {
         try{
-            app(Neo4jService::class)->insertStartupToNeo4j($startup->id);
-            Log::info('Startup tag inserted successfully');
+            SyncStartupToNeo4j::dispatch($startup->id);
+            Log::info('Dispatch sync startup to Neo4j', ['startup_id' => $startup->id]);
         }catch(\Exception $e){
-            Log::info('Failed to insert startup tag to Neo4j');
+            Log::error('Failed to dispatch sync startup to Neo4j', ['startup_id' => $startup->id, 'error' => $e->getMessage()]);
         }
     }
 } 

@@ -8,14 +8,41 @@ use App\Models\ScmInvestor;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use App\Services\StripeService;
 
 class InvestorService
 {
     protected $userService;
+    protected $stripeService;
 
-    public function __construct(UserService $userService)
+    public function __construct(UserService $userService, StripeService $stripeService)
     {
         $this->userService = $userService;
+        $this->stripeService = $stripeService;
+    }
+
+    public function getCurrentInvestor(): Investor
+    {
+        $investor = Investor::where('user_id', auth()->user()->id)->first();
+        if (!$investor) {
+            throw new Exception('Investor not found');
+        }
+        return $investor;
+    }
+
+    public function getInvestorById(int $id): Investor
+    {
+        $investor = Investor::where('id', $id)->first();
+        if (!$investor) {
+            throw new Exception('Investor not found');
+        }
+        return $investor;
+    }
+
+    public function getCurrentInvestorBalance(): float
+    {
+        $investor = $this->getCurrentInvestor();
+        return (float) $investor->balance;
     }
 
     public function validateScmInvestor(string $name)
@@ -69,5 +96,23 @@ class InvestorService
         $investor->investment_preferences = $data['investment_preferences'];
         $investor->save();
         return $investor;
+    }
+
+    public function topUpAccount(float $amount): array
+    {
+        try {
+            $result = $this->stripeService->topUpAccount($amount);
+            return [
+                'success' => true,
+                'message' => 'Top-up session created successfully',
+                'checkout_url' => $result['checkout_url']
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to create top-up session',
+                'error' => $e->getMessage()
+            ];
+        }
     }
 } 

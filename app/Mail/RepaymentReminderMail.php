@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Application;
+use App\Services\RepaymentService;
 
 class RepaymentReminderMail extends Mailable
 {
@@ -23,8 +24,10 @@ class RepaymentReminderMail extends Mailable
     public function __construct(Application $application, $dueDate = null)
     {
         $this->application = $application;
-        $this->dueDate = $dueDate ?? $application->getNextRepaymentDate();
-        $this->repaymentAmount = $application->calculateRepaymentAmount();
+        
+        $repaymentService = app(RepaymentService::class);
+        $this->dueDate = $dueDate ?? $repaymentService->getNextRepaymentDate($application);
+        $this->repaymentAmount = $repaymentService->calculateRepaymentAmount($application);
         
         // Calculate days until due
         $today = now();

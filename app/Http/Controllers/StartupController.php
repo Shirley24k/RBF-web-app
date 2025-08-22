@@ -20,10 +20,10 @@ class StartupController extends Controller
     public function show(): JsonResponse
     {
         try {
-            $startup = Startup::where('user_id', auth()->user()->id)->first();
+            $startup = $this->startupService->getCurrentStartup();
             return response()->json([
                 'data' => $startup
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Startup not found',

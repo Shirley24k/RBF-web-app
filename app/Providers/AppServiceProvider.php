@@ -7,6 +7,7 @@ use App\Services\UserService;
 use App\Services\InvestorService;
 use App\Services\StartupService;
 use App\Services\Neo4jService;
+use App\Services\StripeService;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -21,7 +22,10 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(InvestorService::class, function ($app) {
-            return new InvestorService($app->make(UserService::class));
+            return new InvestorService(
+                $app->make(UserService::class),
+                $app->make(StripeService::class)
+            );
         });
 
         $this->app->singleton(StartupService::class, function ($app) {

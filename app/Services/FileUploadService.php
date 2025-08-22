@@ -3,17 +3,13 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 
 class FileUploadService
 {
-    public function uploadToSupabase(Request $request, string $bucket): array
+    public function uploadToSupabase(UploadedFile $file, string $bucket): array
     {
-        $validated = $request->validate([
-            'document' => 'required|file|mimes:pdf|max:10240'
-        ]);
-
-        $file = $request->file('document');
         $filename = time() . '_' . auth()->user()->id . '_' . rawurlencode($file->getClientOriginalName()); 
 
         $projectUrl = config('supabase.project_url');

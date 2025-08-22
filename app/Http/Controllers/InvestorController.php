@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\InvestorService;
-use App\Models\Investor;
 use Illuminate\Http\JsonResponse;
 use Exception;
 
@@ -20,10 +19,10 @@ class InvestorController extends Controller
     public function show(): JsonResponse
     {
         try {
-            $investor = Investor::where('user_id', auth()->user()->id)->first();
+            $investor = $this->investorService->getCurrentInvestor();
             return response()->json([
                 'data' => $investor
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Investor not found',
@@ -35,10 +34,10 @@ class InvestorController extends Controller
     public function getInvestorById($id): JsonResponse
     {
         try {
-            $investor = Investor::where('id', $id)->first();
+            $investor = $this->investorService->getInvestorById((int)$id);
             return response()->json([
                 'data' => $investor
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Investor not found',
@@ -105,10 +104,10 @@ class InvestorController extends Controller
     public function getInvestorBalance(): JsonResponse
     {
         try{
-            $investor = Investor::where('user_id', auth()->user()->id)->first();
+            $balance = $this->investorService->getCurrentInvestorBalance();
             return response()->json([
                 'message' => 'Investor balance retrieved successfully',
-                'data' => $investor->balance,
+                'data' => $balance,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

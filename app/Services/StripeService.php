@@ -41,16 +41,16 @@ class StripeService
                     'transaction_number' => $i
                 ]
             ], [
-                'stripe_account' => 'acct_1RcP7M4YDZmtY5Om',
+                'stripe_account' => 'acct_1RttMnEQ8FSdiO5X',
             ]);
     
             $charges[] = $charge;
         }
 
-        return response()->json([
+        return [
             'message' => 'Dummy transactions created successfully',
             'charges' => $charges
-        ]);
+        ];
     }
 
     public function getQuarterlyRevenue($stripe_id)
@@ -120,7 +120,7 @@ class StripeService
     }
 
     // investor top up enough funding amount to platform Stripe account
-    public function topUpAccount(float $amount)
+    public function topUpAccount(float $amount): array
     {
         Stripe::setApiKey(config('stripe.secret'));
 
@@ -148,10 +148,10 @@ class StripeService
             'cancel_url' => config('app.frontend_url') . '/investor-transaction?status=cancel',
         ]);
 
-        return response()->json(['checkout_url' => $session->url]);
+        return ['checkout_url' => $session->url];
     }
 
-    public function handleStripeWebhook(Request $request)
+    public function handleStripeWebhook(Request $request): array
     {
         $payload = $request->getContent();
         $sig_header = $request->header('Stripe-Signature');
@@ -163,32 +163,15 @@ class StripeService
             );
         } catch (\Exception $e) {
             \Log::error('Stripe webhook signature verification failed: ' . $e->getMessage());
-            return response('Webhook error', 400);
+            return ['success' => false, 'message' => 'Webhook signature verification failed'];
         }
 
+        // Only verify the webhook is valid, business logic handled by TransactionService
         if ($event->type === 'checkout.session.completed') {
-            $session = $event->data->object;
-            
-            // Handle investor top-up
-            $transactionType = $session->metadata->type ?? null;
-
-            if ($transactionType === 'fund transfer') {
-                $amountMyr = $session->metadata->topup_amount / 100; // Convert from cents to MYR
-                $investor = Investor::where('user_id', $session->metadata->investor_id)->first();
-                if ($investor) {
-                    $investor->balance += $amountMyr;
-                    $investor->save();
-                } else {
-                    \Log::warning('Investor not found for webhook', ['investor_id' => $investorId]);
-                }
-            } else if ($transactionType === 'monthly_repayment') {
-                //Handle monthly repayment
-                $this->handleMonthlyRepaymentWebhook($session);
-            }
-            
+            return ['success' => true, 'message' => 'Webhook verified successfully'];
         }
 
-        return response('Webhook handled', 200);
+        return ['success' => true, 'message' => 'Webhook handled'];
     }
 
     public function fundTransfer($application_id)
@@ -264,7 +247,7 @@ class StripeService
         });
     }
 
-    public function processMonthlyRepayment($application_id, $month)
+    public function processMonthlyRepayment($application_id, $month): array
     {
         $application = Application::with('startup', 'investor')->findOrFail($application_id);
         $startup = $application->startup;
@@ -323,7 +306,7 @@ class StripeService
                 'cancel_url' => config('app.frontend_url') . '/application-transaction-details/' . $application->id . '?status=cancel',
             ]);
 
-            return response()->json(['checkout_url' => $session->url]);
+            return ['checkout_url' => $session->url];
 
         } catch (\Exception $e) {
             throw new \Exception('Stripe repayment checkout failed: ' . $e->getMessage());
@@ -353,58 +336,5 @@ class StripeService
         // Round up to nearest cent to ensure we have enough
         return ceil($grossAmount * 100) / 100;
     }
-
-    /**
-     * Handle monthly repayment webhook when checkout session is completed
-     */
-    public function handleMonthlyRepaymentWebhook($session)
-    {
-        try {
-            $applicationId = $session->metadata->application_id ?? null;
-            $startupId = $session->metadata->startup_id ?? null;
-            $investorId = $session->metadata->investor_id ?? null;
-            $month = $session->metadata->month ?? null;
-            $targetAmount = $session->metadata->target_repayment_amount ?? 0;
-
-            if (!$applicationId || !$startupId || !$investorId) {
-                \Log::error('Missing metadata for monthly repayment webhook', [
-                    'session_id' => $session->id,
-                    'metadata' => $session->metadata
-                ]);
-                return;
-            }
-
-            $application = Application::with(['startup', 'investor'])->find($applicationId);
-            if (!$application) {
-                \Log::error('Application not found for monthly repayment webhook', ['application_id' => $applicationId]);
-                return;
-            }
-
-            // Insert transaction record with Pending status
-            Transaction::create([
-                'amount' => $targetAmount,
-                'type' => 'REPAYMENT',
-                'transaction_datetime' => now(),
-                'from_stripe_id' => $application->startup->stripe_id,
-                'to_stripe_id' => $application->investor->stripe_id,
-                'status' => 'Pending', // Mark as pending until transfer completes
-                'application_id' => $applicationId,
-            ]);
-
-            \Log::info('Monthly repayment webhook processed - transaction created with Pending status', [
-                'application_id' => $applicationId,
-                'amount' => $targetAmount,
-                'session_id' => $session->id,
-                'note' => 'Run: php artisan transfers:process-delayed to process transfer after 3 minutes'
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error processing monthly repayment webhook', [
-                'session_id' => $session->id,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
 
 } 

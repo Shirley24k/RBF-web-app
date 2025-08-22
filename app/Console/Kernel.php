@@ -23,15 +23,6 @@ class Kernel extends ConsoleKernel
             ->onFailure(function () {
                 \Log::error('Delayed transfers processing failed');
             });
-
-        // Send repayment reminders 3 days before processing (28th of each month at 10 AM)
-        // $schedule->command('repayments:send-reminders')
-        //     ->monthlyOn(28, '10:00')
-        //     ->withoutOverlapping()
-        //     ->runInBackground()
-        //     ->onFailure(function () {
-        //         \Log::error('Repayment reminder sending failed');
-        //     });
     }
 
     /**

@@ -8,91 +8,235 @@ use Illuminate\Support\Facades\Http;
 use Stripe\Stripe;
 use Stripe\Charge;
 use App\Models\Application;
+use App\Services\FileUploadService;
+use App\Services\DocumentAnalysisService;
+use App\Services\RiskAssessmentService;
+use App\Services\Neo4jService;
 use App\Services\StripeService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\UploadedFile;
 
 class ApplicationService
 {
-    //Retrieve quarterly revenue from Stripe
-    public function getQuarterlyRevenue($stripe_id): JsonResponse
+    private $fileUploadService;
+    private $documentAnalysisService;
+    private $riskAssessmentService;
+    private $neo4jService;
+    private $stripeService;
+
+    public function __construct(
+        FileUploadService $fileUploadService,
+        DocumentAnalysisService $documentAnalysisService,
+        RiskAssessmentService $riskAssessmentService,
+        Neo4jService $neo4jService,
+        StripeService $stripeService
+    ) {
+        $this->fileUploadService = $fileUploadService;
+        $this->documentAnalysisService = $documentAnalysisService;
+        $this->riskAssessmentService = $riskAssessmentService;
+        $this->neo4jService = $neo4jService;
+        $this->stripeService = $stripeService;
+    }
+
+    /**
+     * Submit application by uploading proposal
+     */
+    public function submitApplication(UploadedFile $file): array
     {
         try {
-            $stripeService = app(StripeService::class);
-            $revenueData = $stripeService->getQuarterlyRevenue($stripe_id);
-
-            return response()->json([
-                'message' => 'Quarterly revenue retrieved successfully',
-                'revenue_q1' => $revenueData['revenue_q1'],
-                'revenue_q2' => $revenueData['revenue_q2'],
-                'growth_rate' => $revenueData['growth_rate']
-            ], 200);
-
+            $uploadResult = $this->fileUploadService->uploadToSupabase($file, 'business-proposal');
+            
+            return [
+                'success' => true,
+                'message' => 'Proposal uploaded successfully',
+                'data' => [
+                    'proposal_path' => $uploadResult['path'],
+                    'current_step' => 'proposal_analysis',
+                    'next_step' => 'risk_assessment'
+                ]
+            ];
         } catch(\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to get quarterly revenue',
+            return [
+                'success' => false,
+                'message' => 'Failed to upload proposal',
                 'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-    
-    //Predict next quarter sales using past revenue from Stripe
-    public function predictSales($revenue_q1, $revenue_q2, $growth_rate): JsonResponse
-    {
-        try {
-            $response = Http::post(config('flask.url').'/predict-sales', [
-                'revenue_q1' => $revenue_q1,
-                'revenue_q2' => $revenue_q2,
-                'growth_rate' => $growth_rate
-            ]);
-
-            return response()->json([
-                'message' => 'Sales predicted successfully',
-                'data' => $response->json()
-            ], 200);
-        }catch(\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to predict sales',
-                'error' => $e->getMessage()
-            ], 500);
+            ];
         }
     }
 
-    //Extract funding details from proposal using OpenAI
-    public function extractFundingDetails($proposal_path): JsonResponse
+    /**
+     * Analyze proposal and create application
+     */
+    public function analyzeProposal(Request $request): array
     {
         try {
-            $response = Http::post(config('flask.url').'/proposal-analysis', [
-                'proposal_path' => $proposal_path
-            ]);
+            $funding_details = $this->documentAnalysisService->extractFundingDetails($request->proposal_path);
 
-            if($response->successful()) {
-                $data = $response->json();
-                
-                // Clean and convert funding_amount to numeric value
-                $funding_amount = $data['funding_amount'] ?? 0;
-                if (is_string($funding_amount)) {
-                    // Remove currency symbols and commas, then convert to float
-                    $funding_amount = (float) preg_replace('/[^0-9.]/', '', $funding_amount);
-                }
-                
-                return response()->json([
-                    'message' => 'Funding details extracted successfully',
+            $application = Application::create([
+                'proposal_path' => $request->proposal_path,
+                'funding_amount' => $funding_details['funding_amount'],
+                'funding_stage' => $funding_details['funding_stage'],
+                'funding_purpose' => $funding_details['funding_purpose'],
+                'status' => 'Await Review',
+                'startup_id' => auth()->user()->startups()->first()->id,
+            ]);
+            
+            return [
+                'success' => true,
+                'message' => 'Proposal analysis completed',
+                'data' => [
+                    'application_id' => $application->id,
+                    'current_step' => 'risk_assessment',
+                    'next_step' => 'investor_matching',
+                    'funding_details' => $funding_details
+                ]
+            ];
+        } catch(\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to analyze proposal',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Assess risk for an application
+     */
+    public function assessRisk(int $application_id): array
+    {
+        try {
+            $application = Application::findOrFail($application_id);
+
+            // Get startup quarterly revenue from stripe
+            $stripe_id = auth()->user()->startups()->first()->stripe_id;
+            $stripe_response = $this->stripeService->getQuarterlyRevenue($stripe_id);
+
+            // Run sales prediction
+            $prediction = $this->riskAssessmentService->predictSales($stripe_response['revenue_q1'], $stripe_response['revenue_q2'], $stripe_response['growth_rate']);
+
+            // Validate prediction benchmarks and funding amount via service
+            $evaluation = $this->riskAssessmentService->evaluateFundingLimit(
+                $prediction['data']['prediction'] ?? 0,
+                $stripe_response['revenue_q2'] ?? 0,
+                (float)$application->funding_amount
+            );
+            
+            $passes = $evaluation['pass'];
+            if ($passes) {
+                return [
+                    'success' => true,
+                    'message' => 'Risk assessment passed',
                     'data' => [
-                        'funding_amount' => $funding_amount,
-                        'funding_stage' => $data['funding_stage'],
-                        'funding_purpose' => $data['funding_purpose'],
+                        'application_id' => $application->id,
+                        'current_step' => 'investor_matching',
+                        'next_step' => 'completed',
+                        'prediction' => $prediction,
+                        'stripe_data' => $stripe_response,
+                        'mrr' => $evaluation['mrr'],
+                        'estimated_funding_amount' => $evaluation['estimated_funding_amount'],
+                        'predicted_growth_rate' => round($evaluation['predicted_growth_rate'] * 100, 1) . '%'
                     ]
-                ], 200);
+                ];
+            } else {
+                $application->status = 'Failed';
+                $application->message = 'Requested funding amount exceeds estimated amount based on Monthly Recurring Revenue (MRR). We encourage you to continue growing your business and reapply when you have stronger revenue performance or consider a smaller funding amount that better matches your current financial position.';
+                $application->save();
+                
+                return [
+                    'success' => false,
+                    'message' => 'Risk assessment failed - Requested funding amount exceeds estimated amount based on MRR multiples',
+                    'data' => [
+                        'application_id' => $application->id,
+                        'current_step' => 'risk_assessment_failed',
+                        'next_step' => null,
+                        'prediction' => $prediction,
+                        'stripe_data' => $stripe_response,
+                        'mrr' => $evaluation['mrr'],
+                        'estimated_funding_amount' => $evaluation['estimated_funding_amount'],
+                        'predicted_growth_rate' => round($evaluation['predicted_growth_rate'] * 100, 1) . '%'
+                    ]
+                ];
             }
-
-            return response()->json([
-                'message' => 'Failed to extract funding details',
-                'error' => 'Flask service returned unsuccessful response'
-            ], 500);
-        }catch(\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to extract funding details',
+        } catch(\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to assess risk',
                 'error' => $e->getMessage()
-            ], 500);
+            ];
         }
     }
+
+    /**
+     * Match investors for an application
+     */
+    public function matchInvestors(int $application_id): array
+    {
+        try {
+            $application = Application::findOrFail($application_id);
+
+            // Insert the application details into neo4j aura
+            $neo4j_response = $this->neo4jService->insertApplicationToNeo4j($application_id);
+            $neo4j_data = $neo4j_response['data'] ?? [];
+
+            // The application will go through startup-investor matching  
+            $matching_response = $this->neo4jService->matchStartupToInvestor($application_id);
+            $matching_data = $matching_response['data'] ?? [];
+
+            return [
+                'success' => true,
+                'message' => 'Investor matching completed',
+                'data' => [
+                    'application_id' => $application->id,
+                    'current_step' => 'completed',
+                    'neo4j_response' => $neo4j_data,
+                    'matching_response' => $matching_data
+                ]
+            ];
+        } catch(\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to match investors',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Select an investor for an application
+     */
+    public function selectInvestor(int $application_id, int $investor_id): Application
+	{
+		$application = Application::findOrFail($application_id);
+		$application->investor_id = $investor_id;
+		$application->save();
+
+		return $application;
+	}
+
+    /**
+     * Accept an application
+     */
+    public function acceptApplication(int $application_id, string $message): Application
+	{
+		$application = Application::findOrFail($application_id);
+		$application->status = 'In Progress';
+		$application->message = $message;
+		$application->save();
+
+		return $application;
+	}
+
+    /**
+     * Reject an application
+     */
+	public function rejectApplication(int $application_id, string $message): Application
+	{
+		$application = Application::findOrFail($application_id);
+		$application->status = 'Rejected';
+		$application->message = $message;
+		$application->save();
+
+		return $application;
+	}
 }

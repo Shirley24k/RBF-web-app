@@ -3,27 +3,28 @@
 namespace App\Observers;
 
 use App\Models\Investor;
-use App\Services\Neo4jService;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SyncInvestorToNeo4j;
+use App\Jobs\UpdateInvestorInNeo4j;
 class InvestorObserver
 {
     public function created(Investor $investor)
     {
         try{
-            app(Neo4jService::class)->insertInvestorTagToNeo4j($investor->id);
-            Log::info('Investor tag inserted successfully');
+            SyncInvestorToNeo4j::dispatch($investor->id);
+            Log::info('Dispatch sync investor to Neo4j', ['investor_id' => $investor->id]);
         }catch(\Exception $e){
-            Log::info('Failed to insert investor tag to Neo4j');
+            Log::error('Failed to dispatch sync investor to Neo4j', ['investor_id' => $investor->id, 'error' => $e->getMessage()]);
         }
     }
 
     public function updated(Investor $investor)
     {
         try{
-            app(Neo4jService::class)->updateInvestorTagToNeo4j($investor->id);
-            Log::info('Investor tag updated successfully');
+            UpdateInvestorInNeo4j::dispatch($investor->id);
+            Log::info('Dispatch update investor to Neo4j', ['investor_id' => $investor->id]);
         }catch(\Exception $e){
-            Log::info('Failed to update investor tag to Neo4j');
+            Log::error('Failed to dispatch update investor to Neo4j', ['investor_id' => $investor->id, 'error' => $e->getMessage()]);
         }
     }
 } 

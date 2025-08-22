@@ -14,6 +14,15 @@ class StartupService
         $this->userService = $userService;
     }
 
+    public function getCurrentStartup(): Startup
+    {
+        $startup = Startup::where('user_id', auth()->user()->id)->first();
+        if (!$startup) {
+            throw new \Exception('Startup not found');
+        }
+        return $startup;
+    }
+
     public function createStartup(array $data)
     {
         return DB::transaction(function () use ($data) {
@@ -33,4 +42,5 @@ class StartupService
             return $startup;
         });
     }
+
 } 

@@ -3,40 +3,46 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Agreement;
 use App\Services\AgreementService;
 use Illuminate\Http\JsonResponse;
-use App\Services\FileUploadService;
 
 class AgreementController extends Controller
 {
-    private $fileUploadService;
     private $agreementService;
-    public function __construct(FileUploadService $fileUploadService, AgreementService $agreementService)
+    public function __construct(AgreementService $agreementService)
     {
-        $this->fileUploadService = $fileUploadService;
         $this->agreementService = $agreementService;
     }
 
-    public function getAgreement($application_id)
+    public function getAgreement(int $application_id): JsonResponse
     {
-        $agreement = Agreement::where('application_id', $application_id)->first();
-        if ($agreement){
+        try {
+            $agreement = $this->agreementService->getAgreementByApplicationId($application_id);
+            if ($agreement) {
+                return response()->json([
+                    'message' => 'Agreement found',
+                    'data' => $agreement
+                ], 200);
+            }
             return response()->json([
-                'message' => 'Agreement found',
-                'data' => $agreement
-            ], 200);
+                'message' => 'Agreement not found',
+                'data' => null
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to get agreement',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        return response()->json([
-            'message' => 'Agreement not found',
-            'data' => null
-        ], 404);
     }
 
     public function uploadAgreement(Request $request, int $application_id): JsonResponse
     {
         try {
-            $fullPath = $this->agreementService->handleAgreementUpload($request, auth()->user(), $application_id, $this->fileUploadService);
+            $request->validate([
+                'document' => 'required|file|mimes:pdf|max:10240'
+            ]);
+            $fullPath = $this->agreementService->handleAgreementUpload($request->file('document'), auth()->user(), $application_id);
             
             return response()->json([
                 'message' => 'Agreement uploaded successfully',
