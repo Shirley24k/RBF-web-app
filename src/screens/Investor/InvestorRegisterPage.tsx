@@ -1,11 +1,13 @@
-import { Button, Input, Option, Radio, Select } from "@material-tailwind/react";
+import { Button, Input, Option, Radio, Select, Spinner } from "@material-tailwind/react";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
-import { CountryCode, getCountries, parsePhoneNumberFromString } from 'libphonenumber-js';
+import { CountryCode, getCountries } from 'libphonenumber-js';
 import { useState } from "react";
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useNavigate } from "react-router-dom";
+import { isValidPhoneNumber } from "../../lib/utils";
+import { industryOptions } from "../../utils/industryOptions";
 
 interface FormErrors {
   fullName?: string;
@@ -68,8 +70,8 @@ export const InvestorRegister = (): JSX.Element => {
   };
 
   const validatePhoneNumber = (number: string, country: CountryCode): boolean => {
-    const phone = parsePhoneNumberFromString(number, country);
-    return phone?.isValid() || false;
+    // Use our utility function for consistent validation
+    return isValidPhoneNumber(number, country);
   };
 
   // Add handleCountryChange function
@@ -97,7 +99,7 @@ export const InvestorRegister = (): JSX.Element => {
         return undefined;
       case 'password':
         if (!value.toString()) return "Password is required";
-        if (value.toString().length < 6) return "Password must be at least 6 characters";
+        if (value.toString().length < 8) return "Password must be at least 8 characters";
         return undefined;
       case 'confirmPassword':
         if (!value.toString()) return "Confirm password is required";
@@ -236,16 +238,9 @@ export const InvestorRegister = (): JSX.Element => {
       const response = await axios.post(`${API_BASE_URL}/register/investor`, formData);
 
       if (response.status === 201) {
+        alert("Please verify your email before logging in.");
         navigate("/login");
       }
-      // // Check if investor is in SCM investor alert list
-      // if (!response.data.validation_status){
-      //   setErrors(prev => ({
-      //     ...prev,
-      //     submit: "We have found you in the SCM investor alert list. Your registration cannot be processed at this time. Please contact support for assistance."
-      //   }));
-      //   return;
-      // }
        
     } catch (error: any) {
       if (error.response) {
@@ -340,7 +335,7 @@ export const InvestorRegister = (): JSX.Element => {
         </header>
 
         <div className="flex flex-col items-center w-full max-w-[603px] gap-5 mx-auto">
-          <h1 className="w-full font-heading font-[number:var(--heading-font-weight)] text-black text-[length:var(--heading-font-size)] text-center tracking-[var(--heading-letter-spacing)] leading-[var(--heading-line-height)] [font-style:var(--heading-font-style)]">
+          <h1 className="w-full font-heading font-[600] text-black text-[45px] text-center tracking-[0px] leading-[52px] font-normal">
             Sign Up
           </h1>
 
@@ -350,6 +345,11 @@ export const InvestorRegister = (): JSX.Element => {
         </div>
 
         <div className="w-full max-w-[854px] mx-auto">
+          {errors.submit && (
+              <div className="p-4 my-4 text-sm text-red-700 bg-red-100 rounded-lg text-center">
+                {errors.submit}
+              </div>
+            )}
           {/* Investor Type Selection */}
           <div className="flex justify-center mb-10">
             <div className="flex gap-8">
@@ -629,14 +629,14 @@ export const InvestorRegister = (): JSX.Element => {
                 className="bg-white"
                 error={!!errors.preferredIndustries}
               >
-                {["FinTech", "HealthTech", "AgriTech", "EdTech", "SaaS"].map(
+                {industryOptions.map(
                   (industry) => (
                     <Option
-                      key={industry}
+                      key={industry.value}
                       onClick={() => {
-                        const newIndustries = selectedIndustries.includes(industry)
-                          ? selectedIndustries.filter((item) => item !== industry)
-                          : [...selectedIndustries, industry];
+                        const newIndustries = selectedIndustries.includes(industry.value)
+                          ? selectedIndustries.filter((item) => item !== industry.value)
+                          : [...selectedIndustries, industry.value];
                         setSelectedIndustries(newIndustries);
                         const error = validateField("preferredIndustries", newIndustries);
                         setErrors(prev => ({ ...prev, preferredIndustries: error }));
@@ -645,10 +645,10 @@ export const InvestorRegister = (): JSX.Element => {
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={selectedIndustries.includes(industry)}
+                          checked={selectedIndustries.includes(industry.value)}
                           readOnly
                         />
-                        {industry}
+                        {industry.label}
                       </div>
                     </Option>
                   )
@@ -707,7 +707,7 @@ export const InvestorRegister = (): JSX.Element => {
                           key={item}
                           className="inline-block bg-blue-gray-100 text-blue-gray-800 text-xs px-2 py-1 rounded-full mr-1"
                         >
-                          {item}
+                          {item.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
                         </span>
                       ))
                     : "Select preferred funding stages"
@@ -716,7 +716,7 @@ export const InvestorRegister = (): JSX.Element => {
                 className="bg-white"
                 error={!!errors.fundingStages}
               >
-                {["Seed", "Series A", "Series B"].map((stage) => (
+                {["seed", "series_a", "series_b"].map((stage) => (
                   <Option
                     key={stage}
                     onClick={() => {
@@ -728,13 +728,13 @@ export const InvestorRegister = (): JSX.Element => {
                       setErrors(prev => ({ ...prev, fundingStages: error }));
                     }}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 capitalize">
                       <input
                         type="checkbox"
                         checked={selectedFundingStages.includes(stage)}
                         readOnly
                       />
-                      {stage}
+                      {stage.replace(/_/g, ' ')}
                     </div>
                   </Option>
                 ))}
@@ -774,17 +774,18 @@ export const InvestorRegister = (): JSX.Element => {
         </section>
 
         <div className="flex flex-col w-full max-w-[382px] items-center gap-2 mx-auto">
-          {errors.submit && (
-            <div className="w-full p-3 mb-4 text-sm text-red-500 bg-red-100 rounded-lg">
-              {errors.submit}
-            </div>
-          )}
           <Button
-            className="w-full h-12 bg-dark-plum hover:bg-light-purple text-white font-bold text-sm rounded-lg capitalize"
+            className="w-full h-12 bg-dark-plum hover:bg-light-purple text-white font-bold text-sm rounded-lg capitalize disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Signing Up..." : "Sign Up"}
+            {isSubmitting ? (
+              <div className="flex items-center justify-center gap-2">
+                <Spinner className="h-5 w-5" />
+              </div>
+            ) : (
+              "Sign Up"
+            )}
           </Button>
 
           <p className="text-sm text-center font-roboto">

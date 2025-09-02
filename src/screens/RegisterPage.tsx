@@ -30,7 +30,7 @@ export const Register = (): JSX.Element => {
           </h1>
 
           <div className="flex flex-col items-center gap-10 sm:gap-[65px] mt-16 sm:mt-[120px] w-full max-w-xs sm:max-w-md md:max-w-[573px]">
-            <p className="font-heading font-[number:var(--heading-font-weight)] text-black text-base sm:text-lg md:text-xl text-center tracking-[var(--heading-letter-spacing)] leading-[var(--heading-line-height)] [font-style:var(--heading-font-style)]">
+            <p className="font-heading font-[600] text-black text-base sm:text-lg md:text-xl text-center tracking-[0px] leading-[52px] font-normal">
               Do you want to sign up as
             </p>
 

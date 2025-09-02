@@ -2,7 +2,7 @@ import { ChevronLeftIcon, ClockIcon, CurrencyDollarIcon, ExclamationTriangleIcon
 import { Button, Card, CardBody, IconButton, Progress, Spinner, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Sidenav } from "../components/sidenav";
 import { StatusBadge } from "../components/StatusBadge";
 
@@ -19,8 +19,11 @@ export const TransactionDetails = (): JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sendReminder, setSendReminder] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
+  const [searchParams] = useSearchParams();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  
+  const navigate = useNavigate();
   const fetchTransactionData = async () => {
     try {
       setIsLoading(true);
@@ -47,6 +50,33 @@ export const TransactionDetails = (): JSX.Element => {
       setIsLoading(false);
     }
   }
+
+  const handleStripeSuccess = async (sessionId: string) => {
+    try {
+      setProcessingPayment(true);      
+      const response = await axios.post(`${API_BASE_URL}/transactions/process-success`, {
+        session_id: sessionId,
+        application_id: id
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
+
+      if (response.data.success) {
+        // Refresh transaction data to show updated status
+        await fetchTransactionData();
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error processing successful payment:', error);
+      alert('Payment was successful but there was an error updating the transaction. Please contact support.');
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
   
   const handleRepayment = async () => {
     await axios.post(`${API_BASE_URL}/transactions/repayment`, {
@@ -68,20 +98,17 @@ export const TransactionDetails = (): JSX.Element => {
 
   const handleSendReminder = async () => {
     try {
-      axios.post(`${API_BASE_URL}/repayment-reminder/${id}`, {
+      setSendingReminder(true);
+      await axios.post(`${API_BASE_URL}/repayment-reminder/${id}`, null, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         }
-      })
-      .then((response)=>{
-        setSendReminder(true);
-      })
-      .catch((error)=>{
-        console.error('Failed to send reminder:', error);
-      })
-      // Could add a success notification here
+      });
+      setSendReminder(true);
     } catch (error) {
       console.error('Failed to send reminder:', error);
+    } finally {
+      setSendingReminder(false);
     }
   };
 
@@ -142,6 +169,18 @@ export const TransactionDetails = (): JSX.Element => {
     fetchTransactionData()
   }, [id])
 
+  // Handle Stripe success callback
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const sessionId = searchParams.get('session_id');
+    
+    if (status === 'success' && sessionId) {
+      alert('Payment processed successfully! Your transaction is now pending and will be transferred to the investor within 3 minutes.');
+      setIsLoading(true);
+      handleStripeSuccess(sessionId);
+    }
+  }, [searchParams]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen w-full">
@@ -153,26 +192,26 @@ export const TransactionDetails = (): JSX.Element => {
   return (
     <div className="bg-white flex flex-row justify-center w-full">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+      <div className="hidden lg:block fixed w-32 h-full left-0 top-0 z-20">
         <Sidenav active="transactions" />
       </div>
       
       {/* Mobile Layout */}
-      <div className="lg:hidden">
+      <div className="lg:hidden z-10">
         <Sidenav active="transactions" />
       </div>
 
       {/* Main Content */}
-      <div className="mr-10 max-sm:mr-4 flex flex-col flex-1">
+      <div className="flex flex-col flex-1 w-full mr-10">
         {/* Header */}
-        <div className="ml-32 max-md:ml-24 max-sm:ml-20 py-8 max-md:py-6 max-sm:py-4 flex flex-row items-center justify-between gap-4 max-sm:gap-2">
+        <div className="ml-32 max-md:ml-24 max-sm:ml-20 py-8 max-md:py-6 max-sm:py-4 flex flex-row items-center justify-between gap-4 max-sm:gap-2 transition-all duration-300">
           <div className="flex items-center">
             <IconButton
               variant="text"
               className="mr-4 max-md:mr-3 max-sm:mr-2 flex items-center justify-center"
               onClick={(e) => {
                 e.preventDefault();
-                window.history.back();
+                {isStartup ? navigate('/startup-transaction') : window.history.back()}
               }}
             >
               <ChevronLeftIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
@@ -208,17 +247,17 @@ export const TransactionDetails = (): JSX.Element => {
                 variant="outlined"
                 className="flex items-center gap-2 border-orange-500 text-orange-500 hover:bg-orange-50 text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-1"
                 onClick={handleSendReminder}
-                disabled={sendReminder}
+                disabled={sendingReminder || sendReminder}
               >
                 <svg className="hidden md:block h-4 w-4 max-md:h-3 max-md:w-3 max-sm:h-3 max-sm:w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                {sendReminder ? 'Sent' : 'Send Reminder'}
+                {sendingReminder ? (<Spinner className="h-4 w-4" />) : (sendReminder ? 'Sent' : 'Send Reminder')}
               </Button>
             )}
           </div>
         </div>
-        <div className="ml-40 max-md:ml-24 max-sm:ml-20 max-w-7xl px-4 max-md:px-6 max-sm:px-4">
+        <div className="ml-32 max-md:ml-24 max-sm:ml-20 px-4 max-md:px-6 max-sm:px-4 transition-all duration-300">
           {/* Application Overview Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-md:gap-4 max-sm:gap-3 mb-6 max-md:mb-4 max-sm:mb-3">
             <Card className="p-4 max-md:p-3 max-sm:p-2">
@@ -283,7 +322,7 @@ export const TransactionDetails = (): JSX.Element => {
                 className="h-3 max-md:h-2 max-sm:h-2"
               />
               <div className="flex flex-col sm:flex-row justify-between mt-2 text-sm max-md:text-xs max-sm:text-xs text-gray-600 gap-1">
-                <span>Fund Transfer Date: {formatDate(transactionData[0].transaction_datetime)}</span>
+                <span>Fund Transfer Date: {transactionData && transactionData.length > 0 ? formatDate(transactionData[transactionData.length - 1].transaction_datetime) : '-'}</span>
                 <span>Revenue Share Percentage: {applicationData.revenue_share_percentage}%</span>
               </div>
             </Card>
@@ -376,7 +415,7 @@ export const TransactionDetails = (): JSX.Element => {
                       </div>
                     </div>
                     
-                    <div className="text-right sm:text-left">
+                    <div className="text-right sm:text-left flex flex-col justify-end">
                       <Typography 
                         variant="h6" 
                         color={transaction.type === 'FUND_TRANSFER' ? "green" : "blue-gray"}

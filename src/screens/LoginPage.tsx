@@ -1,4 +1,4 @@
-import { Button, Checkbox, Input, Typography } from "@material-tailwind/react";
+import { Button, Input, Spinner } from "@material-tailwind/react";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
 import { useState } from "react";
@@ -30,8 +30,14 @@ export const Login = (): JSX.Element => {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
         // Check if stripe is linked
-        if(response.data.user.role === "startup" || response.data.user.role === "investor"){
-          const endpoint = response.data.user.role === "startup" ? "startup/profile" : "investor/profile";
+        if(response.data.user.role === "startup" || response.data.user.role === "investor" || response.data.user.role === "staff"){
+          let endpoint;
+          if (response.data.user.role === "startup" || response.data.user.role === "staff") {
+            endpoint = "startup/profile";
+          } else {
+            endpoint = "investor/profile";
+          }
+          
           await axios.get(`${API_BASE_URL}/${endpoint}`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -49,7 +55,12 @@ export const Login = (): JSX.Element => {
           });
         } 
         // Redirect based on role
-        navigate(`/${response.data.user.role}-home`);
+        if (response.data.user.role === 'staff') {
+          // Staff members should access startup features
+          navigate('/startup-home');
+        } else {
+          navigate(`/${response.data.user.role}-home`);
+        }
       } else {
         setError(response.data.message || 'Login failed. Please try again.');
       }
@@ -149,17 +160,7 @@ export const Login = (): JSX.Element => {
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  label={
-                    <Typography className="font-normal text-md max-md:text-sm max-sm:text-xs">
-                      Remember Me
-                    </Typography>
-                  }
-                  className="w-[18px] h-[18px] rounded border border-solid border-black"
-                />
-              </div>
+            <div className="flex items-center justify-end flex-wrap gap-2">
               <p 
                 onClick={() => navigate("/forgot-password")}
                 className="font-['Roboto',Helvetica] font-medium text-gray-600 text-sm max-md:text-xs p-0 h-auto cursor-pointer hover:text-dark-plum"
@@ -170,11 +171,17 @@ export const Login = (): JSX.Element => {
 
             {/* Sign In Button */}
             <Button
-              className="w-full h-12 max-md:h-10 max-sm:h-8 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-sm max-md:text-xs rounded-lg capitalize hover:bg-light-purple"
+              className="w-full h-12 max-md:h-10 max-sm:h-8 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-sm max-md:text-xs rounded-lg capitalize hover:bg-light-purple disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => login(email, password)}
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Spinner className="h-5 w-5" />
+                </div>
+              ) : (
+                "Sign In"
+              )}
             </Button>
 
             {/* Create Account Link */}

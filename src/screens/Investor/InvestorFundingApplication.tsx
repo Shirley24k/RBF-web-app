@@ -94,7 +94,6 @@ export const InvestorFunding = (): JSX.Element => {
                     </th>
                     <th>
                       <div className="flex items-center gap-2">
-                          <FunnelIcon className="w-4 h-4 max-md:w-3 max-md:h-3 text-light-purple" />
                           <span className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap">
                           Status
                         </span>

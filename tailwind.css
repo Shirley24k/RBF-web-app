@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer components {
   .all-\[unset\] {
     all: unset;
@@ -11,70 +10,34 @@
 
 :root {
   --avocado-green: rgba(205, 214, 195, 0.8);
-  --blue-gray50: rgba(236, 239, 241, 1);
+  --light-blue: rgba(134, 181, 229, 0.8);
+  --blue-gray-50: rgba(236, 239, 241, 1);
   --brown-50: rgba(239, 235, 233, 1);
   --brown-700: rgba(93, 64, 55, 1);
-  --amber-50: #fff8e1;
-  --amber-800: #ff8f00;
+  --amber-50: rgb(255, 248, 225);
+  --amber-800: rgb(255, 143, 0);
   --deep-orange-50: rgb(251, 233, 231);
   --deep-orange-500: rgb(191, 54, 12);
-  --gray-900: rgba(33, 33, 33, 1); 
+  --gray-900: rgba(33, 33, 33, 1);
   --green-50: rgb(232, 245, 233);
   --green-900: rgba(27, 94, 32, 1);
   --light-purple: rgba(87, 73, 100, 0.78);
   --beige: rgba(253, 250, 246, 1);
   --dark-beige: rgba(250, 241, 230, 1);
-  --dark-plum: rgba(87, 73, 100, 1);
-  --description-font-family: "Lato", Helvetica;
-  --description-font-size: 24px;
-  --description-font-style: normal;
-  --description-font-weight: 500;
-  --description-letter-spacing: -0.48px;
-  --description-line-height: normal;
+  --dark-plum: rgb(87, 73, 100);
   --gray-300: rgba(224, 224, 224, 1);
   --light-apple-green: rgba(247, 247, 232, 1);
   --light-green: rgba(205, 214, 195, 0.42);
   --light-purple: rgba(87, 73, 100, 0.78);
-  --heading-font-family: "Roboto", Helvetica;
-  --heading-font-size: 45px;
-  --heading-font-style: normal;
-  --heading-font-weight: 600;
-  --heading-letter-spacing: 0px;
-  --heading-line-height: 52px;
-  --section-title-font-family: "Lora", Helvetica;
-  --section-title-font-size: 48px;
-  --section-title-font-style: normal;
-  --section-title-font-weight: 600;
-  --section-title-letter-spacing: -0.96px;
-  --section-title-line-height: normal;
-  --shadow-dark-500-20: 0px 2px 4px -2px rgba(33, 33, 33, 0.2), 0px 4px 6px -1px
-    rgba(33, 33, 33, 0.2);
-  --small-text-font-family: "Inter", Helvetica;
-  --small-text-font-size: 16px;
-  --small-text-font-style: normal;
-  --small-text-font-weight: 500;
-  --small-text-letter-spacing: 0px;
-  --small-text-line-height: 150%;
-  --leading-tight-text-sm-font-normal-font-family: "Roboto", Helvetica;
-  --leading-tight-text-sm-font-normal-font-size: 14px;
-  --leading-tight-text-sm-font-normal-font-style: normal;
-  --leading-tight-text-sm-font-normal-font-weight: 400;
-  --leading-tight-text-sm-font-normal-letter-spacing: 0px;
-  --leading-tight-text-sm-font-normal-line-height: 125%;
-  --text-sm-font-medium-font-family: "Roboto", Helvetica;
-  --text-sm-font-medium-font-size: 14px;
-  --text-sm-font-medium-font-style: normal;
-  --text-sm-font-medium-font-weight: 500;
-  --text-sm-font-medium-letter-spacing: 0px;
-  --text-sm-font-medium-line-height: 150%;
-  --text-xs-font-medium-font-family: "Roboto", Helvetica;
-  --text-xs-font-medium-font-size: 12px;
-  --text-xs-font-medium-font-style: normal;
-  --text-xs-font-medium-font-weight: 500;
-  --text-xs-font-medium-letter-spacing: 0px;
-  --text-xs-font-medium-line-height: 150%;
-  --warm-off-white: rgba(243, 241, 237, 1);
+  --warm-off-white: #f3f1ed;
   --white: rgba(255, 255, 255, 1);
+  --description-font-family: "Lato", Helvetica;
+  --description-font-weight: 500;
+  --section-title-font-family: "Lora", Helvetica;
+  --section-title-font-weight: 600;
+  --small-text-font-family: "Inter", Helvetica;
+  --small-text-font-weight: 500;
+  --shadow-dark-500-20: 0px 2px 4px -2px rgba(33, 33, 33, 0.2), 0px 4px 6px -1px rgba(33, 33, 33, 0.2);
 }
 
 @tailwind base;

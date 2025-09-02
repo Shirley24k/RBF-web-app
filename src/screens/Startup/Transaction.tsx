@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 import { StatusBadge } from "../../components/StatusBadge";
+import { handleStaffPermissionError } from "../../utils/permissionHandler";
 
 export const StartupTransaction = (): JSX.Element => {
   const [applications, setApplications] = useState<any>(null);
@@ -13,15 +14,23 @@ export const StartupTransaction = (): JSX.Element => {
 
   //fetch active and completed applications
   const fetchApplications = async () => {
-    await axios.get(`${API_BASE_URL}/startup/transaction-applications`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+    try {
+      const response = await axios.get(`${API_BASE_URL}/startup/transaction-applications`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
+      
+      setApplications(response.data.data);
+      console.log('Applications', response.data.data);
+    } catch (error: any) {
+      console.error("Error fetching applications:", error);
+      
+      // Handle staff permission errors specifically
+      if (handleStaffPermissionError(error, 'Insufficient permissions to view transaction applications', 'view transaction applications')) {
+        return;
       }
-    })
-    .then((response) => {
-      setApplications(response.data.data)
-      console.log('Applications', response.data.data)
-    })
+    }
   }
 
   useEffect(() => {

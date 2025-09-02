@@ -1,28 +1,32 @@
 import {
-  ArrowRightStartOnRectangleIcon,
-  Bars3Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  ClipboardDocumentListIcon,
-  CurrencyDollarIcon,
-  HomeIcon,
-  UserCircleIcon
+    ArrowRightStartOnRectangleIcon,
+    Bars3Icon,
+    ChevronDownIcon,
+    ChevronRightIcon,
+    ClipboardDocumentListIcon,
+    CurrencyDollarIcon,
+    DocumentTextIcon,
+    HomeIcon,
+    UserCircleIcon,
+    UserIcon
 } from "@heroicons/react/24/solid";
 import axios from "axios";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { getEffectiveRole } from "../utils/permissionHandler";
 
 import {
-  Card,
-  IconButton,
-  List,
-  ListItem,
-  ListItemPrefix,
-  Typography,
+    Card,
+    IconButton,
+    List,
+    ListItem,
+    ListItemPrefix,
+    Typography,
 } from "@material-tailwind/react";
 
 interface SidenavProps {
-  active: "home" | "application" | "transactions" | "profile";
+  active: "home" | "application" | "transactions" | "profile" | "proposal" | "user-management";
 }
 
 export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
@@ -39,11 +43,20 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
   const role = localStorage.getItem("role");
   const isStripeLinked = localStorage.getItem("isStripeLinked") === "true";
   const shouldRestrict = role === "startup" || role === "investor";
+  // Staff members should not be restricted by Stripe linking as they use the startup's Stripe account
   const [hasApplicationNotification, setHasApplicationNotification] = useState(false);
   const [isApplicationOpen, setIsApplicationOpen] = useState(active === "application");
   const collapsedMenuRef = useRef<HTMLDivElement | null>(null);
   const [collapsedMenuPos, setCollapsedMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [showCollapsedSubmenu, setShowCollapsedSubmenu] = useState(false);
+  
+  // Get current location and search params for active status tracking
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  
+  // Check if we're actually on a funding page and get current status
+  const isOnFundingPage = location.pathname.includes('-funding');
+  const currentStatus = isOnFundingPage ? (searchParams.get('status') || "All") : null;
 
   useEffect(() => {
     const fetchNotification = async () => {
@@ -53,6 +66,10 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
           url = `${API_BASE_URL}/investor/applications-await-review`;
         } else if (role === "admin") {
           url = `${API_BASE_URL}/pending-applications`;
+        } else if (role === "startup" || role === "staff") {
+          // Staff members don't need application notifications as they can't review applications
+          setHasApplicationNotification(false);
+          return;
         } else {
           setHasApplicationNotification(false);
           return;
@@ -156,7 +173,8 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
   };
 
   const buildStatusPath = (status: string): string => {
-    return `/${role}-funding?status=${encodeURIComponent(status)}`;
+    const effectiveRole = getEffectiveRole();
+    return `/${effectiveRole}-funding?status=${encodeURIComponent(status)}`;
   };
 
   const navItems = [
@@ -164,31 +182,61 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
       key: "home",
       label: "Home",
       icon: <HomeIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />,
-      path: `/${role}-home`,
+      path: `/${role === "staff" ? "startup" : role}-home`,
     },
+    ...(role === "startup" || role === "staff"
+      ? [
+          {
+            key: "proposal",
+            label: "Proposal",
+            icon: <DocumentTextIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />,
+            path: "/proposal-listings",
+          },
+        ]
+      : []),
     {
       key: "application",
       label: "Application",
       icon: <ClipboardDocumentListIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />,
-      path: `/${role}-funding`,
+      path: `/${role === "staff" ? "startup" : role}-funding`,
     },
-    ...(role === "investor" || role === "startup"
+    ...(role === "investor" || role === "startup" || role === "staff"
       ? [
           {
             key: "transactions",
             label: "Transaction History",
             icon: <CurrencyDollarIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />,
-            path: `/${role}-transaction`,
+            path: `/${role === "staff" ? "startup" : role}-transaction`,
           },
         ]
       : []),
-    ...(role === "investor"
+    ...(role === "admin"
+      ? [
+          {
+            key: "user-management",
+            label: "User Management",
+            icon: <UserIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />,
+            path: "/admin-user-management",
+          },
+        ]
+      : []),
+    ...(role === "investor" 
       ? [
           {
             key: "profile",
             label: "Profile",
             icon: <UserCircleIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />,
             path: "/investor-profile",
+          },
+        ]
+      : []),
+    ...(role === "startup" || role === "staff"
+      ? [
+          {
+            key: "profile",
+            label: "Profile",
+            icon: <UserCircleIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />,
+            path: "/startup-profile",
           },
         ]
       : []),
@@ -258,8 +306,8 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
                       </ListItemPrefix>
                       {open && (
                         <Typography
-                          variant="paragraph"
-                          className="font-semibold text-dark-plum"
+                          variant="h6"
+                          className="text-dark-plum"
                         >
                           {label}
                           {hasApplicationNotification && (
@@ -281,8 +329,13 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
                       <List>
                         <ListItem
                           key="status-All"
-                          className="pl-12 py-1 hover:bg-avocado-green/70 text-dark-plum"
-                          onClick={() => handleNav(`/${role}-funding`)}
+                          className={clsx(
+                            "pl-12 py-1 cursor-pointer transition-colors duration-200",
+                            isOnFundingPage && currentStatus === 'All' 
+                              ? "bg-avocado-green" 
+                              : "hover:bg-avocado-green"
+                          )}
+                          onClick={() => handleNav(`/${getEffectiveRole()}-funding`)}
                         >
                           <Typography variant="small" className="text-dark-plum">All</Typography>
                         </ListItem>
@@ -290,7 +343,12 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
                           <ListItem
                             key={`status-${status}`}
                             onClick={() => handleNav(buildStatusPath(status))}
-                            className={clsx("pl-12 py-1 hover:bg-avocado-green/70", "text-dark-plum")}
+                            className={clsx(
+                              "pl-12 py-1 cursor-pointer transition-colors duration-200",
+                              isOnFundingPage && currentStatus === status
+                                ? "bg-avocado-green"
+                                : "hover:bg-avocado-green"
+                            )}
                           >
                             <div className="flex items-center justify-between w-full">
                               <Typography variant="small" className="text-dark-plum">
@@ -358,8 +416,8 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
               </ListItemPrefix>
               {open && (
                 <Typography
-                  variant="paragraph"
-                  className="font-semibold text-dark-plum"
+                  variant="h6"
+                  className="text-dark-plum"
                 >
                   Sign Out
                 </Typography>
@@ -424,14 +482,14 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
                         <span className="flex items-center justify-center w-8 h-8 relative">
                           {icon}
                           {hasApplicationNotification && (
-                            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-600 border-2 border-white" />
+                            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-600" />
                           )}
                         </span>
                       </ListItemPrefix>
                       {open && (
                         <Typography
-                          variant="paragraph"
-                          className="font-semibold text-dark-plum"
+                          variant="h6"
+                          className="text-dark-plum"
                         >
                           {label}
                           {hasApplicationNotification && (
@@ -453,20 +511,36 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
                       <List>
                         <ListItem
                           key="status-All"
-                          className="pl-12 py-1 hover:bg-avocado-green/70 text-dark-plum"
-                          onClick={() => handleNav(`/${role}-funding`)}
+                          className={clsx(
+                            "pl-12 py-1 cursor-pointer transition-colors duration-200",
+                            isOnFundingPage && currentStatus === 'All' 
+                              ? "bg-avocado-green" 
+                              : "hover:bg-avocado-green"
+                          )}
+                          onClick={() => handleNav(`/${getEffectiveRole()}-funding`)}
                         >
-                          <Typography variant="small" className="text-dark-plum">All</Typography>
+                          <Typography variant="paragraph" className="font-normal text-dark-plum">All</Typography>
                         </ListItem>
                         {getStatusFilters().map((status) => (
                           <ListItem
                             key={`status-${status}`}
                             onClick={() => handleNav(buildStatusPath(status))}
-                            className={clsx("pl-12 py-1 hover:bg-avocado-green/70", "text-dark-plum")}
+                            className={clsx(
+                              "pl-12 py-1 cursor-pointer transition-colors duration-200",
+                              isOnFundingPage && currentStatus === status
+                                ? "bg-avocado-green"
+                                : "hover:bg-avocado-green"
+                            )}
                           >
-                            <Typography variant="small" className="text-dark-plum">
-                              {status}
-                            </Typography>
+                            <div className="flex items-center justify-between w-full">
+                              <Typography variant="paragraph" className="font-normal text-dark-plum">
+                                {status}
+                              </Typography>
+                              {(role === "investor" && hasApplicationNotification && status === "Await Review") ||
+                               (role === "admin" && hasApplicationNotification && status === "Pending") ? (
+                                <span className="inline-block h-2 w-2 rounded-full bg-red-600" />
+                              ) : null}
+                            </div>
                           </ListItem>
                         ))}
                       </List>
@@ -503,8 +577,8 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
                   </ListItemPrefix>
                   {open && (
                     <Typography
-                      variant="paragraph"
-                      className="font-semibold text-dark-plum"
+                      variant="h6"
+                      className="text-dark-plum"
                     >
                       {label}
                     </Typography>
@@ -524,8 +598,8 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
               </ListItemPrefix>
               {open && (
                 <Typography
-                  variant="paragraph"
-                  className="font-semibold text-dark-plum"
+                  variant="h6"
+                  className="text-dark-plum"
                 >
                   Sign Out
                 </Typography>
@@ -541,15 +615,34 @@ export const Sidenav = ({ active }: SidenavProps): JSX.Element => {
           className="fixed z-[60] bg-white shadow-2xl border border-gray-200 rounded-lg py-2"
           style={{ top: collapsedMenuPos?.top ?? 48, left: collapsedMenuPos?.left ?? 80 }}
         >
-          <div className="px-4 py-2 text-xs font-semibold text-gray-500">Applications</div>
+          <div className="px-4 py-2 text-sm font-semibold text-gray-500">Applications</div>
           <List className="min-w-[200px]">
-            <ListItem className="py-1 px-4 hover:bg-avocado-green/70" onClick={() => handleNav(`/${role}-funding`)}>
+            <ListItem 
+              className={clsx(
+                "py-1 px-4 cursor-pointer transition-colors duration-200",
+                isOnFundingPage && currentStatus === 'All' 
+                  ? "bg-avocado-green" 
+                  : "hover:bg-avocado-green"
+              )} 
+              onClick={() => handleNav(`/${getEffectiveRole()}-funding`)}
+            >
               <Typography variant="small" className="text-dark-plum">All</Typography>
             </ListItem>
             {getStatusFilters().map((status) => (
-              <ListItem key={`collapsed-${status}`} className="py-1 px-4 hover:bg-avocado-green/70" onClick={() => handleNav(buildStatusPath(status))}>
+              <ListItem 
+                key={`collapsed-${status}`} 
+                className={clsx(
+                  "py-1 px-4 cursor-pointer transition-colors duration-200",
+                  isOnFundingPage && currentStatus === status
+                    ? "bg-avocado-green"
+                    : "hover:bg-avocado-green"
+                )} 
+                onClick={() => handleNav(buildStatusPath(status))}
+              >
                 <div className="flex items-center justify-between w-full">
-                  <Typography variant="small" className="text-dark-plum">{status}</Typography>
+                  <Typography variant="small" className="text-dark-plum">
+                    {status}
+                  </Typography>
                   {(role === "investor" && hasApplicationNotification && status === "Await Review") ||
                    (role === "admin" && hasApplicationNotification && status === "Pending") ? (
                     <span className="inline-block h-2 w-2 rounded-full bg-red-600" />

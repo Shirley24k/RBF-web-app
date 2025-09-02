@@ -17,10 +17,7 @@ export const InvestorHome = (): JSX.Element => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [isStripeLinked, setIsStripeLinked] = useState(localStorage.getItem("isStripeLinked") === "true");
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem("sidenavOpen");
-    return saved === null ? true : saved === "true";
-  });
+
   const [analytics, setAnalytics] = useState({
     totalApplications: 0,
     ongoingApplications: 0,
@@ -42,41 +39,6 @@ export const InvestorHome = (): JSX.Element => {
     fetchAnalytics();
     fetchRecentApplications();
   }, []);
-
-  // Listen for sidebar state changes
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem("sidenavOpen");
-      setSidebarOpen(saved === null ? true : saved === "true");
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also listen for custom events if needed
-    const handleSidebarToggle = () => {
-      handleStorageChange();
-    };
-    
-    window.addEventListener('sidebarToggle', handleSidebarToggle);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('sidebarToggle', handleSidebarToggle);
-    };
-  }, []);
-
-  // Poll for sidebar state changes (fallback)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const saved = localStorage.getItem("sidenavOpen");
-      const currentState = saved === null ? true : saved === "true";
-      if (currentState !== sidebarOpen) {
-        setSidebarOpen(currentState);
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [sidebarOpen]);
 
   const fetchAnalytics = async () => {
     try {
@@ -173,7 +135,7 @@ export const InvestorHome = (): JSX.Element => {
       </div>
 
       {/* Main Content */}
-      <main className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300`}>
+      <main className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300">
         <div className="flex-1 p-8 max-md:p-6 max-sm:p-4">
           {isStripeLinked ? (
             <div className="w-full">

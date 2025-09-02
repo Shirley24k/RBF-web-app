@@ -13,15 +13,13 @@ import { useEffect, useState } from "react";
 import { Sidenav } from "../../components/sidenav";
 import { StatCard } from "../../components/StatCard";
 import { StatusBadge } from "../../components/StatusBadge";
+import { handleStaffPermissionError } from "../../utils/permissionHandler";
 
 export const StartupHome = (): JSX.Element => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [isStripeLinked, setIsStripeLinked] = useState(localStorage.getItem("isStripeLinked") === "true");
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem("sidenavOpen");
-    return saved === null ? true : saved === "true";
-  });
+
   const [analytics, setAnalytics] = useState({
     totalApplications: 0,
     awaitReviewApplications: 0,
@@ -34,49 +32,27 @@ export const StartupHome = (): JSX.Element => {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('stripe_linked') === '1'){
-      localStorage.setItem('isStripeLinked', 'true');
-      setIsStripeLinked(true);
-    }
-    fetchAnalytics();
-    fetchRecentApplications();
-  }, []);
-
-  // Listen for sidebar state changes
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem("sidenavOpen");
-      setSidebarOpen(saved === null ? true : saved === "true");
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also listen for custom events if needed
-    const handleSidebarToggle = () => {
-      handleStorageChange();
-    };
-    
-    window.addEventListener('sidebarToggle', handleSidebarToggle);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('sidebarToggle', handleSidebarToggle);
-    };
-  }, []);
-
-  // Poll for sidebar state changes (fallback)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const saved = localStorage.getItem("sidenavOpen");
-      const currentState = saved === null ? true : saved === "true";
-      if (currentState !== sidebarOpen) {
-        setSidebarOpen(currentState);
+    const initializeData = async () => {
+      const params = new URLSearchParams(window.location.search);
+      if(params.get('stripe_linked') === '1'){
+        localStorage.setItem('isStripeLinked', 'true');
+        setIsStripeLinked(true);
+        setLoading(true); // Set loading state while creating dummy transactions
+        await createDummyTransactions();
+        // Only fetch analytics and recent applications after dummy transactions are created
+        await fetchAnalytics();
+        await fetchRecentApplications();
+        setLoading(false); // Set loading to false after everything is complete
+      } else {
+        // If no dummy transactions needed, fetch data immediately
+        await fetchAnalytics();
+        await fetchRecentApplications();
+        setLoading(false); // Set loading to false after data is fetched
       }
-    }, 100);
+    };
 
-    return () => clearInterval(interval);
-  }, [sidebarOpen]);
+    initializeData();
+  }, []);
 
   const fetchAnalytics = async () => {
     try {
@@ -99,10 +75,13 @@ export const StartupHome = (): JSX.Element => {
           totalFundingReceived: data.stats.total_funding_received || 0
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching analytics:", error);
-    } finally {
-      setLoading(false);
+      
+      // Handle staff permission errors specifically
+      if (handleStaffPermissionError(error, 'Insufficient permissions to view analytics', 'view analytics')) {
+        return;
+      }
     }
   };
 
@@ -120,8 +99,59 @@ export const StartupHome = (): JSX.Element => {
       if (data) {
         setRecentApplications(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching recent applications:", error);
+      
+      // Handle staff permission errors specifically
+      if (handleStaffPermissionError(error, 'Insufficient permissions to view recent applications', 'view recent applications')) {
+        return;
+      }
+    }
+  };
+
+  const createDummyTransactions = async () => {
+    try {
+      // Get startup details to get stripe_id
+      const startupResponse = await axios.get(`${API_BASE_URL}/startup/profile`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const startupData = startupResponse.data.data;
+      const stripeId = startupData.stripe_id;
+
+      if (!stripeId) {
+        alert('Stripe account not linked. Please link your Stripe account first.');
+        return;
+      }
+
+      // Create dummy transactions for 6 months (2025-01 to 2025-06)
+      const months = ['2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06'];
+
+      for (const month of months) {
+        try {
+          const response = await axios.post(`${API_BASE_URL}/dummy-transactions`, {
+            month: month,
+            stripe_id: stripeId
+          }, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          console.log(`Dummy transactions created for ${month}:`, response.data);
+        } catch (error: any) {
+          console.error(`Failed to create dummy transactions for ${month}:`, error);
+        }
+      }
+    } catch (error: any) {
+      console.error("Error creating dummy transactions:", error);
+      alert('Failed to create dummy transactions. Please try again.');
+    } finally {
+      console.log('Dummy transactions created successfully');
     }
   };
   
@@ -158,6 +188,14 @@ export const StartupHome = (): JSX.Element => {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white flex flex-row justify-center w-full">
       {/* Desktop Sidebar */}
@@ -171,7 +209,7 @@ export const StartupHome = (): JSX.Element => {
       </div>
 
       {/* Main Content */}
-      <main className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300`}>
+      <main className="ml-72 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300">
         <div className="flex-1 p-8 max-md:p-6 max-sm:p-4">
           {isStripeLinked ? (
             <div className="w-full">
@@ -184,13 +222,7 @@ export const StartupHome = (): JSX.Element => {
                   Here's your funding journey overview
                 </p>
               </div>
-
-              {loading ? (
-                <div className="flex justify-center items-center h-80 max-md:h-64 max-sm:h-48">
-                  <Spinner className="h-16 w-16 max-md:h-12 max-md:w-12 max-sm:h-10 max-sm:w-10 text-dark-plum" />
-                </div>
-              ) : (
-                <>
+  
                   {/* Analytics Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-md:gap-6 max-sm:gap-4 mb-10 max-md:mb-8 max-sm:mb-6">
                     <StatCard
@@ -271,9 +303,9 @@ export const StartupHome = (): JSX.Element => {
                         </Button>
                         <Button 
                           className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4 max-sm:px-3 rounded-lg text-base max-md:text-sm max-sm:text-xs capitalize"
-                          onClick={()=>{window.location.href="/startup-funding"}}
+                          onClick={()=>{window.location.href="/proposal-management"}}
                         >
-                          View All Applications
+                          Create Proposal
                         </Button>
                       </div>
                     </div>
@@ -310,8 +342,6 @@ export const StartupHome = (): JSX.Element => {
                       )}
                     </div>
                   </div>
-                </>
-              )}
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center min-h-screen">

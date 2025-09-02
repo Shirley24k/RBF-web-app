@@ -2,12 +2,12 @@ import { Route, Routes } from "react-router-dom";
 import { PrivateRoute } from "./PrivateRoute";
 import { AdminFunding } from "./screens/Admin/AdminFundingApplication";
 import { AdminHome } from "./screens/Admin/AdminHome";
+import { AdminUserManagement } from "./screens/Admin/AdminUserManagement";
 import { ApplicationDetails } from "./screens/ApplicationDetails";
 import { ForgotPassword } from "./screens/ForgotPasswordPage";
 import { InvestorFunding } from "./screens/Investor/InvestorFundingApplication";
 import { InvestorHome } from "./screens/Investor/InvestorHome";
 import { InvestorRegister } from "./screens/Investor/InvestorRegisterPage";
-import { EditProfile } from "./screens/Investor/ModifyProfile";
 import { InvestorProfile } from "./screens/Investor/Profile";
 import { InvestorTransaction } from "./screens/Investor/Transaction";
 import { LandingPage } from "./screens/LandingPage";
@@ -15,6 +15,9 @@ import { Login } from "./screens/LoginPage";
 import { Register } from "./screens/RegisterPage";
 import { ResetPassword } from "./screens/ResetPasswordPage";
 import { ProcessingFundingPage } from "./screens/Startup/ProcessingFundingPage";
+import { StartupProfile } from "./screens/Startup/Profile";
+import { ProposalListings } from "./screens/Startup/ProposalListings";
+import { ProposalManagement } from "./screens/Startup/ProposalManagement";
 import { SelectInvestor } from "./screens/Startup/SelectInvestor";
 import { StartupFunding } from "./screens/Startup/StartupFundingApplication";
 import { StartupHome } from "./screens/Startup/StartupHome";
@@ -39,6 +42,9 @@ function App() {
             {/* Private Routes */}
             <Route element={<PrivateRoute />}>
                 <Route path="/startup-home" element={<StartupHome />} />
+                <Route path="/proposal-listings" element={<ProposalListings />} />
+                <Route path="/proposal-management" element={<ProposalManagement />} />
+                <Route path="/startup-profile" element={<StartupProfile />} />
                 <Route path="/startup-funding" element={<StartupFunding />} />
                 <Route path="/submit-funding" element={<StartupSubmitFunding />} />
                 <Route path="/processing-funding" element={<ProcessingFundingPage />} />
@@ -50,10 +56,10 @@ function App() {
                 <Route path="/investor-home" element={<InvestorHome />} />
                 <Route path="/investor-funding" element={<InvestorFunding />} />
                 <Route path="/investor-profile" element={<InvestorProfile />} />
-                <Route path="/edit-profile" element={<EditProfile />} />
                 <Route path="/investor-transaction" element={<InvestorTransaction />} />
                 <Route path="/admin-home" element={<AdminHome />} />
                 <Route path="/admin-funding" element={<AdminFunding />} />
+                <Route path="/admin-user-management" element={<AdminUserManagement />} />
             </Route>
         </Routes>
     );

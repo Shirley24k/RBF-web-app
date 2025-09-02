@@ -14,14 +14,14 @@ const statusTypes = {
     textColor: "text-gray-900",
   },
   "Await Review": {
-    bgColor: "bg-[var(--amber-50)]",
-    dotColor: "bg-[var(--amber-800)]",
-    textColor: "text-[var(--amber-800)]",
+    bgColor: "bg-amber-50",
+    dotColor: "bg-amber-800",
+    textColor: "text-amber-800",
   },
   Pending: {
-    bgColor: "bg-[var(--deep-orange-50)]",
-    dotColor: "bg-[var(--deep-orange-500)]",
-    textColor: "text-[var(--deep-orange-500)]",
+    bgColor: "bg-deep-orange-50",
+    dotColor: "bg-deep-orange-500",
+    textColor: "text-deep-orange-500",
   },
   "In Progress": {
     bgColor: "bg-blue-50",
@@ -39,9 +39,9 @@ const statusTypes = {
     textColor: "text-green-900",
   },
   Completed: {
-    bgColor: "bg-[var(--brown-50)]",
-    dotColor: "bg-[var(--brown-700)]",
-    textColor: "text-[var(--brown-700)]",
+    bgColor: "bg-brown-50",
+    dotColor: "bg-brown-700",
+    textColor: "text-brown-700",
   },
 };
 

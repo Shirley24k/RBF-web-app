@@ -27,9 +27,9 @@ export const ProcessingFundingPage = (): JSX.Element => {
 
   const processingSteps: ProcessingStep[] = [
     {
-      id: 'proposal-analysis',
-      title: 'Business Proposal Analysis',
-      description: 'Extracting key information and evaluating business model',
+      id: 'submit-application',
+      title: 'Submit Application',
+      description: 'Processing your funding request and creating application',
       estimatedTime: '30-60 seconds'
     },
     {
@@ -47,38 +47,45 @@ export const ProcessingFundingPage = (): JSX.Element => {
   ];
 
   useEffect(() => {
-    // Start processing steps - application ID will be created during proposal analysis
+    // Start processing steps - proposal ID will be used to create application
     processApplicationSteps();
   }, []);
 
   const processApplicationSteps = async () => {
     try {
-      // Step 1: Proposal Analysis
+      // Step 1: Submit Application (starts at 0% progress)
       setCurrentStep(0);
       setOverallProgress(0);
       
-      // Start continuous progress for proposal analysis (0% to 50%)
-      const proposalTimer = setInterval(() => {
+      // Start continuous progress for submit application (0% to 50%)
+      const submitTimer = setInterval(() => {
         setOverallProgress(prev => {
           if (prev >= 50) {
-            clearInterval(proposalTimer);
+            clearInterval(submitTimer);
             return 50;
           }
-          return prev + 0.5; // Increment by 0.5% every 50ms for smooth movement
+          return prev + 1; // Increment by 1% every 50ms for smooth movement
         });
       }, 50);
       
-      const proposalRes = await axios.post(`${API_BASE_URL}/startup/analyze-proposal`, {
-        proposal_path: location.state?.proposal_path || ''
+      // Get proposal ID from location state
+      const proposalId = location.state?.proposal_id;
+      if (!proposalId) {
+        throw new Error('Proposal ID not found. Please select a proposal to submit for funding.');
+      }
+      
+      // Submit the application using the submit-funding API
+      const submitResponse = await axios.post(`${API_BASE_URL}/startup/submit-funding`, {
+        proposal_id: proposalId
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
 
+      // Get the application ID from the response
+      const appId = submitResponse.data.application_id;
+      setApplicationId(appId);
+      
       setOverallProgress(50);
-
-      // Update applicationId with the one returned from proposal analysis
-      const newAppId = proposalRes.data.application_id;
-      setApplicationId(newAppId);
 
       // Step 2: Risk Assessment
       setCurrentStep(1);
@@ -94,7 +101,7 @@ export const ProcessingFundingPage = (): JSX.Element => {
         });
       }, 50);
       
-      const riskRes = await axios.post(`${API_BASE_URL}/startup/assess-risk/${newAppId}`, {}, {
+      const riskRes = await axios.post(`${API_BASE_URL}/startup/assess-risk/${appId}`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
 
@@ -112,21 +119,23 @@ export const ProcessingFundingPage = (): JSX.Element => {
       // Investor matching completes immediately since we're already at 100%
       setOverallProgress(100);
       
-      const matchRes = await axios.post(`${API_BASE_URL}/startup/match-investors/${newAppId}`, {}, {
+      const matchRes = await axios.post(`${API_BASE_URL}/startup/match-investors/${appId}`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
 
       setOverallProgress(100);
 
       // Check if matching was successful and get investor data
-      if (matchRes.data.matching_response && matchRes.data.matching_response.data) {
+      if (matchRes.data.matching_response && Array.isArray(matchRes.data.matching_response)) {
         navigate('/select-investor', {
           state: {
-            investorMatches: matchRes.data.matching_response.data,
-            applicationId: newAppId
+            investorMatches: matchRes.data.matching_response,
+            applicationId: appId
           }
         });
       } else {
+        // No investors found or unexpected response format
+        console.warn('No investor matches found or unexpected response format:', matchRes.data);
         setIsProcessing(false);
       }
     } catch (error) {

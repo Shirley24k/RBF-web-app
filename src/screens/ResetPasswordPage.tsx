@@ -1,4 +1,4 @@
-import { Button, Input } from "@material-tailwind/react";
+import { Button, Input, Spinner } from "@material-tailwind/react";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
 import { useState } from "react";
@@ -158,11 +158,17 @@ export const ResetPassword = (): JSX.Element => {
 
             {/* Submit Button */}
             <Button
-              className="w-full h-10 sm:h-12 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-xs sm:text-sm rounded-lg capitalize hover:bg-light-purple"
+              className="w-full h-10 sm:h-12 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-xs sm:text-sm rounded-lg capitalize hover:bg-light-purple disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleSubmit}
               disabled={isLoading}
             >
-              {isLoading ? "Resetting..." : "Reset Password"}
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Spinner className="h-4 w-4 sm:h-5 sm:w-5" />
+                </div>
+              ) : (
+                "Reset Password"
+              )}
             </Button>
 
             {/* Back to Login */}

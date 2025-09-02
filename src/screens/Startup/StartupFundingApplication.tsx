@@ -1,10 +1,10 @@
-import { FunnelIcon } from "@heroicons/react/24/solid";
-import { Button, Card, CardBody, Spinner } from "@material-tailwind/react";
+import { Button, Card, CardBody, Spinner, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Sidenav } from "../../components/sidenav";
 import { StatusBadge } from "../../components/StatusBadge.tsx";
+import { handleStaffPermissionError } from "../../utils/permissionHandler";
 
 export const StartupFunding = (): JSX.Element => {
   const navigate = useNavigate();
@@ -14,15 +14,25 @@ export const StartupFunding = (): JSX.Element => {
   const [loading, setLoading] = useState(true);
 
   const fetchApplications = async () => {
-    await axios.get(`${API_BASE_URL}/startup/applications`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      }
-    })
-    .then((response) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/startup/applications`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
+      
       setFundingApplication(response.data.data);
       setLoading(false);
-    })
+    } catch (error: any) {
+      console.error("Error fetching applications:", error);
+      
+      // Handle staff permission errors specifically
+      if (handleStaffPermissionError(error, 'Insufficient permissions to view applications', 'view applications')) {
+        return;
+      }
+      
+      setLoading(false);
+    }
   }
   
   useEffect(() => {
@@ -62,9 +72,9 @@ export const StartupFunding = (): JSX.Element => {
       </div>
       <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
         <div className="flex flex-row justify-between items-center py-6 max-md:py-4 w-full max-w-2xl md:max-w-3xl mx-auto">
-          <h1 className="text-3xl max-md:text-2xl max-sm:text-lg font-medium text-black font-text-3xl-font-medium">
+          <Typography variant="h3" className="text-3xl max-md:text-2xl max-sm:text-lg font-medium text-black font-text-3xl-font-medium">
             Funding Application
-          </h1>
+          </Typography>
           <Button
             variant="filled"
             className="bg-dark-plum hover:bg-light-purple text-white capitalize mt-4 max-md:mt-4 sm:mt-0 px-6 max-md:px-4 max-sm:px-2"
@@ -81,9 +91,9 @@ export const StartupFunding = (): JSX.Element => {
           {/* No Applications Card */}
           {fundingApplication && filteredApplications.length === 0 ? (
             <div className="flex justify-center">
-              <div className="text-center text-gray-600 text-lg max-md:text-base">
+              <Typography variant="paragraph" className="text-center text-gray-600 text-lg max-md:text-base">
                 No applications found for the selected filter.
-              </div>
+              </Typography>
             </div>
           ) : (
             <div className="w-full max-w-2xl md:max-w-3xl mx-auto">
@@ -103,7 +113,6 @@ export const StartupFunding = (): JSX.Element => {
                       </th>
                       <th>
                         <div className="flex items-center gap-2">
-                          <FunnelIcon className="w-4 h-4 max-md:w-3 max-md:h-3 text-light-purple" />
                           <span className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap">
                             Status
                           </span>

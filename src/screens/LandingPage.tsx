@@ -337,14 +337,14 @@ export const LandingPage = (): JSX.Element => {
 
               <div className="flex flex-col md:flex-row justify-end gap-32 max-md:gap-16 max-sm:gap-8">
                 <div className="flex flex-col gap-6 max-md:gap-4 max-sm:gap-3">
-                  <div className="font-small-text font-semibold text-beige text-[length:var(--small-text-font-size)] tracking-[var(--small-text-letter-spacing)] leading-[var(--small-text-line-height)] [font-style:var(--small-text-font-style)]">
+                  <div className="font-small-text font-semibold text-beige text-[16px] tracking-[0px] leading-[150%] font-normal">
                     Resources
                   </div>
 
                   {resourceLinks.map((link, index) => (
                     <div
                       key={index}
-                      className="font-small-text font-medium text-beige text-[length:var(--small-text-font-size)] tracking-[var(--small-text-letter-spacing)] leading-[var(--small-text-line-height)] [font-style:var(--small-text-font-style)]"
+                      className="font-small-text font-medium text-beige text-[16px] tracking-[0px] leading-[150%] font-normal"
                     >
                       <a href={link.link}>{link.title}</a>
                     </div>
@@ -353,7 +353,7 @@ export const LandingPage = (): JSX.Element => {
 
                 {/* Contact Us Section */}
                 <div className="flex flex-col gap-6 max-md:gap-4 max-sm:gap-3">
-                  <div className="font-small-text font-semibold text-beige text-[length:var(--small-text-font-size)] tracking-[var(--small-text-letter-spacing)] leading-[var(--small-text-line-height)] [font-style:var(--small-text-font-style)]">
+                  <div className="font-small-text font-semibold text-beige text-[16px] tracking-[0px] leading-[150%] font-normal">
                     Contact Us
                   </div>
 
@@ -364,7 +364,7 @@ export const LandingPage = (): JSX.Element => {
                         className="flex items-start gap-4 max-md:gap-3 max-sm:gap-2 text-white"
                       >
                         {item.icon}
-                        <div className="font-small-text font-medium text-beige text-[length:var(--small-text-font-size)] tracking-[var(--small-text-letter-spacing)] leading-[var(--small-text-line-height)] [font-style:var(--small-text-font-style)]">
+                        <div className="font-small-text font-medium text-beige text-[16px] tracking-[0px] leading-[150%] font-normal">
                           {item.text}
                         </div>
                       </div>

@@ -31,10 +31,6 @@ export const InvestorTransaction = (): JSX.Element => {
     })
   }
 
-  useEffect(() => {
-    fetchApplications()
-  }, [])
-
   const handleTopUp = () => {
     axios.post(`${API_BASE_URL}/investor/top-up`, {
       amount: topUpAmount,
@@ -78,6 +74,7 @@ export const InvestorTransaction = (): JSX.Element => {
   }, [status])
 
   useEffect(()=>{
+    fetchApplications();
     getBalance();
   }, [])
 
@@ -163,7 +160,7 @@ export const InvestorTransaction = (): JSX.Element => {
                         No.
                       </th>
                       <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left pl-6 max-md:pl-4">
-                        Application
+                        Startup
                       </th>
                       <th className="font-bold text-light-purple text-base max-md:text-sm tracking-[0] leading-[21px] whitespace-nowrap text-left">
                         Datetime
@@ -261,7 +258,7 @@ export const InvestorTransaction = (): JSX.Element => {
               variant="ghost"
               color="gray"
               onClose={() => setSnackbarMessage("")}
-              className="w-fit rounded-lg border-none flex items-center justify-between px-3 py-2 max-md:py-4 font-medium text-sm max-md:text-base"
+              className="w-fit rounded-lg border-none flex items-center justify-between px-3 font-medium text-sm max-md:text-base"
             >
               {snackbarMessage}
             </Alert>

@@ -1,11 +1,12 @@
-import { Button, Input, Option, Select } from "@material-tailwind/react";
+import { Button, Input, Option, Select, Spinner } from "@material-tailwind/react";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { useState } from "react";
 import PhoneInput, { Country } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useNavigate } from "react-router-dom";
+import { isValidPhoneNumber } from "../../lib/utils";
+import { industryOptions } from "../../utils/industryOptions";
 
 interface FormErrors {
   fullName?: string;
@@ -36,8 +37,8 @@ export const StartupRegister = (): JSX.Element => {
   const [registrationError, setRegistrationError] = useState("");
 
   const validatePhoneNumber = (number: string, country: Country): boolean => {
-    const phone = parsePhoneNumberFromString(number, country);
-    return phone?.isValid() || false;
+    // Use our utility function for consistent validation
+    return isValidPhoneNumber(number, country);
   };
 
   const validateField = (name: keyof FormErrors, value: string): string | undefined => {
@@ -54,7 +55,7 @@ export const StartupRegister = (): JSX.Element => {
         return undefined;
       case 'password':
         if (!value) return "Password is required";
-        if (value.length < 6) return "Password must be at least 6 characters";
+        if (value.length < 8) return "Password must be at least 8 characters";
         return undefined;
       case 'confirmPassword':
         if (!value) return "Confirm password is required";
@@ -150,6 +151,7 @@ export const StartupRegister = (): JSX.Element => {
 
       const response = await axios.post(`${API_BASE_URL}/register/startup`, formData);
       if (response.status === 201) {
+        alert("Please verify your email before logging in.");
         navigate("/login");
       }
     } catch (error: any) {
@@ -314,11 +316,11 @@ export const StartupRegister = (): JSX.Element => {
                       onChange={(value) => handleInputChange('companySector', value as string)}
                       error={!!errors.companySector}
                     >
-                      <Option value="SaaS">SaaS</Option>
-                      <Option value="FinTech">FinTech</Option>
-                      <Option value="HealthTech">HealthTech</Option>
-                      <Option value="AI">AI</Option>
-                      <Option value="EdTech">EdTech</Option>
+                      {industryOptions.map((option) => (
+                        <Option key={option.value} value={option.value}>
+                          {option.label}
+                        </Option>
+                      ))}
                     </Select>
                   </div>
                   {errors.companySector && <span className="text-red-500 text-sm">{errors.companySector}</span>}
@@ -360,11 +362,17 @@ export const StartupRegister = (): JSX.Element => {
 
             <div className="flex flex-col w-full max-w-[382px] items-start gap-2 mx-auto">
               <Button
-                className="w-full h-12 bg-dark-plum text-white font-bold text-sm rounded-lg capitalize hover:bg-light-purple"
+                className="w-full h-12 bg-dark-plum text-white font-bold text-sm rounded-lg capitalize hover:bg-light-purple disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Signing Up..." : "Sign Up"}
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Spinner className="h-5 w-5" />
+                  </div>
+                ) : (
+                  "Sign Up"
+                )}
               </Button>
 
               <p className="w-full text-center text-sm font-normal">

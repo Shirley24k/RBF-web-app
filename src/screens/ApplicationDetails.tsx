@@ -1,17 +1,18 @@
 import { ArrowUpTrayIcon, BellAlertIcon, ChevronLeftIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import {
-    Button,
-    Card,
-    CardBody,
-    IconButton,
-    Spinner,
-    Textarea,
-    Tooltip,
-    Typography,
+  Button,
+  Card,
+  CardBody,
+  IconButton,
+  Spinner,
+  Textarea,
+  Tooltip,
+  Typography,
 } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { ProposalModal } from "../components/ProposalModal";
 import { Sidenav } from "../components/sidenav";
 
 interface ApplicationDetailsProps {
@@ -30,10 +31,14 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   const [adminMessage, setAdminMessage] = useState<string>("");
   const [agreement, setAgreement] = useState<any>(null);
   const [notifyInvestor, setNotifyInvestor] = useState<boolean>(false);
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem("sidenavOpen");
-    return saved === null ? true : saved === "true";
-  });
+  const [sendingNotifyInvestor, setSendingNotifyInvestor] = useState<boolean>(false);
+  const [showProposalModal, setShowProposalModal] = useState<boolean>(false);
+  const [proposalData, setProposalData] = useState<any>(null);
+  const [isAccepting, setIsAccepting] = useState<boolean>(false);
+  const [isDeclining, setIsDeclining] = useState<boolean>(false);
+  const [isAdminApproving, setIsAdminApproving] = useState<boolean>(false);
+  const [isAdminDeclining, setIsAdminDeclining] = useState<boolean>(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Helper to get agreement paths
@@ -46,41 +51,6 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   const needInvestorReupload = agreement ? agreement?.needs_investor_reupload : false
   const userNeedReupload = userRole === 'startup' ? needStartupReupload : needInvestorReupload
   const otherNeedReupload = userRole === 'startup' ? needInvestorReupload : needStartupReupload
-
-  // Listen for sidebar state changes
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem("sidenavOpen");
-      setSidebarOpen(saved === null ? true : saved === "true");
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also listen for custom events if needed
-    const handleSidebarToggle = () => {
-      handleStorageChange();
-    };
-    
-    window.addEventListener('sidebarToggle', handleSidebarToggle);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('sidebarToggle', handleSidebarToggle);
-    };
-  }, []);
-
-  // Poll for sidebar state changes (fallback)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const saved = localStorage.getItem("sidenavOpen");
-      const currentState = saved === null ? true : saved === "true";
-      if (currentState !== sidebarOpen) {
-        setSidebarOpen(currentState);
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [sidebarOpen]);
 
   const fetchApplication = async () => {
     try {
@@ -176,6 +146,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       return;
     }
 
+    setIsAccepting(true);
     try {
       const response = await axios.patch(`${API_BASE_URL}/application/${id}/accept`, {
         message: message
@@ -192,6 +163,8 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       }
     } catch (error) {
       alert("Failed to accept application. Please try again.");
+    } finally {
+      setIsAccepting(false);
     }
   };
 
@@ -201,6 +174,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       return;
     }
 
+    setIsDeclining(true);
     try {
       const response = await axios.patch(`${API_BASE_URL}/application/${id}/reject`, {
         message: message
@@ -217,15 +191,18 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       }
     } catch (error) {
       alert("Failed to decline application. Please try again.");
+    } finally {
+      setIsDeclining(false);
     }
   };
 
   const handleAdminApprove = async () => {
     if (!adminMessage.trim()) {
-        alert("Please provide a message for the approval.");
-        return;
+      alert("Please provide a message for the approval.");
+      return;
     }
 
+    setIsAdminApproving(true);
     try {    
       const response = await axios.patch(`${API_BASE_URL}/application/${id}/admin-approve`, {
         message: adminMessage
@@ -242,6 +219,8 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       }
     } catch (error) {
       console.error("Failed to approve application. Please try again.");
+    } finally {
+      setIsAdminApproving(false);
     }
   };
 
@@ -251,6 +230,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       return;
     }
 
+    setIsAdminDeclining(true);
     try {
       const response = await axios.patch(`${API_BASE_URL}/application/${id}/admin-decline`, {
         message: adminMessage
@@ -267,6 +247,8 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       }
     } catch (error) {
       alert("Failed to decline application. Please try again.");
+    } finally {
+      setIsAdminDeclining(false);
     }
   };
 
@@ -274,7 +256,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
     try{
       const response = await axios.get(`${API_BASE_URL}/agreement/${id}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem("token")}`,
         },
       });
       setAgreement(response.data.data);
@@ -283,18 +265,42 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
     }
   }
 
-  const handleNotifyInvestor = () => {
-    axios.post(`${API_BASE_URL}/investor-topup-reminder/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-    })
-    .then((response)=>{
+  const getProposalData = async () => {
+    try {
+      if (application?.proposal_id) {
+        const response = await axios.get(`${API_BASE_URL}/startup/proposals/${application.proposal_id}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setProposalData(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching proposal data:", error);
+    }
+  }
+
+  const openProposalModal = () => {
+    if (!proposalData) {
+      getProposalData();
+    }
+    setShowProposalModal(true);
+  };
+
+  const handleNotifyInvestor = async () => {
+    try {
+      setSendingNotifyInvestor(true);
+      await axios.post(`${API_BASE_URL}/investor-topup-reminder/${id}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
       setNotifyInvestor(true);
-    })
-    .catch((error)=>{
+    } catch (error) {
       console.error('Failed to send reminder:', error);
-    });
+    } finally {
+      setSendingNotifyInvestor(false);
+    }
   };
 
   useEffect(() => {
@@ -384,20 +390,20 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
   }
   
   return (
-    <div className="bg-white flex flex-row justify-center w-full">
+    <div className="bg-white flex flex-row justify-center w-full mb-10">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+      <div className="hidden lg:block fixed w-32 h-full left-0 top-0 z-20">
         <Sidenav active="application" />
       </div>
 
       {/* Mobile Layout */}
-      <div className="lg:hidden">
+      <div className="lg:hidden z-10">
         <Sidenav active="application" />
       </div>
 
       {/* Main Content */}
       <div className="flex flex-col flex-1">
-        <div className={`${sidebarOpen ? 'ml-64' : 'ml-32'} max-md:ml-24 max-sm:ml-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 max-sm:gap-2 transition-all duration-300`}>
+        <div className="ml-32 max-md:ml-24 max-sm:ml-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 max-sm:gap-2 transition-all duration-300">
           <div className="py-8 max-md:py-6 max-sm:py-4 flex items-center">
               <IconButton
               variant="text"
@@ -423,7 +429,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
           )}
           </div>
         </div>
-        <div className={`${sidebarOpen ? 'ml-64' : 'ml-40'} max-md:ml-24 max-sm:ml-20 max-w-7xl px-4 max-md:px-6 max-sm:px-4 transition-all duration-300`}>
+        <div className="ml-32 max-md:ml-24 max-sm:ml-20 max-w-7xl px-4 max-md:px-6 max-sm:px-4 transition-all duration-300">
           {/* Application Information Card (always shown) */}
           <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
             <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
@@ -433,7 +439,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-md:gap-3 max-sm:gap-2">
                 {/* Desktop/Tablet: Two-column layout */}
                 <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Business Proposal</Typography>
+                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Proposal Details</Typography>
                   <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Application Status</Typography>
                   <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Application Datetime</Typography>
                   <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Amount</Typography>
@@ -448,14 +454,12 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                   )}
                 </div>
                 <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                  <a 
-                    className="underline font-[400] cursor-pointer text-gray-500 text-sm max-md:text-xs h-6 flex items-center" 
-                    href={application.proposal_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button 
+                    className="underline font-[400] cursor-pointer text-gray-500 text-sm max-md:text-xs h-6 flex items-center hover:text-gray-800" 
+                    onClick={openProposalModal}
                   >
-                    Business proposal.pdf
-                  </a>
+                    View Business Proposal
+                  </button>
                   <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                     {application.status}
                   </Typography>
@@ -489,15 +493,13 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                 {/* Mobile: Label-value pairs */}
                 <div className="md:hidden flex flex-col gap-y-4 max-sm:gap-y-3">
                   <div className="flex flex-col gap-y-1">
-                    <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Business Proposal</Typography>
-                    <a 
-                      className="underline font-[400] cursor-pointer text-gray-500 text-sm max-sm:text-xs" 
-                      href={application.proposal_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Proposal Details</Typography>
+                    <button 
+                      className="underline font-[400] text-sm max-sm:text-xs flex flex-start" 
+                      onClick={openProposalModal}
                     >
-                      Business proposal.pdf
-                    </a>
+                      View Business Proposal
+                    </button>
                   </div>
                   
                   <div className="flex flex-col gap-y-1">
@@ -751,11 +753,11 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               <Button
                 className="flex items-center gap-2 bg-dark-plum hover:bg-light-purple text-white font-bold capitalize px-5 max-md:px-4 max-sm:px-3 py-2 max-md:py-1.5 max-sm:py-1 rounded-lg shadow-md ml-0 sm:ml-6 text-sm max-md:text-xs"
                 onClick={handleNotifyInvestor}
-                disabled={notifyInvestor}
+                disabled={sendingNotifyInvestor || notifyInvestor}
                 title="Notify Investor to Top Up Balance"
               >
                 <BellAlertIcon className="w-6 h-6 max-md:w-5 max-md:h-5 max-sm:w-4 max-sm:h-4" />
-                {notifyInvestor ? 'Notification Sent' : 'Notify Investor'}
+                {sendingNotifyInvestor ? (<Spinner className="h-4 w-4" />) : (notifyInvestor ? 'Notification Sent' : 'Notify Investor')}
               </Button>
             </div>
           )}
@@ -856,11 +858,17 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
               <div className="flex flex-col sm:flex-row gap-4 max-md:gap-3 max-sm:gap-2">
                 <Button
-                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-2"
+                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleSubmit}
                     disabled={!selectedFile || isUploading}
                 >
-                    {isUploading ? "Uploading..." : "Submit"}
+                    {isUploading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <Spinner className="h-4 w-4" />
+                      </div>
+                    ) : (
+                      "Submit"
+                    )}
                 </Button>
                 <Button
                   className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-2"
@@ -922,17 +930,31 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
               />
               <div className="flex flex-row justify-end gap-4 max-md:gap-3 max-sm:gap-2">
                 <Button
-                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 px-4"
+                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleAccept}
+                  disabled={isAccepting}
                 >
-                  Accept
+                  {isAccepting ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner className="h-4 w-4" />
+                    </div>
+                  ) : (
+                    "Accept"
+                  )}
                 </Button>
                 <Button
-                  className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 px-4"
+                  className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
                   variant="outlined"
                   onClick={handleDecline}
+                  disabled={isDeclining}
                 >
-                  Decline
+                  {isDeclining ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner className="h-4 w-4" />
+                    </div>
+                  ) : (
+                    "Decline"
+                  )}
                 </Button>
               </div>
             </div>
@@ -982,18 +1004,31 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
               <div className="flex flex-row justify-end gap-4 max-md:gap-3 max-sm:gap-2">
                 <Button
-                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 px-4"
+                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleAdminApprove}
-                  disabled={insufficientBalance()}
+                  disabled={insufficientBalance() || isAdminApproving}
                 >
-                  Approve
+                  {isAdminApproving ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner className="h-4 w-4" />
+                    </div>
+                  ) : (
+                    "Approve"
+                  )}
                 </Button>
                 <Button
-                  className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 px-4"
+                  className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
                   variant="outlined"
                   onClick={handleAdminDecline}
+                  disabled={isAdminDeclining}
                 >
-                  Decline
+                  {isAdminDeclining ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner className="h-4 w-4" />
+                    </div>
+                  ) : (
+                    "Decline"
+                  )}
                 </Button>
               </div>
             </div>
@@ -1059,6 +1094,14 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
           )}
         </div>
       </div>
+
+      {/* Proposal Modal */}
+      <ProposalModal
+        open={showProposalModal}
+        onClose={() => setShowProposalModal(false)}
+        proposal={proposalData}
+        title="Business Proposal Details"
+      />
     </div>
   );
 }; 
