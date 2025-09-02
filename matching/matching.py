@@ -92,32 +92,28 @@ def update_investor(id, investment_preferences):
     
     execute_with_retry(operation)
 
-def insert_startup(id):
+def insert_application(app_id, funding_amount_range, funding_stage, company_sector, tags=None):
     def operation(driver):
+        # Create tags list from parameters and additional tags
+        base_tags = [funding_amount_range, funding_stage, company_sector]
+        if tags:
+            base_tags.extend(tags)
+        
+        # Filter out empty/None tags
+        valid_tags = [tag for tag in base_tags if tag]
+        
         with driver.session() as session:
-            session.run('MERGE (s:Startup {startup: $id})', id=id)
-    
-    execute_with_retry(operation)
-
-def insert_application(app_id, startup_id, funding_amount_range, funding_stage, company_sector):
-    def operation(driver):
-        tags = [funding_amount_range, funding_stage, company_sector]
-        with driver.session() as session:
+            # Create application node
             session.run('MERGE (a:Application {application_id: $id})', id=app_id)
-            session.run(
-                'MATCH (a:Application {application_id: $id}) '
-                'MATCH (s:Startup {startup: $startup_id}) '
-                'MERGE (s)-[:submitted]->(a)',
-                id=app_id, startup_id=startup_id
-            )
-            for tag in tags:
-                if tag:
-                    session.run(
-                        'MERGE (t:Tag {tag: $tag}) '
-                        'MERGE (a:Application {application_id: $id}) '
-                        'MERGE (a)-[:has_tag]->(t)',
-                        tag=tag, id=app_id
-                    )
+            
+            # Create tag nodes and connect to application
+            for tag in valid_tags:
+                session.run(
+                    'MERGE (t:Tag {tag: $tag}) '
+                    'MERGE (a:Application {application_id: $id}) '
+                    'MERGE (a)-[:has_tag]->(t)',
+                    tag=tag, id=app_id
+                )
     
     execute_with_retry(operation)
 

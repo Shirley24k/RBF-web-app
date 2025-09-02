@@ -1,3 +1,4 @@
+@REM task scheduler -> create task -> trigger -> execute run_scraper.bat
 @echo off
 cd /d "C:\RBF\flask-ml"
 call venv\Scripts\activate

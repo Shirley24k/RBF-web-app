@@ -1,3 +1,4 @@
+#executed by run_scraper.bat using task scheduler
 from scraping.scm_scraper import scrape_and_export
 
 if __name__ == "__main__":
