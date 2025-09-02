@@ -15,10 +15,6 @@ class CreateApplicationsTable extends Migration
     {
         Schema::create('applications', function (Blueprint $table) {
             $table->id();
-            $table->string('proposal_path');
-            $table->decimal('funding_amount', 10, 2); 
-            $table->string('funding_stage')->nullable();
-            $table->string('funding_purpose')->nullable();
             $table->decimal('revenue_share_percentage', 10, 2)->nullable();
             $table->decimal('repayment_cap', 10, 2)->nullable();
             $table->decimal('cap_multiple', 10, 2)->nullable();
@@ -28,9 +24,11 @@ class CreateApplicationsTable extends Migration
             $table->longText('message')->nullable(); 
             $table->unsignedBigInteger('startup_id');
             $table->unsignedBigInteger('investor_id')->nullable();
+            $table->unsignedBigInteger('proposal_id')->nullable();
             $table->timestamps();
             $table->foreign('startup_id')->references('id')->on('startups')->onDelete('cascade');
             $table->foreign('investor_id')->references('id')->on('investors')->onDelete('cascade');
+            $table->foreign('proposal_id')->references('id')->on('proposals')->onDelete('set null');
         });
     }
 

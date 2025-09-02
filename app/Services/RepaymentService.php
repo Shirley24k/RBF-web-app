@@ -45,28 +45,38 @@ class RepaymentService
             return $firstRepaymentDate;
         }
 
-        // Determine the base month for calculation: either current or next
-        $year = $today->year;
-        $month = $today->month;
+        // Get the last completed repayment to determine the next due date
+        $lastRepayment = $application->transactions()
+            ->where('type', 'REPAYMENT')
+            ->where('status', 'Completed')
+            ->orderBy('transaction_datetime', 'desc')
+            ->first();
 
-        // Create a Carbon instance for the potential repayment date in the current month
-        $potentialThisMonthRepayment = Carbon::createSafe($year, $month, min($application->repayment_date, Carbon::create($year, $month, 1)->daysInMonth));
-
-        // Check if this month's repayment has been paid AND if the potential repayment date for this month is today or in the past.
-        if ($this->hasRepaymentForMonth($application, $potentialThisMonthRepayment->format('Y-m'))) {
-            // If this month was paid, move to the next month for the next due date
-            $nextMonthRepayment = $potentialThisMonthRepayment->copy()->addMonth();
-            $nextMonthRepayment->day = min($application->repayment_date, $nextMonthRepayment->daysInMonth);
-            return $nextMonthRepayment->startOfDay();
+        if ($lastRepayment) {
+            // Calculate the next repayment date based on the repayment schedule, not the actual completion date
+            $fundTransferDate = Carbon::parse($fundTransfer->transaction_datetime);
+            $firstRepaymentDate = $fundTransferDate->copy()->addDays(30);
+            
+            // Count how many repayments have been completed
+            $completedRepaymentsCount = $application->transactions()
+                ->where('type', 'REPAYMENT')
+                ->where('status', 'Completed')
+                ->count();
+            
+            // The next repayment should be (completedRepaymentsCount + 1) months after the first repayment
+            $nextRepaymentDate = $firstRepaymentDate->copy()->addMonths($completedRepaymentsCount);
+            $nextRepaymentDate->day = min($application->repayment_date, $nextRepaymentDate->daysInMonth);
+            
+            // Due or overdue
+            if ($nextRepaymentDate->lessThanOrEqualTo($today)) {
+                return $nextRepaymentDate->startOfDay();
+            }
+            
+            return $nextRepaymentDate->startOfDay();
+        } else {
+            // No repayments yet, use the first repayment date
+            return $firstRepaymentDate;
         }
-
-        // If this month's repayment is due today or in the past, and it's NOT paid, return it (it's overdue or due today)
-        if ($potentialThisMonthRepayment->lessThanOrEqualTo($today)) {
-            return $potentialThisMonthRepayment->startOfDay();
-        }
-
-        // If the current month's repayment date is in the future AND it's not paid yet, then that's the next repayment date
-        return $potentialThisMonthRepayment->startOfDay();
     }
 
     /**
@@ -135,8 +145,22 @@ class RepaymentService
      */
     public function calculateRepaymentAmount(Application $application): float
     {
-        $monthly_revenue = $this->stripeService->getMonthlyRevenue($application->startup->stripe_id, now()->format('Y-m'));
-        $repayment_amount = $monthly_revenue * $application->revenue_share_percentage;
+        // Get the next repayment date to determine which month's revenue to use
+        $nextRepaymentDate = $this->getNextRepaymentDate($application);
+        
+        if ($nextRepaymentDate) {
+            // Use the month of the next repayment date
+            $revenueMonth = $nextRepaymentDate->format('Y-m');
+        } else {
+            // Fallback to current month if no next repayment date
+            $revenueMonth = now()->format('Y-m');
+        }
+        \Log::info('Startup stripe id: ' . $application->startup->stripe_id);
+        $monthly_revenue = $this->stripeService->getMonthlyRevenue($application->startup->stripe_id, $revenueMonth);
+        \Log::info('Monthly revenue: ' . $monthly_revenue);
+        $repayment_amount = $monthly_revenue * ($application->revenue_share_percentage / 100);
+        \Log::info('Revenue share percentage: ' . $application->revenue_share_percentage);
+        \Log::info('Repayment amount: ' . $repayment_amount);
         return $repayment_amount;
     }
 

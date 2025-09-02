@@ -16,11 +16,32 @@ class StartupService
 
     public function getCurrentStartup(): Startup
     {
-        $startup = Startup::where('user_id', auth()->user()->id)->first();
-        if (!$startup) {
-            throw new \Exception('Startup not found');
+        $user = auth()->user();
+        
+        // If user is startup owner, get their startup
+        if ($user->role === 'startup') {
+            $startup = Startup::with('user')->where('user_id', $user->id)->first();
+            if (!$startup) {
+                throw new \Exception('Startup not found');
+            }
+            return $startup;
         }
-        return $startup;
+        
+        // If user is staff, get their associated startup
+        if ($user->role === 'staff') {
+            $staff = $user->staff()->first();
+            if (!$staff || $staff->status !== 'ACTIVE') {
+                throw new \Exception('Staff member not found or inactive');
+            }
+            
+            $startup = Startup::with('user')->find($staff->startup_id);
+            if (!$startup) {
+                throw new \Exception('Associated startup not found');
+            }
+            return $startup;
+        }
+        
+        throw new \Exception('User is not authorized to access startup features');
     }
 
     public function createStartup(array $data)

@@ -31,7 +31,7 @@ class RepaymentReminderMail extends Mailable
         
         // Calculate days until due
         $today = now();
-        $this->daysUntilDue = $today->diffInDays($this->dueDate, false); // false = absolute value
+        $this->daysUntilDue = $today->diffInDays($this->dueDate, false); 
     }
 
     /**

@@ -23,7 +23,7 @@ class InvestorTopupReminderMail extends Mailable
     public function __construct(Application $application, $requiredAmount = null)
     {
         $this->application = $application;
-        $this->requiredAmount = $requiredAmount ?? $application->funding_amount;
+        $this->requiredAmount = $requiredAmount ?? $application->proposal->funding_amount;
         $this->currentBalance = $application->investor->balance ?? 0;
         $this->shortfall = max(0, $this->requiredAmount - $this->currentBalance);
     }

@@ -8,6 +8,10 @@ use App\Services\InvestorService;
 use App\Services\StartupService;
 use App\Services\Neo4jService;
 use App\Services\StripeService;
+use App\Services\ApplicationService;
+use App\Services\FileUploadService;
+use App\Services\DocumentAnalysisService;
+use App\Services\RiskAssessmentService;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -35,6 +39,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(Neo4jService::class, function ($app) {
             return new Neo4jService();
         });
+
+        $this->app->singleton(ApplicationService::class, function ($app) {
+            return new ApplicationService(
+                $app->make(FileUploadService::class),
+                $app->make(DocumentAnalysisService::class),
+                $app->make(RiskAssessmentService::class),
+                $app->make(Neo4jService::class),
+                $app->make(StripeService::class),
+                $app->make(StartupService::class)
+            );
+        });
     }
 
     /**
@@ -45,6 +60,5 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         \App\Models\Investor::observe(\App\Observers\InvestorObserver::class);
-        \App\Models\Startup::observe(\App\Observers\StartupObserver::class);
     }
 }

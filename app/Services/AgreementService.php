@@ -130,7 +130,7 @@ class AgreementService
             $application = Application::findOrFail($application_id);
             //validate investor balance against funding amount
             $investor = Investor::findOrFail($application->investor_id);
-            if ($investor->balance < $application->funding_amount) {
+            if ($investor->balance < $application->proposal->funding_amount) {
                 throw new \Exception('Insufficient balance');
             }
             //extract agreement details and update database

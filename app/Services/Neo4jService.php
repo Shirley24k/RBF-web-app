@@ -52,41 +52,20 @@ class Neo4jService
         }
     }
 
-    public function insertStartupToNeo4j($startup_id)
-    {
-        try{
-            $startup = Startup::find($startup_id);
-            //Create startup node
-            $response = Http::post(config('flask.url').'/neo4j/startup', [
-                'id' => $startup_id,
-            ]);
-
-            return $response->json();
-        }catch(\Exception $e){
-            Log::error('Failed to insert startup to Neo4j', [
-                'startup_id' => $startup_id,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
-    }
-
     public function insertApplicationToNeo4j($application_id): array
     {
         try{
-            $application = Application::find($application_id);
-            $startup = Startup::find($application->startup_id);
+            $application = Application::with('proposal')->find($application_id);
             
             // Convert funding amount to range
-            $fundingAmountRange = $this->getFundingAmountRange($application->funding_amount);
+            $fundingAmountRange = $this->getFundingAmountRange($application->proposal->funding_amount);
 
             //Create application node
             $response = Http::post(config('flask.url').'/neo4j/application', [
                 'application_id' => $application_id,
-                'startup_id' => $startup->id,
                 'funding_amount_range' => $fundingAmountRange,
-                'funding_stage' => $application->funding_stage,
-                'company_sector' => $startup->company_sector
+                'funding_stage' => $application->proposal->funding_stage,
+                'company_sector' => $application->proposal->company_industry
             ]);
 
             if($response->failed()) {

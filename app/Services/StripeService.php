@@ -20,28 +20,29 @@ use Stripe\Webhook;
 use Stripe\PaymentMethod;
 use Stripe\Balance;
 use Stripe\BalanceTransaction;
+use App\Services\RepaymentService;
 
 class StripeService
 {
 
-    public function createDummyTransactions($month)
+    public function createDummyTransactions($month, $stripe_id)
     {
         Stripe::setApiKey(config('stripe.secret'));
 
         $charges = [];
     
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 15; $i++) {
             $charge = Charge::create([
-                'amount' => rand(1000, 10000) * 100, 
+                'amount' => rand(100000, 1000000) * 100, 
                 'currency' => 'myr',
                 'source' => 'tok_visa',
-                'description' => 'Dummy sale from startup A',
+                'description' => 'Dummy sale from startup',
                 'metadata' => [
                     'simulated_month' => $month,
                     'transaction_number' => $i
                 ]
             ], [
-                'stripe_account' => 'acct_1RttMnEQ8FSdiO5X',
+                'stripe_account' => $stripe_id,
             ]);
     
             $charges[] = $charge;
@@ -59,10 +60,15 @@ class StripeService
             Stripe::setApiKey(config('stripe.secret'));
 
             $charges = Charge::all([
-                'limit' => 60,
+                'limit' => 90,
             ], [
                 'stripe_account' => $stripe_id,
             ]);
+
+            \Log::info('Total charges retrieved from Stripe: ' . count($charges->data));
+            \Log::info('Charges with simulated_month metadata: ' . count(array_filter($charges->data, function($charge) {
+                return isset($charge->metadata['simulated_month']);
+            })));
 
             $monthly_revenue = [];
 
@@ -76,6 +82,9 @@ class StripeService
                     $monthly_revenue[$month] += $amount;
                 }
             }
+
+            \Log::info('Monthly revenue breakdown: ' . json_encode($monthly_revenue));
+
 
             $revenue_q1 = 0;
             $revenue_q2 = 0;
@@ -124,7 +133,10 @@ class StripeService
     {
         Stripe::setApiKey(config('stripe.secret'));
 
-        $amountInCents = $amount * 100;
+        $percentageFee = 0.04;
+        $fixedFeeMyr = 1.0;
+        $grossAmount = ($amount + $fixedFeeMyr) / (1 - $percentageFee);
+        $amountInCents = (int) ceil($grossAmount * 100);
 
         $session = Session::create([
             'payment_method_types' => ['card'],
@@ -195,7 +207,7 @@ class StripeService
 
             try {
                 $transfer = Transfer::create([
-                    'amount' => $application->funding_amount * 100,
+                    'amount' => $application->proposal->funding_amount * 100,
                     'currency' => 'myr',
                     'destination' => $startup->stripe_id,
                     'description' => 'Fund transfer to startup',
@@ -218,12 +230,12 @@ class StripeService
 
             // If we get here, transfer was successful (Stripe would have thrown an exception if it failed)
             //Deduct investor balance
-            $investor->balance -= $application->funding_amount;
+            $investor->balance -= $application->proposal->funding_amount;
             $investor->save();
             
             //Insert transaction to database
             Transaction::create([
-                'amount' => $application->funding_amount,
+                'amount' => $application->proposal->funding_amount,
                 'type' => 'FUND_TRANSFER',
                 'transaction_datetime' => now(),
                 'from_stripe_id' => $investor->stripe_id,
@@ -239,7 +251,7 @@ class StripeService
             
             \Log::info('Transfer completed successfully', [
                 'transfer_id' => $transfer->id,
-                'amount' => $application->funding_amount,
+                'amount' => $application->proposal->funding_amount,
                 'application_id' => $application->id
             ]);
 
@@ -252,7 +264,8 @@ class StripeService
         $application = Application::with('startup', 'investor')->findOrFail($application_id);
         $startup = $application->startup;
         $investor = $application->investor;
-        $revenue = $this->getMonthlyRevenue($startup->stripe_id, $month);
+        $repaymentService = new RepaymentService($this);
+        $monthlyRepayment = $repaymentService->calculateRepaymentAmount($application);
 
         // Check if startup has stripe account
         if (!$startup->stripe_id) {
@@ -263,9 +276,6 @@ class StripeService
         if (!$investor->stripe_id) {
             throw new \Exception('Investor does not have a stripe account');
         }
-
-        // Calculate the monthly repayment amount
-        $monthlyRepayment = $revenue * $application->revenue_share_percentage;
 
         // Check if monthly repayment + total repaid is greater than the repayment cap
         if ($monthlyRepayment + $application->total_repaid > $application->repayment_cap) {
@@ -297,7 +307,7 @@ class StripeService
                     'application_id' => $application->id,
                     'startup_id' => $startup->id,
                     'investor_id' => $investor->id,
-                    'type' => 'monthly_repayment',
+                    'type' => 'monthly repayment',
                     'month' => $month,
                     'target_repayment_amount' => $monthlyRepayment,
                     'gross_amount' => $grossAmount
@@ -313,12 +323,48 @@ class StripeService
         }
     }
 
-    public function getTotalRepaid($application_id)
+    
+    public function processPendingRepayment(Transaction $transaction): array
     {
-        return Transaction::where('application_id', $application_id)
-            ->where('type', 'REPAYMENT')
-            ->where('status', 'Completed')
-            ->sum('amount');
+        try {
+            Stripe::setApiKey(config('stripe.secret'));
+            
+            // Create the transfer from platform to investor
+            $transfer = Transfer::create([
+                'amount' => $transaction->amount * 100, // Convert to cents
+                'currency' => 'myr',
+                'destination' => $transaction->application->investor->stripe_id,
+                'description' => 'Monthly repayment to investor',
+                'metadata' => [
+                    'application_id' => $transaction->application_id,
+                    'transaction_id' => $transaction->id,
+                    'repayment_type' => 'monthly repayment'
+                ]
+            ]);
+            
+            \Log::info("Stripe transfer created successfully", [
+                'transfer_id' => $transfer->id,
+                'transaction_id' => $transaction->id,
+                'amount' => $transaction->amount
+            ]);
+            
+            return [
+                'success' => true,
+                'transfer_id' => $transfer->id,
+                'message' => 'Transfer completed successfully'
+            ];
+            
+        } catch (\Exception $e) {
+            \Log::error("Stripe transfer failed", [
+                'transaction_id' => $transaction->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
     /**
@@ -336,5 +382,4 @@ class StripeService
         // Round up to nearest cent to ensure we have enough
         return ceil($grossAmount * 100) / 100;
     }
-
 } 

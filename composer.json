@@ -15,6 +15,7 @@
         "stripe/stripe-php": "^17.3"
     },
     "require-dev": {
+        "barryvdh/laravel-ide-helper": "^2.14",
         "facade/ignition": "^2.5",
         "fakerphp/faker": "^1.9.1",
         "laravel/breeze": "^1.10",

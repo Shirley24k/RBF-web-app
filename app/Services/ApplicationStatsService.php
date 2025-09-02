@@ -21,7 +21,12 @@ class ApplicationStatsService
 			'completed' => Application::where('status', 'Completed')->count(),
 			'total_startups' => Startup::count(),
 			'total_investors' => Investor::count(),
-			'total_funding_amount' => Application::whereIn('status', ['Active', 'Completed'])->sum('funding_amount'),
+			'total_funding_amount' => Application::with('proposal')
+			->whereIn('status', ['Active', 'Completed'])
+			->get()
+			->sum(function($application) {
+				return $application->proposal->funding_amount ?? 0;
+			}),
 		];
 	}
 
@@ -36,7 +41,13 @@ class ApplicationStatsService
 			'active' => Application::where('startup_id', $startupId)->where('status', 'Active')->count(),
 			'failed' => Application::where('startup_id', $startupId)->whereIn('status', ['Failed', 'Rejected'])->count(),
 			'completed' => Application::where('startup_id', $startupId)->where('status', 'Completed')->count(),
-			'total_funding_amount' => Application::where('startup_id', $startupId)->whereIn('status', ['Active', 'Completed'])->sum('funding_amount'),
+			'total_funding_received' => Application::with('proposal')
+			->where('startup_id', $startupId)
+			->whereIn('status', ['Active', 'Completed'])
+			->get()
+			->sum(function($application) {
+				return $application->proposal->funding_amount ?? 0;
+			}),
 		];
 	}
 
@@ -52,7 +63,13 @@ class ApplicationStatsService
 			'active' => Application::where('investor_id', $investorId)->where('status', 'Active')->count(),
 			'failed' => Application::where('investor_id', $investorId)->whereIn('status', ['Failed', 'Rejected'])->count(),
 			'completed' => Application::where('investor_id', $investorId)->where('status', 'Completed')->count(),
-			'total_invested' => Application::where('investor_id', $investorId)->whereIn('status', ['Active', 'Completed'])->sum('funding_amount'),
+			'total_invested' => Application::with('proposal')
+			->where('investor_id', $investorId)
+			->whereIn('status', ['Active', 'Completed'])
+			->get()
+			->sum(function($application) {
+				return $application->proposal->funding_amount ?? 0;
+			}),
 			'investor_balance' => $investor ? $investor->balance : 0,
 		];
 	}

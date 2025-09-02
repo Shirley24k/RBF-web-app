@@ -15,6 +15,10 @@ use App\Services\Neo4jService;
 use App\Services\StripeService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
+use App\Models\Startup;
+use App\Models\User;
+use App\Models\Proposal;
+use App\Services\StartupService;
 
 class ApplicationService
 {
@@ -23,78 +27,94 @@ class ApplicationService
     private $riskAssessmentService;
     private $neo4jService;
     private $stripeService;
+    private $startupService;
 
     public function __construct(
         FileUploadService $fileUploadService,
         DocumentAnalysisService $documentAnalysisService,
         RiskAssessmentService $riskAssessmentService,
         Neo4jService $neo4jService,
-        StripeService $stripeService
+        StripeService $stripeService,
+        StartupService $startupService
     ) {
         $this->fileUploadService = $fileUploadService;
         $this->documentAnalysisService = $documentAnalysisService;
         $this->riskAssessmentService = $riskAssessmentService;
         $this->neo4jService = $neo4jService;
         $this->stripeService = $stripeService;
+        $this->startupService = $startupService;
     }
 
     /**
-     * Submit application by uploading proposal
+     * Submit application by selecting an existing proposal
      */
-    public function submitApplication(UploadedFile $file): array
+    public function submitApplication(int $proposal_id): array
     {
         try {
-            $uploadResult = $this->fileUploadService->uploadToSupabase($file, 'business-proposal');
-            
-            return [
-                'success' => true,
-                'message' => 'Proposal uploaded successfully',
-                'data' => [
-                    'proposal_path' => $uploadResult['path'],
-                    'current_step' => 'proposal_analysis',
-                    'next_step' => 'risk_assessment'
-                ]
-            ];
-        } catch(\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Failed to upload proposal',
-                'error' => $e->getMessage()
-            ];
-        }
-    }
+            // Get the proposal details
+            $proposal = Proposal::findOrFail($proposal_id);
 
-    /**
-     * Analyze proposal and create application
-     */
-    public function analyzeProposal(Request $request): array
-    {
-        try {
-            $funding_details = $this->documentAnalysisService->extractFundingDetails($request->proposal_path);
+            // Validate proposal exists and has required fields
+            if (!$proposal) {
+                throw new \Exception('Proposal not found');
+            }
 
-            $application = Application::create([
-                'proposal_path' => $request->proposal_path,
-                'funding_amount' => $funding_details['funding_amount'],
-                'funding_stage' => $funding_details['funding_stage'],
-                'funding_purpose' => $funding_details['funding_purpose'],
+            // Verify the proposal belongs to the authenticated startup
+            $startup = $this->startupService->getCurrentStartup();
+
+            if ($proposal->startup_id !== $startup->id) {
+                throw new \Exception('Proposal does not belong to this startup');
+            }
+
+            // Validate that required fields are present
+            if (empty($proposal->funding_amount)) {
+                throw new \Exception('Proposal funding amount is required');
+            }
+
+            // Validate proposal status
+            if ($proposal->status !== 'REVIEWED') {
+                throw new \Exception('Proposal must be reviewed before creating an application');
+            }
+
+            // Create the application using proposal data
+            $applicationData = [
+                'proposal_id' => $proposal_id,
+                'funding_amount' => $proposal->funding_amount,
+                'funding_stage' => $proposal->funding_stage,
+                'funding_purpose' => $proposal->funding_purpose,
                 'status' => 'Await Review',
-                'startup_id' => auth()->user()->startups()->first()->id,
-            ]);
-            
+                'startup_id' => $startup->id,
+            ];
+
+            // Use database transaction to ensure data consistency
+            $application = DB::transaction(function () use ($applicationData) {
+                return Application::create($applicationData);
+            });
+
+            // Check if application was created successfully
+            if (!$application || !$application->id) {
+                throw new \Exception('Failed to create application record');
+            }
+
             return [
                 'success' => true,
-                'message' => 'Proposal analysis completed',
+                'message' => 'Application created successfully from proposal',
                 'data' => [
-                    'application_id' => $application->id,
+                    'id' => $application->id,
+                    'proposal_id' => $proposal_id,
                     'current_step' => 'risk_assessment',
                     'next_step' => 'investor_matching',
-                    'funding_details' => $funding_details
+                    'funding_details' => [
+                        'funding_amount' => $proposal->funding_amount,
+                        'funding_stage' => $proposal->funding_stage,
+                        'funding_purpose' => $proposal->funding_purpose,
+                    ]
                 ]
             ];
         } catch(\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Failed to analyze proposal',
+                'message' => 'Failed to create application from proposal',
                 'error' => $e->getMessage()
             ];
         }
@@ -109,7 +129,8 @@ class ApplicationService
             $application = Application::findOrFail($application_id);
 
             // Get startup quarterly revenue from stripe
-            $stripe_id = auth()->user()->startups()->first()->stripe_id;
+            $startup = $this->startupService->getCurrentStartup();
+            $stripe_id = $startup->stripe_id;
             $stripe_response = $this->stripeService->getQuarterlyRevenue($stripe_id);
 
             // Run sales prediction
@@ -119,9 +140,9 @@ class ApplicationService
             $evaluation = $this->riskAssessmentService->evaluateFundingLimit(
                 $prediction['data']['prediction'] ?? 0,
                 $stripe_response['revenue_q2'] ?? 0,
-                (float)$application->funding_amount
+                (float)$application->proposal->funding_amount
             );
-            
+
             $passes = $evaluation['pass'];
             if ($passes) {
                 return [
@@ -142,7 +163,7 @@ class ApplicationService
                 $application->status = 'Failed';
                 $application->message = 'Requested funding amount exceeds estimated amount based on Monthly Recurring Revenue (MRR). We encourage you to continue growing your business and reapply when you have stronger revenue performance or consider a smaller funding amount that better matches your current financial position.';
                 $application->save();
-                
+
                 return [
                     'success' => false,
                     'message' => 'Risk assessment failed - Requested funding amount exceeds estimated amount based on MRR multiples',
@@ -158,7 +179,7 @@ class ApplicationService
                     ]
                 ];
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return [
                 'success' => false,
                 'message' => 'Failed to assess risk',
@@ -193,7 +214,7 @@ class ApplicationService
                     'matching_response' => $matching_data
                 ]
             ];
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return [
                 'success' => false,
                 'message' => 'Failed to match investors',
@@ -206,37 +227,37 @@ class ApplicationService
      * Select an investor for an application
      */
     public function selectInvestor(int $application_id, int $investor_id): Application
-	{
-		$application = Application::findOrFail($application_id);
-		$application->investor_id = $investor_id;
-		$application->save();
+    {
+        $application = Application::findOrFail($application_id);
+        $application->investor_id = $investor_id;
+        $application->save();
 
-		return $application;
-	}
+        return $application;
+    }
 
     /**
      * Accept an application
      */
     public function acceptApplication(int $application_id, string $message): Application
-	{
-		$application = Application::findOrFail($application_id);
-		$application->status = 'In Progress';
-		$application->message = $message;
-		$application->save();
+    {
+        $application = Application::findOrFail($application_id);
+        $application->status = 'In Progress';
+        $application->message = $message;
+        $application->save();
 
-		return $application;
-	}
+        return $application;
+    }
 
     /**
      * Reject an application
      */
-	public function rejectApplication(int $application_id, string $message): Application
-	{
-		$application = Application::findOrFail($application_id);
-		$application->status = 'Rejected';
-		$application->message = $message;
-		$application->save();
+    public function rejectApplication(int $application_id, string $message): Application
+    {
+        $application = Application::findOrFail($application_id);
+        $application->status = 'Rejected';
+        $application->message = $message;
+        $application->save();
 
-		return $application;
-	}
+        return $application;
+    }
 }

@@ -8,6 +8,10 @@ use App\Services\ApplicationStatsService;
 use App\Services\ApplicationListingService;
 use App\Services\ApplicationService;
 use App\Services\NotificationService;
+use App\Services\StartupService;
+use App\Models\User;
+use App\Models\Startup;
+use App\Models\Investor;
 
 class ApplicationController extends Controller
 {
@@ -15,54 +19,44 @@ class ApplicationController extends Controller
     private $applicationListingService;
     private $applicationService;
     private $notificationService;
-    
+    private $startupService;
+
     public function __construct(
         ApplicationStatsService $applicationStatsService,
         ApplicationListingService $applicationListingService,
         ApplicationService $applicationService,
-        NotificationService $notificationService
-    )
-    {
+        NotificationService $notificationService,
+        StartupService $startupService
+    ) {
         $this->applicationStatsService = $applicationStatsService;
         $this->applicationListingService = $applicationListingService;
         $this->applicationService = $applicationService;
         $this->notificationService = $notificationService;
+        $this->startupService = $startupService;
     }
-    
+
     public function submitApplication(Request $request): JsonResponse
     {
         try {
             $request->validate([
-                'document' => 'required|file|mimes:pdf|max:10240'
+                'proposal_id' => 'required|integer|exists:proposals,id'
             ]);
-            $result = $this->applicationService->submitApplication($request->file('document'));
-            
+
+            // Create application directly from selected proposal
+            $result = $this->applicationService->submitApplication($request->proposal_id);
+
             if ($result['success']) {
-                return response()->json($result['data'], 201);
+                return response()->json([
+                    'message' => 'Application submitted successfully',
+                    'data' => $result['data'],
+                    'application_id' => $result['data']['id'] ?? null
+                ], 201);
             } else {
                 return response()->json($result, 500);
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to submit application',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function analyzeProposal(Request $request): JsonResponse
-    {
-        try {
-            $result = $this->applicationService->analyzeProposal($request);
-            
-            if ($result['success']) {
-                return response()->json($result['data'], 200);
-            } else {
-                return response()->json($result, 500);
-            }
-        } catch(\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to analyze proposal',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -72,13 +66,13 @@ class ApplicationController extends Controller
     {
         try {
             $result = $this->applicationService->assessRisk($application_id);
-            
+
             if ($result['success']) {
                 return response()->json($result['data'], 200);
             } else {
-                return response()->json($result['data'], 200); 
+                return response()->json($result['data'], 200);
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to assess risk',
                 'error' => $e->getMessage()
@@ -90,13 +84,13 @@ class ApplicationController extends Controller
     {
         try {
             $result = $this->applicationService->matchInvestors($application_id);
-            
+
             if ($result['success']) {
                 return response()->json($result['data'], 200);
             } else {
                 return response()->json($result, 500);
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to match investors',
                 'error' => $e->getMessage()
@@ -125,7 +119,8 @@ class ApplicationController extends Controller
     public function getApplicationsForStartup(): JsonResponse
     {
         try {
-            $data = $this->applicationListingService->listForStartup(auth()->user()->startups()->first()->id);
+            $startup = $this->startupService->getCurrentStartup();
+            $data = $this->applicationListingService->listForStartup($startup->id);
 
             return response()->json([
                 'data' => $data
@@ -141,7 +136,8 @@ class ApplicationController extends Controller
     public function getRecentApplicationsForStartup(): JsonResponse
     {
         try {
-            $data = $this->applicationListingService->listRecentForStartup(auth()->user()->startups()->first()->id, 3);
+            $startup = $this->startupService->getCurrentStartup();
+            $data = $this->applicationListingService->listRecentForStartup($startup->id, 3);
 
             return response()->json([
                 'data' => $data
@@ -157,7 +153,8 @@ class ApplicationController extends Controller
     public function getTransactionApplicationsForStartup(): JsonResponse
     {
         try {
-            $data = $this->applicationListingService->listTransactionForStartup(auth()->user()->startups()->first()->id);
+            $startup = $this->startupService->getCurrentStartup();
+            $data = $this->applicationListingService->listTransactionForStartup($startup->id);
             return response()->json([
                 'data' => $data
             ], 200);
@@ -173,7 +170,7 @@ class ApplicationController extends Controller
     public function getApplicationsForInvestor(): JsonResponse
     {
         try {
-            $data = $this->applicationListingService->listForInvestor(auth()->user()->investors()->first()->id);
+            $data = $this->applicationListingService->listForInvestor(auth()->user()->investor()->first()->id);
 
             return response()->json([
                 'data' => $data
@@ -188,13 +185,13 @@ class ApplicationController extends Controller
 
     public function getInvestorAwaitReviewApplications(): JsonResponse
     {
-        try{
-            $data = $this->applicationListingService->listInvestorAwaitReview(auth()->user()->investors()->first()->id);
+        try {
+            $data = $this->applicationListingService->listInvestorAwaitReview(auth()->user()->investor()->first()->id);
 
             return response()->json([
                 'data' => $data
             ], 200);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to get applications',
                 'error' => $e->getMessage()
@@ -205,7 +202,7 @@ class ApplicationController extends Controller
     public function getRecentApplicationsForInvestor(): JsonResponse
     {
         try {
-            $data = $this->applicationListingService->listRecentForInvestor(auth()->user()->investors()->first()->id, 3);
+            $data = $this->applicationListingService->listRecentForInvestor(auth()->user()->investor()->first()->id, 3);
 
             return response()->json([
                 'data' => $data
@@ -220,13 +217,13 @@ class ApplicationController extends Controller
 
     public function getTransactionApplicationsForInvestor(): JsonResponse
     {
-        try{
-            $data = $this->applicationListingService->listTransactionForInvestor(auth()->user()->investors()->first()->id);
-                
+        try {
+            $data = $this->applicationListingService->listTransactionForInvestor(auth()->user()->investor()->first()->id);
+
             return response()->json([
                 'data' => $data
             ], 200);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to get applications',
                 'error' => $e->getMessage()
@@ -317,7 +314,7 @@ class ApplicationController extends Controller
     {
         try {
             $result = $this->notificationService->sendRepaymentReminder($application_id);
-            
+
             if ($result['success']) {
                 return response()->json($result['data'], 200);
             } else {
@@ -336,7 +333,7 @@ class ApplicationController extends Controller
     {
         try {
             $result = $this->notificationService->sendInvestorTopupReminder($application_id);
-            
+
             if ($result['success']) {
                 return response()->json($result['data'], 200);
             } else {
@@ -355,11 +352,11 @@ class ApplicationController extends Controller
     {
         try {
             $user = auth()->user();
-            if ($user->role == 'startup') {
-                $startup = $user->startups()->first();
+            if ($user->role == 'startup' || $user->role == 'staff') {
+                $startup = $this->startupService->getCurrentStartup();
                 $stats = $this->applicationStatsService->getStartupStats($startup->id);
             } elseif ($user->role == 'investor') {
-                $investor = $user->investors()->first();
+                $investor = $user->investor()->first();
                 $stats = $this->applicationStatsService->getInvestorStats($investor->id);
             } else {
                 $stats = $this->applicationStatsService->getGlobalStats();

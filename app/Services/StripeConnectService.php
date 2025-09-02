@@ -67,7 +67,7 @@ class StripeConnectService
         // Save stripe id to associated profile
         $stripeUserId = $data['stripe_user_id'];
         if ($user->role === 'startup') {
-            $startup = $user->startups()->first();
+            $startup = $user->startup()->first();
             if (!$startup) {
                 return [
                     'success' => false,
@@ -84,7 +84,7 @@ class StripeConnectService
         }
 
         if ($user->role === 'investor') {
-            $investor = $user->investors()->first();
+            $investor = $user->investor()->first();
             if (!$investor) {
                 return [
                     'success' => false,

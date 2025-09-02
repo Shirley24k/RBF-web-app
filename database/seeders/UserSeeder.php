@@ -19,40 +19,10 @@ class UserSeeder extends Seeder
         User::create([
             'email' => 'admin@gmail.com',
             'password' => Hash::make('admin123'),
-            'role' => 'admin'
+            'role' => 'admin',
+            'email_verified_at' => now(),
         ]);
 
-        // Create startup user
-        User::create([
-            'email' => 'startup@gmail.com',
-            'password' => Hash::make('startup123'),
-            'role' => 'startup'
-        ]);
-
-        // Create investor user
-        User::create(
-        [
-            'email' => 'investor@gmail.com',
-            'password' => Hash::make('investor123'),
-            'role' => 'investor'
-        ]);
-
-        User::create([
-            'email' => 'investorfirm@gmail.com',
-            'password' => Hash::make('investor123'),
-            'role' => 'investor'
-        ]);
-
-        User::create([
-            'email' => 'investor2@gmail.com',
-            'password' => Hash::make('investor123'),
-            'role' => 'investor'
-        ]);
-
-        User::create([
-            'email' => 'investor3@gmail.com',
-            'password' => Hash::make('investor123'),
-            'role' => 'investor'
-        ]);
-    }  
+        $this->command->info('Users seeded successfully!');
+    }
 }

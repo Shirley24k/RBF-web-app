@@ -57,7 +57,9 @@ class InvestorService
         return [
             'exists' => $exists,
             'message' => $exists 
-                ? 'We have found you in the SCM investor alert list. Your registration cannot be processed at this time. Please contact support for assistance.' 
+                ? 'We have found you in the SCM investor alert list. 
+                Your registration cannot be processed at this time. 
+                Please contact support for assistance.' 
                 : 'Investor validation successful.'
         ];
     }

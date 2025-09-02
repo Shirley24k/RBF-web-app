@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Application;
+use App\Models\Proposal;
 
 class ApplicationSeeder extends Seeder
 {
@@ -14,42 +15,48 @@ class ApplicationSeeder extends Seeder
      */
     public function run()
     {
+        // Get the first proposal to use for applications
+        $proposal = Proposal::where('status', 'REVIEWED')->first();
+
+        if (!$proposal) {
+            $this->command->info('No proposals found. Please run ProposalSeeder first.');
+            return;
+        }
+
         // simulate successful application
         Application::create([
-            'proposal_path' => 'Business proposal sample.pdf',
-            'funding_amount' => 100000.00,
-            'funding_stage' => 'Seed',
-            'funding_purpose' => 'Product Development',
-            'status' => 'Await Review',
+            'proposal_id' => $proposal->id,
+            'revenue_share_percentage' => 10.00,
+            'repayment_cap' => $proposal->funding_amount * 1.5,
+            'cap_multiple' => 1.50,
+            'status' => 'Active',
             'startup_id' => 1,
             'investor_id' => 1,
+            'total_repaid' => 5000.00,
+            'repayment_date' => 27
         ]);
 
         // simulate rejected application
         Application::create([
-            'proposal_path' => 'Business proposal sample.pdf',
-            'funding_amount' => 200000.00,
-            'funding_stage' => 'Series A',
-            'funding_purpose' => 'Business Expansion',
+            'proposal_id' => $proposal->id,
             'status' => 'Await Review',
             'startup_id' => 1,
-            'investor_id' => 1,
+            'investor_id' => 2,
         ]);
 
         // simulate completed application
         Application::create([
-            'proposal_path' => 'Business proposal sample.pdf',
-            'funding_amount' => 300000.00,
-            'funding_stage' => 'Series B',
-            'funding_purpose' => 'Marketing and Sales',
+            'proposal_id' => $proposal->id,
             'revenue_share_percentage' => 10.00,
-            'repayment_cap' => 450000.00,
+            'repayment_cap' => $proposal->funding_amount * 1.5,
             'cap_multiple' => 1.50,
             'status' => 'Completed',
             'startup_id' => 1,
             'investor_id' => 1,
-            'total_repaid' => 450000.00,
+            'total_repaid' => $proposal->funding_amount * 1.5,
             'repayment_date' => 28
         ]);
+
+        $this->command->info('Applications seeded successfully!');
     }
 }

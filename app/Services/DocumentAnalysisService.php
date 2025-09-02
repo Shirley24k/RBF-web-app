@@ -6,39 +6,36 @@ use Illuminate\Support\Facades\Http;
 
 class DocumentAnalysisService
 {
-    //Extract funding details from proposal using OpenAI
-    public function extractFundingDetails($proposal_path): array
+    //Extract comprehensive proposal details from proposal using OpenAI
+    public function extractProposalData($document): array
     {
         try {
-            $response = Http::post(config('flask.url').'/proposal-analysis', [
-                'proposal_path' => $proposal_path
-            ]);
+            // Send file directly to Flask service
+            $response = Http::attach(
+                'document', 
+                file_get_contents($document->getRealPath()), 
+                $document->getClientOriginalName()
+            )->post(config('flask.url').'/proposal-analysis');
 
             if($response->successful()) {
                 $data = $response->json();
                 
-                // Clean and convert funding_amount to numeric value
-                $funding_amount = $data['funding_amount'] ?? 0;
-                if (is_string($funding_amount)) {
-                    // Remove currency symbols and commas, then convert to float
-                    $funding_amount = (float) preg_replace('/[^0-9.]/', '', $funding_amount);
-                }
-                
                 return [
-                    'message' => 'Funding details extracted successfully',
-                    'funding_amount' => $funding_amount,
-                    'funding_stage' => $data['funding_stage'],
-                    'funding_purpose' => $data['funding_purpose'],
+                    'success' => true,
+                    'message' => 'Proposal data extracted successfully',
+                    'data' => $data
                 ];
             }
 
             return [
-                'message' => 'Failed to extract funding details',
+                'success' => false,
+                'message' => 'Failed to extract proposal data',
                 'error' => 'Flask service returned unsuccessful response'
             ];
-        }catch(\Exception $e) {
+        } catch(\Exception $e) {
             return [
-                'message' => 'Failed to extract funding details',
+                'success' => false,
+                'message' => 'Failed to extract proposal data',
                 'error' => $e->getMessage()
             ];
         }

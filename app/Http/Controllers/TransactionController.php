@@ -41,10 +41,11 @@ class TransactionController extends Controller
     {
         $request->validate([
             'month' => 'required|string',
+            'stripe_id' => 'required|string',
         ]);
 
         try {
-            $result = $this->transactionService->createDummyTransactions($request->month);
+            $result = $this->transactionService->createDummyTransactions($request->month, $request->stripe_id);
             
             if ($result['success']) {
                 return response()->json($result, 200);
@@ -98,8 +99,6 @@ class TransactionController extends Controller
     //     }
     // }
 
-
-
     public function processMonthlyRepayment(Request $request): JsonResponse
     {
         $request->validate([
@@ -126,4 +125,32 @@ class TransactionController extends Controller
         }
     }
 
+    public function processSuccessRepayment(Request $request): JsonResponse
+    {
+        $request->validate([
+            'session_id' => 'required|string',
+            'application_id' => 'required|exists:applications,id',
+        ]);
+
+        try {
+            $result = $this->transactionService->processSuccessRepayment(
+                $request->session_id, 
+                $request->application_id
+            );
+            
+            // Check if the result is successful
+            if ($result['success']) {
+                return response()->json($result, 200);
+            } else {
+                return response()->json($result, 500);
+            }
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process successful repayment',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

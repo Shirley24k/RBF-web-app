@@ -36,8 +36,12 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
+        // Send email verification instead of auto-login
+        $user->sendEmailVerificationNotification();
 
-        return response()->noContent();
+        return response()->json([
+            'message' => 'Registration successful! Please check your email to verify your account.',
+            'success' => true
+        ], 201);
     }
 }

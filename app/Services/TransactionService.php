@@ -23,9 +23,11 @@ class TransactionService
 	public function getTransactionDetails(int $applicationId): array
 	{
 		$application = Application::with(['startup', 'investor', 'transactions'])->findOrFail($applicationId);
+		$application->funding_amount = $application->proposal->funding_amount;
 		$transactions = $application->transactions()->orderBy('transaction_datetime', 'desc')->get();
 		$next_repayment_date = $this->repaymentService->getNextRepaymentDate($application);
 		$overdue_details = $this->repaymentService->getOverduePaymentDetails($application);
+		$repayment_amount = $this->repaymentService->calculateRepaymentAmount($application) ?: 0;
 		
 		return [
 			'application' => $application,
@@ -34,18 +36,18 @@ class TransactionService
 			'transactions' => $transactions,
 			'next_repayment_date' => $next_repayment_date,
 			'overdue_details' => $overdue_details,
-			'repayment_amount' => $this->repaymentService->calculateRepaymentAmount($application) ?: 0,
+			'repayment_amount' => $repayment_amount,
 		];
 	}
 
-	public function createDummyTransactions(string $month): array
+	public function createDummyTransactions(string $month, string $stripe_id): array
 	{
 		try {
-			$result = $this->stripeService->createDummyTransactions($month);
+			$result = $this->stripeService->createDummyTransactions($month, $stripe_id);
 			return [
 				'success' => true,
 				'message' => 'Dummy transactions created successfully',
-				'data' => $result->getData(true)
+				'data' => $result['charges']
 			];
 		} catch (\Exception $e) {
 			return [
@@ -55,8 +57,6 @@ class TransactionService
 			];
 		}
 	}
-
-
 
 	/**
 	 * Process webhook events and handle business logic
@@ -81,7 +81,7 @@ class TransactionService
 
 			if ($transactionType === 'fund transfer') {
 				$this->handleTopUpWebhook($session);
-			} else if ($transactionType === 'monthly_repayment') {
+			} else if ($transactionType === 'monthly repayment') {
 				$this->handleMonthlyRepaymentWebhook($session);
 			}
 		}
@@ -92,7 +92,13 @@ class TransactionService
 	 */
 	private function handleTopUpWebhook($session): void
 	{
-		$amountMyr = $session->metadata->topup_amount / 100; // Convert from cents to MYR
+		$grossAmountCharged = $session->metadata->topup_amount / 100; // Convert from cents to MYR
+		
+		// Calculate the actual amount received after Stripe fees (4% + RM1)
+		$percentageFee = 0.04;
+		$fixedFeeMyr = 1.0;
+		$amountMyr = ($grossAmountCharged * (1 - $percentageFee)) - $fixedFeeMyr;
+
 		$investor = Investor::where('user_id', $session->metadata->investor_id)->first();
 		
 		if ($investor) {
@@ -100,7 +106,8 @@ class TransactionService
 			$investor->save();
 			\Log::info('Investor balance updated via webhook', [
 				'investor_id' => $investor->id,
-				'amount' => $amountMyr,
+				'gross_amount_charged' => $grossAmountCharged,
+				'net_amount_received' => $amountMyr,
 				'session_id' => $session->id
 			]);
 		} else {
@@ -162,6 +169,102 @@ class TransactionService
 			]);
 		}
 	}
+
+	public function processSuccessRepayment(string $sessionId, int $applicationId): array
+	{
+		try {
+			$application = Application::with(['startup', 'investor'])->findOrFail($applicationId);
+			
+			$pendingTransactions = Transaction::where('application_id', $applicationId)
+				->where('type', 'REPAYMENT')
+				->where('status', 'Pending')
+				->with(['application.startup', 'application.investor'])
+				->get();
+			
+			if ($pendingTransactions->isEmpty()) {
+				return [
+					'success' => false,
+					'message' => 'No pending transactions found for this application'
+				];
+			}
+			
+			// Process each pending transaction (perform Stripe transfer)
+			foreach ($pendingTransactions as $transaction) {
+				try {
+					// Call Stripe service to perform the transfer
+					$transferResult = $this->stripeService->processPendingRepayment($transaction);
+					
+					if ($transferResult['success']) {
+						// Update transaction status to completed
+						$transaction->status = 'Completed';
+						$transaction->save();
+						
+						\Log::info("Transaction completed via processSuccessRepayment", [
+							'transaction_id' => $transaction->id,
+							'application_id' => $applicationId,
+							'session_id' => $sessionId
+						]);
+					} else {
+						\Log::error("Transfer failed in processSuccessRepayment", [
+							'transaction_id' => $transaction->id,
+							'error' => $transferResult['error']
+						]);
+						return $transferResult;
+					}
+					
+				} catch (\Exception $e) {
+					\Log::error("Error processing transaction in processSuccessRepayment", [
+						'transaction_id' => $transaction->id,
+						'error' => $e->getMessage()
+					]);
+					return [
+						'success' => false,
+						'message' => 'Failed to process transaction transfer',
+						'error' => $e->getMessage()
+					];
+				}
+			}
+			
+			// 4. Update application total_repaid
+			$application->total_repaid = $this->getTotalRepaid($application->id);
+			$application->save();
+			
+			// 5. Update application status if completed
+			if ($application->total_repaid >= $application->repayment_cap) {
+				$application->status = 'Completed';
+				$application->save();
+			}
+			
+			return [
+				'success' => true,
+				'message' => 'Repayment processed successfully',
+				'transactions_processed' => $pendingTransactions->count()
+			];
+			
+		} catch (\Exception $e) {
+			\Log::error('Failed to process successful repayment', [
+				'application_id' => $applicationId,
+				'session_id' => $sessionId,
+				'error' => $e->getMessage()
+			]);
+			
+			return [
+				'success' => false,
+				'message' => 'Failed to process repayment',
+				'error' => $e->getMessage()
+			];
+		}
+	}
+
+	
+    public function getTotalRepaid($application_id)
+    {
+        return Transaction::where('application_id', $application_id)
+            ->where('type', 'REPAYMENT')
+            ->where('status', 'Completed')
+            ->sum('amount');
+    }
+
 }
 
 

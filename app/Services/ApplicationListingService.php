@@ -29,7 +29,6 @@ class ApplicationListingService
 				'investor_name' => $application->investor ? $application->investor->name : null,
 				'date' => $application->updated_at ? $application->updated_at->format('Y-m-d') : null,
 				'status' => $application->status,
-				'proposal_url' => $this->retrieveSignedUrl('business-proposal', $application->proposal_path),
 			];
 		});
 	}
@@ -82,7 +81,6 @@ class ApplicationListingService
 				'startup_name' => $application->startup ? $application->startup->name : null,
 				'date' => $application->updated_at ? $application->updated_at->format('Y-m-d') : null,
 				'status' => $application->status,
-				'proposal_url' => $this->retrieveSignedUrl('business-proposal', $application->proposal_path),
 			];
 		});
 	}
@@ -145,7 +143,6 @@ class ApplicationListingService
 				'investor_name' => $application->investor ? $application->investor->name : null,
 				'date' => $application->updated_at ? $application->updated_at->format('Y-m-d') : null,
 				'status' => $application->status,
-				'proposal_url' => $this->retrieveSignedUrl('business-proposal', $application->proposal_path),
 			];
 		});
 	}
@@ -167,9 +164,11 @@ class ApplicationListingService
 		$application->startup_agreement_path = $application->agreement ? $application->agreement->startup_agreement_path : null;
 		$application->investor_agreement_path = $application->agreement ? $application->agreement->investor_agreement_path : null;
 		$application->admin_message = $application->agreement && $application->agreement->message ? $application->agreement->message : null;
+		$application->funding_amount = $application->proposal->funding_amount;
+		$application->funding_stage = $application->proposal->funding_stage;
+		$application->funding_purpose = $application->proposal->funding_purpose;
 
 		// Signed URLs
-		$application->proposal_url = $this->retrieveSignedUrl('business-proposal', $application->proposal_path);
 		$application->startup_agreement_url = $this->retrieveSignedUrl('agreement', $application->startup_agreement_path);
 		$application->investor_agreement_url = $this->retrieveSignedUrl('agreement', $application->investor_agreement_path);
 
@@ -202,5 +201,3 @@ class ApplicationListingService
 		}
 	}
 }
-
-

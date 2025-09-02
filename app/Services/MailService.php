@@ -58,32 +58,4 @@ class MailService
             ];
         }
     }
-
-    /**
-     * Send repayment reminders for all due applications
-     */
-    // public function sendRepaymentReminders()
-    // {
-    //     $applications = Application::where('status', 'Active')
-    //         ->with(['startup.user', 'investor'])
-    //         ->get();
-
-    //     $results = [];
-        
-    //     foreach ($applications as $application) {
-    //         $nextRepaymentDate = $application->getNextRepaymentDate();
-            
-    //         if ($nextRepaymentDate) {
-    //             $daysUntilDue = now()->diffInDays($nextRepaymentDate, false);
-                
-    //             // Send reminder if due within 3 days or overdue
-    //             if ($daysUntilDue <= 3) {
-    //                 $result = $this->sendRepaymentReminder($application, $nextRepaymentDate);
-    //                 $results[] = $result;
-    //             }
-    //         }
-    //     }
-        
-    //     return $results;
-    // }
 } 
