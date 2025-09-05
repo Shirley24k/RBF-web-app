@@ -7,7 +7,7 @@ import joblib
 from proposal_analysis.openai_document_analysis import extract_agreement_details, extract_proposal_details
 from scraping.scm_scraper import scrape_and_export
 import numpy as np
-from matching.matching import insert_investor, insert_application, match_investor_application, update_investor
+from matching.matching import insert_investor, insert_application, match_investor_application, update_investor, create_invested_by
 import traceback
 
 def convert_numpy_types(obj):
@@ -222,6 +222,21 @@ def matching():
         result = match_investor_application(application_id)
         response = [{"investor": inv, "score": convert_numpy_types(score)} for inv, score in result]
         return jsonify(response) 
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/neo4j/invested-by', methods=['POST'])
+def api_invested_by():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        application_id = data.get('application_id')
+        investor_id = data.get('investor_id')
+        if not application_id or not investor_id:
+            return jsonify({'error': 'Missing required fields: application_id or investor_id'}), 400
+        create_invested_by(application_id, investor_id)
+        return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

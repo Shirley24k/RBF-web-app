@@ -1,5 +1,4 @@
-#preprocess investment data by exploding investors of each investment
-
+# Preprocess investment data for three-node system (Application, Tag, Investor)
 import pandas as pd
 import uuid
 
@@ -26,6 +25,7 @@ funding_bins = [
 def assign_funding_range(amount):
     if pd.isnull(amount):
         return "Unknown"
+    
     for low, high, label in funding_bins:
         if low <= amount <= high:
             return label
@@ -35,83 +35,118 @@ def assign_funding_range(amount):
 file_path = "matching/Investment dataset.csv"
 df = pd.read_csv(file_path, encoding="utf-8")
 
+print(f"Original dataset shape: {df.shape}")
+print(f"Columns: {list(df.columns)}")
+
 # Create application_id for each unique investment
 df['application_id'] = [str(uuid.uuid4()) for _ in range(len(df))]
 
-# Explode investors of each investment
+# Explode investors of each investment (split comma-separated investors)
 df['Investors'] = df['Investors'].str.split(',')
 df_exploded = df.explode('Investors')
 df_exploded['Investors'] = df_exploded['Investors'].str.strip()
 
-# Convert funding amount to numeric and multiply by 10000
+# Convert funding amount to numeric and multiply by 10000 (RMB '0,000 format)
 amount_col = "Funding amount (RMB '0,000)"
 df_exploded[amount_col] = pd.to_numeric(df_exploded[amount_col], errors='coerce')
 df_exploded[amount_col] = df_exploded[amount_col].apply(lambda x: x * 10000 if pd.notnull(x) else x)
 
-# Assign funding range
+# Assign funding range tags
 funding_range_col = 'Funding Range'
 df_exploded[funding_range_col] = df_exploded[amount_col].apply(assign_funding_range)
 
-# --- 1. startup_application.csv (application_id, startup) ---
-startup_application = df.loc[:, ['application_id', 'Startup']].drop_duplicates()
-startup_application.to_csv('matching/startup_application.csv', index=False, encoding='utf-8-sig')
+print(f"Exploded dataset shape: {df_exploded.shape}")
+print(f"Funding ranges found: {df_exploded[funding_range_col].value_counts().to_dict()}")
 
-# --- 2. application_tags.csv (application_id, tag) ---
-# Get the funding range data from exploded dataframe and merge back
-funding_range_data = df_exploded.loc[:, ['application_id', funding_range_col]].drop_duplicates()
+# --- 1. application_tags.csv (application_id, tag) ---
+# Create tags for each application from sector, stage, and funding range
 
 # Sector tags
 sector_tags = df.loc[:, ['application_id', 'Sector']].rename(columns={'Sector': 'tag'})
 sector_tags['tag'] = sector_tags['tag'].str.strip()
 
-# Stage tags
+# Stage tags  
 stage_tags = df.loc[:, ['application_id', 'Funding stage']].rename(columns={'Funding stage': 'tag'})
 stage_tags['tag'] = stage_tags['tag'].str.strip()
 
-# Amount range tags
-amount_tags = funding_range_data.rename(columns={funding_range_col: 'tag'})
-amount_tags['tag'] = amount_tags['tag'].str.strip()
+# Funding range tags
+funding_range_data = df_exploded.loc[:, ['application_id', funding_range_col]].rename(columns={funding_range_col: 'tag'})
+funding_range_data['tag'] = funding_range_data['tag'].str.strip()
 
-# Combine all tags
-application_tags = pd.concat([sector_tags, stage_tags, amount_tags], ignore_index=True).drop_duplicates()
+# Combine all tags and remove duplicates
+application_tags = pd.concat([sector_tags, stage_tags, funding_range_data], ignore_index=True)
+application_tags = application_tags.dropna().drop_duplicates()
+
+# Clean up tags (remove empty strings and normalize)
+application_tags = application_tags[application_tags['tag'].str.len() > 0]
+application_tags['tag'] = application_tags['tag'].str.strip()
+
 application_tags.to_csv('matching/application_tags.csv', index=False, encoding='utf-8-sig')
 
-# --- 3. investor_tags.csv (investor, tag) ---
+# --- 2. investor_tags.csv (investor, tag) ---
+# Create tags for each investor based on their investment patterns
+
 # Get unique investors from exploded data
 unique_investors = df_exploded['Investors'].dropna().unique()
 
-# Create investor tags based on their investment patterns
 investor_tags_list = []
 
 for investor in unique_investors:
+    if pd.isna(investor) or investor.strip() == '':
+        continue
+        
     investor_data = df_exploded[df_exploded['Investors'] == investor]
     
-    # Sector tags for this investor
+    # Sector preferences for this investor
     sectors = investor_data['Sector'].dropna().unique()
     for sector in sectors:
-        investor_tags_list.append({'investor': investor, 'tag': sector.strip()})
+        if sector.strip():
+            investor_tags_list.append({'investor': investor.strip(), 'tag': sector.strip()})
     
-    # Stage tags for this investor
+    # Stage preferences for this investor
     stages = investor_data['Funding stage'].dropna().unique()
     for stage in stages:
-        investor_tags_list.append({'investor': investor, 'tag': stage.strip()})
+        if stage.strip():
+            investor_tags_list.append({'investor': investor.strip(), 'tag': stage.strip()})
     
-    # Amount range tags for this investor
+    # Amount range preferences for this investor
     amounts = investor_data[funding_range_col].dropna().unique()
     for amount in amounts:
-        investor_tags_list.append({'investor': investor, 'tag': amount.strip()})
+        if amount.strip() and amount != 'Unknown':
+            investor_tags_list.append({'investor': investor.strip(), 'tag': amount.strip()})
 
 investor_tags = pd.DataFrame(investor_tags_list).drop_duplicates()
+investor_tags = investor_tags.dropna()
+
 investor_tags.to_csv('matching/investor_tags.csv', index=False, encoding='utf-8-sig')
 
-# --- 4. investment_record.csv (application_id, investor) ---
-investment_record = df_exploded.loc[:, ['application_id', 'Investors']].rename(columns={'Investors': 'investor'}).drop_duplicates()
+# --- 3. investment_record.csv (application_id, investor) ---
+# Record which investors actually invested in which applications
+
+investment_record = df_exploded.loc[:, ['application_id', 'Investors']].rename(columns={'Investors': 'investor'})
+investment_record = investment_record.dropna()
+investment_record['investor'] = investment_record['investor'].str.strip()
+investment_record = investment_record[investment_record['investor'].str.len() > 0].drop_duplicates()
+
 investment_record.to_csv('matching/investment_record.csv', index=False, encoding='utf-8-sig')
 
 # Print summary
 print("Files created successfully:")
-print(f"- startup_application.csv: {len(startup_application)} records")
 print(f"- application_tags.csv: {len(application_tags)} records")
-print(f"- investor_tags.csv: {len(investor_tags)} records")
+print(f"- investor_tags.csv: {len(investor_tags)} records") 
 print(f"- investment_record.csv: {len(investment_record)} records")
+
+print(f"\nData Summary:")
+print(f"- Unique Applications: {len(df)}")
+print(f"- Unique Investors: {len(unique_investors)}")
+print(f"- Total Investment Records: {len(df_exploded)}")
+
+print(f"\nTag Categories:")
+print(f"- Sector Tags: {len(sector_tags)}")
+print(f"- Stage Tags: {len(stage_tags)}")
+print(f"- Funding Range Tags: {len(funding_range_data)}")
+
+print(f"\nFunding Ranges Found:")
+for range_name, count in df_exploded[funding_range_col].value_counts().items():
+    print(f"   {range_name}: {count} investments")
 

@@ -4,7 +4,8 @@ import time
 
 def get_driver():
     """Create a new Neo4j driver instance"""
-    uri = os.getenv("NEO4J_PROD_URI") or ""
+    # uri = os.getenv("NEO4J_PROD_URI") or ""
+    uri = os.getenv("NEO4J_TRAIN_URI") or ""
     username = os.getenv("NEO4J_USERNAME") or ""
     password = os.getenv("NEO4J_PASSWORD") or ""
     
@@ -121,58 +122,58 @@ def match_investor_application(application_id):
     def operation(driver):
         with driver.session() as session:
             query = """
-            MATCH (app:Application {application_id: $app_id})-[:has_tag]->(app_tag:Tag)
-            WITH app, collect(app_tag) AS application_tags
-            MATCH (i:Investor)-[:prefer_tag]->(inv_tag:Tag)
-            WITH i, collect(inv_tag) AS investor_tags, application_tags
+            MATCH (a:Application {application_id: $app_id})-[:has_tag]->(t:Tag)
+            WITH collect(DISTINCT t.tag) AS all_tags
+            WITH all_tags,
+                [x IN all_tags WHERE x =~ '(?i).*[0-9].*'] AS funding_tags,
+                [x IN all_tags WHERE x =~ '(?i).*(seed|series).*'] AS stage_tags,
+                [x IN all_tags WHERE NOT (x =~ '(?i).*[0-9].*' OR x =~ '(?i).*(seed|series).*')] AS sector_tags
+            WITH all_tags, funding_tags, stage_tags, sector_tags,
+                1.0 / toFloat(size(all_tags)) AS initial_resource
 
-            WITH
-              i,
-              size([
-                x IN application_tags
-                WHERE x.tag IN [y IN investor_tags | y.tag] AND NOT x.tag STARTS WITH 'RM' AND NOT x.tag STARTS WITH 'Less' AND NOT x.tag STARTS WITH 'More'
-              ]) AS sector_stage_match,
-              [x IN application_tags WHERE x.tag STARTS WITH 'RM' OR x.tag STARTS WITH 'Less' OR x.tag STARTS WITH 'More'] AS s_funding_tags,
-              [y IN investor_tags WHERE y.tag STARTS WITH 'RM' OR y.tag STARTS WITH 'Less' OR y.tag STARTS WITH 'More'] AS i_funding_tags
+            UNWIND (
+            [x IN funding_tags | {tag: x, w: coalesce(2.0, 1.0)}] +
+            [x IN stage_tags | {tag: x, w: coalesce(1.0, 1.0)}] +
+            [x IN sector_tags | {tag: x, w: coalesce(3.0, 1.0)}]
+            ) AS item
 
-            WITH i, sector_stage_match, s_funding_tags, i_funding_tags
-            UNWIND s_funding_tags AS s_fund_tag
-            UNWIND i_funding_tags AS i_fund_tag
+            MATCH (tg:Tag {tag: item.tag})
+            WITH initial_resource, item, tg, sector_tags, all_tags,
+                COUNT { (tg)<-[:has_tag]-() } + COUNT { (tg)<-[:prefer_tag]-() } AS degree_tag
+            WHERE degree_tag > 0
 
-            WITH i, sector_stage_match, s_fund_tag, i_fund_tag
-            CALL (s_fund_tag) {
-              RETURN CASE
-                WHEN s_fund_tag.tag = 'Less than RM 100,000' THEN 50000
-                WHEN s_fund_tag.tag = 'RM 100,000 - RM 500,000' THEN 300000
-                WHEN s_fund_tag.tag = 'RM 500,000 - RM 1,000,000' THEN 750000
-                WHEN s_fund_tag.tag = 'RM 1,000,000 - RM 2,000,000' THEN 1500000
-                WHEN s_fund_tag.tag = 'RM 2,000,000 - RM 5,000,000' THEN 3500000
-                WHEN s_fund_tag.tag = 'More than RM 5,000,000' THEN 7000000
-                ELSE 0
-              END AS s_amount
-            }
+            MATCH (tg)<-[:prefer_tag]-(i:Investor)
+            WITH i, initial_resource, item, degree_tag, sector_tags, all_tags
 
-            CALL (i_fund_tag) {
-              RETURN CASE
-                WHEN i_fund_tag.tag = 'Less than RM 100,000' THEN 50000
-                WHEN i_fund_tag.tag = 'RM 100,000 - RM 500,000' THEN 300000
-                WHEN i_fund_tag.tag = 'RM 500,000 - RM 1,000,000' THEN 750000
-                WHEN i_fund_tag.tag = 'RM 1,000,000 - RM 2,000,000' THEN 1500000
-                WHEN i_fund_tag.tag = 'RM 2,000,000 - RM 5,000,000' THEN 3500000
-                WHEN i_fund_tag.tag = 'More than RM 5,000,000' THEN 7000000
-                ELSE 0
-              END AS i_amount
-            }
+            // Calculate past investment count for tie-breaking
+            OPTIONAL MATCH (i)<-[:invested_by]-(pastApp:Application)-[:has_tag]->(secTag:Tag)
+            WHERE secTag.tag IN sector_tags
+            WITH i, initial_resource, item, degree_tag, COUNT(DISTINCT pastApp) AS sector_investments, all_tags
 
-            WITH i, sector_stage_match, s_amount, i_amount
-            WHERE s_amount > 0 AND i_amount > 0
-            WITH i, sector_stage_match, exp(- abs(s_amount - i_amount) / 100000) AS funding_sim
-            WITH i, sector_stage_match, avg(funding_sim) AS avg_funding_sim
-            WITH i, (avg_funding_sim * 1.0) + (sector_stage_match * 1.0) AS score
-            RETURN i.investor AS RecommendedInvestor, score
-            ORDER BY score DESC
+            // Calculate tag overlap count
+            OPTIONAL MATCH (i)-[:prefer_tag]->(overlapTag:Tag)
+            WHERE overlapTag.tag IN all_tags
+            WITH i, initial_resource, item, degree_tag, sector_investments, COUNT(DISTINCT overlapTag) AS tag_overlap_count
+
+            RETURN i.investor AS RecommendedInvestor,
+                sum(item.w * initial_resource / toFloat(degree_tag)) AS score,
+                sector_investments,
+                tag_overlap_count
+            ORDER BY score DESC, sector_investments DESC, tag_overlap_count DESC
             LIMIT 3
             """
             result = session.run(query, app_id=application_id)
-            return [(record["RecommendedInvestor"], record["score"]) for record in result]
+            return [(record["RecommendedInvestor"], record["score"], record["sector_investments"], record["tag_overlap_count"]) for record in result]
+    return execute_with_retry(operation)
+
+def create_invested_by(application_id, investor_id):
+    def operation(driver):
+        with driver.session() as session:
+            session.run(
+                'MERGE (a:Application {application_id: $app_id})\n'
+                'MERGE (i:Investor {investor: $inv_id})\n'
+                'MERGE (a)-[:invested_by]->(i)',
+                app_id=application_id,
+                inv_id=investor_id
+            )
     return execute_with_retry(operation)
