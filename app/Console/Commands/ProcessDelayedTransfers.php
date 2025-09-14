@@ -1,5 +1,5 @@
 <?php
-
+//Fixed, no need manually execute this script, can delete this file later
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -60,7 +60,7 @@ class ProcessDelayedTransfers extends Command
                     'metadata' => [
                         'application_id' => $transaction->application_id,
                         'transaction_id' => $transaction->id,
-                        'repayment_type' => 'monthly_repayment'
+                        'repayment_type' => 'monthly repayment'
                     ]
                 ]);
 
@@ -79,10 +79,10 @@ class ProcessDelayedTransfers extends Command
                     $application->save();
                 }
 
-                $this->info("✅ Transfer completed for transaction ID: {$transaction->id}");
+                $this->info("Transfer completed for transaction ID: {$transaction->id}");
 
             } catch (\Exception $e) {
-                $this->error("❌ Transfer failed for transaction ID: {$transaction->id} - {$e->getMessage()}");
+                $this->error("Transfer failed for transaction ID: {$transaction->id} - {$e->getMessage()}");
                 \Log::error('Delayed transfer failed', [
                     'transaction_id' => $transaction->id,
                     'application_id' => $transaction->application_id,

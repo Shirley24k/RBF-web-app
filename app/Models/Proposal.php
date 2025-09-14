@@ -142,6 +142,11 @@ class Proposal extends Model
         return $this->hasMany(Application::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProposalReview::class);
+    }
+
     public function isReviewed(): bool
     {
         return $this->status === 'REVIEWED';
@@ -152,11 +157,30 @@ class Proposal extends Model
         return $this->status === 'DRAFT';
     }
 
+    public function isReviewing(): bool
+    {
+        return $this->status === 'REVIEWING';
+    }
+
+    public function hasUnresolvedReviews(): bool
+    {
+        return $this->reviews()->unresolved()->exists();
+    }
+
+    public function allReviewsResolved(): bool
+    {
+        $totalReviews = $this->reviews()->count();
+        $resolvedReviews = $this->reviews()->resolved()->count();
+        
+        return $totalReviews > 0 && $totalReviews === $resolvedReviews;
+    }
+
     public static function getStatusOptions(): array
     {
         return [
             'DRAFT' => 'Draft',
-            'REVIEWED' => 'Reviewed'
+            'REVIEWING' => 'Reviewing',
+            'REVIEWED' => 'Reviewed',
         ];
     }
 }

@@ -17,7 +17,7 @@ class CreateAgreementsTable extends Migration
             $table->id();
             $table->string('startup_agreement_path')->nullable();
             $table->string('investor_agreement_path')->nullable();
-            $table->longText('message')->nullable();
+            $table->text('message')->nullable();
             $table->boolean('needs_startup_reupload')->default(false);
             $table->boolean('needs_investor_reupload')->default(false);
             $table->unsignedBigInteger('application_id');

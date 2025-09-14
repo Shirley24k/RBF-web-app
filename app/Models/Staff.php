@@ -32,6 +32,7 @@ class Staff extends Model
         'view_proposal' => 'View Proposals',
         'create_proposal' => 'Create Proposals',
         'edit_proposal' => 'Edit Proposals',
+        'add_review' => 'Add Reviews',
         
         // Application Management
         'view_applications' => 'View Applications',

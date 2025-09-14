@@ -155,12 +155,8 @@ class RepaymentService
             // Fallback to current month if no next repayment date
             $revenueMonth = now()->format('Y-m');
         }
-        \Log::info('Startup stripe id: ' . $application->startup->stripe_id);
         $monthly_revenue = $this->stripeService->getMonthlyRevenue($application->startup->stripe_id, $revenueMonth);
-        \Log::info('Monthly revenue: ' . $monthly_revenue);
         $repayment_amount = $monthly_revenue * ($application->revenue_share_percentage / 100);
-        \Log::info('Revenue share percentage: ' . $application->revenue_share_percentage);
-        \Log::info('Repayment amount: ' . $repayment_amount);
         return $repayment_amount;
     }
 

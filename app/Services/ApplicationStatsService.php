@@ -17,7 +17,8 @@ class ApplicationStatsService
 			'pending' => Application::where('status', 'Pending')->count(),
 			'in_progress' => Application::where('status', 'In Progress')->count(),
 			'active' => Application::where('status', 'Active')->count(),
-			'failed' => Application::whereIn('status', ['Failed', 'Rejected'])->count(),
+			'failed' => Application::where('status', 'Failed')->count(),
+			'rejected' => Application::where('status', 'Rejected')->count(),
 			'completed' => Application::where('status', 'Completed')->count(),
 			'total_startups' => Startup::count(),
 			'total_investors' => Investor::count(),
@@ -35,6 +36,7 @@ class ApplicationStatsService
 		return [
 			'total' => Application::where('startup_id', $startupId)->count(),
 			'await_review' => Application::where('startup_id', $startupId)->where('status', 'Await Review')->count(),
+			'pending' => Application::where('startup_id', $startupId)->where('status', 'Pending')->count(),
 			'ongoing' => Application::where('startup_id', $startupId)->whereIn('status', ['Await Review', 'Pending', 'In Progress', 'Active'])->count(),
 			'pending' => Application::where('startup_id', $startupId)->where('status', 'Pending')->count(),
 			'in_progress' => Application::where('startup_id', $startupId)->where('status', 'In Progress')->count(),
@@ -73,6 +75,30 @@ class ApplicationStatsService
 			'investor_balance' => $investor ? $investor->balance : 0,
 		];
 	}
+
+	public function getMonthlyStats(): array
+	{
+		$currentMonth = now()->format('Y-m');
+		$startOfMonth = now()->startOfMonth();
+		$endOfMonth = now()->endOfMonth();
+		
+		// New applications submitted this month
+		$newApplicationsThisMonth = Application::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+		
+		// New startups registered this month
+		$newStartupsThisMonth = Startup::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+		
+		// New investors registered this month
+		$newInvestorsThisMonth = Investor::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+
+		return [
+			'new_applications_this_month' => $newApplicationsThisMonth,
+			'new_startups_this_month' => $newStartupsThisMonth,
+			'new_investors_this_month' => $newInvestorsThisMonth,
+			'month' => $currentMonth
+		];
+	}
+
 }
 
 

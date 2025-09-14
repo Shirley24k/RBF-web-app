@@ -17,6 +17,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ProposalReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -131,6 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/applications', [ApplicationController::class, 'getAllApplications'])->middleware('staff.permission:view_applications');
     Route::get('/pending-applications', [ApplicationController::class, 'getPendingApplications'])->middleware('staff.permission:view_applications');
     Route::get('/application-stats', [ApplicationController::class, 'getApplicationStats']);
+    Route::get('/monthly-chart-data', [ApplicationController::class, 'getMonthlyChartData']);
     
     // Admin account management routes
     Route::prefix('admin')->group(function () {
@@ -160,7 +162,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Proposal routes with ID
     Route::get('/startup/proposals/{id}', [ProposalController::class, 'getProposalById'])->middleware('staff.permission:view_proposal');
     Route::put('/startup/proposals/{id}', [ProposalController::class, 'updateProposal'])->middleware('staff.permission:edit_proposal');
+    Route::get('/proposals/{proposalId}/reviews', [ProposalReviewController::class, 'show'])->middleware('staff.permission:add_review');
     Route::put('/startup/review-proposals/{id}', [ProposalController::class, 'reviewProposal'])->middleware('staff.permission:review_proposal');
+    
+    // Proposal review routes
+    Route::post('/startup/reviews/{proposalId}', [ProposalReviewController::class, 'store'])->middleware('staff.permission:add_review');
+    Route::patch('/startup/reviews/{proposalId}/resolution', [ProposalReviewController::class, 'updateResolution'])->middleware('staff.permission:review_proposal');
     
     // Agreement routes with ID
     Route::get('/agreement/{application_id}', [AgreementController::class, 'getAgreement'])->middleware('staff.permission:view_agreement');
@@ -183,6 +190,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/permissions', [StaffController::class, 'getPermissions']);
         Route::put('/{id}', [StaffController::class, 'update']);
         Route::delete('/{id}', [StaffController::class, 'destroy']);
+        
+        // Staff proposal review routes
+        Route::post('/proposals/{proposalId}/responses', [ProposalReviewController::class, 'storeResponseForStaff'])->middleware('staff.permission:add_review');
     });
 
 });

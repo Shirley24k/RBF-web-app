@@ -360,6 +360,8 @@ class ApplicationController extends Controller
                 $stats = $this->applicationStatsService->getInvestorStats($investor->id);
             } else {
                 $stats = $this->applicationStatsService->getGlobalStats();
+                $monthlyStats = $this->applicationStatsService->getMonthlyStats();
+                $stats = array_merge($stats, $monthlyStats);
             }
 
             return response()->json([
@@ -369,6 +371,34 @@ class ApplicationController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to get application statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getMonthlyChartData(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            
+            // Only allow admin users to access chart data
+            if ($user->role !== 'admin') {
+                return response()->json([
+                    'message' => 'Unauthorized access',
+                    'error' => 'Only admin users can access chart data'
+                ], 403);
+            }
+
+            $months = $request->input('months', 12); // Default to 12 months
+            $chartData = $this->applicationStatsService->getMonthlyChartData($months);
+
+            return response()->json([
+                'message' => 'Monthly chart data retrieved successfully',
+                'data' => $chartData
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to get monthly chart data',
                 'error' => $e->getMessage()
             ], 500);
         }

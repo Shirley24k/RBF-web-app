@@ -106,12 +106,36 @@ class ProposalService
     }
 
     /**
-     * Review a proposal - update status to 'reviewed'
+     * Get a specific proposal by ID for a startup
+     */
+    public function getProposalByIdForStartup(int $proposalId, int $startupId): Proposal
+    {
+        $proposal = Proposal::where('id', $proposalId)
+            ->where('startup_id', $startupId)
+            ->first();
+
+        if (!$proposal) {
+            throw new Exception('Proposal not found');
+        }
+
+        return $proposal;
+    }
+
+    /**
+     * Update proposal status
+     */
+    public function updateProposalStatus(int $proposalId, int $startupId, string $status): Proposal
+    {
+        $proposal = $this->getProposalByIdForStartup($proposalId, $startupId);
+        $proposal->update(['status' => $status]);
+        return $proposal->fresh();
+    }
+
+    /**
+     * Review a proposal - update status to 'reviewed' (legacy method)
      */
     public function reviewProposal(int $proposalId, int $startupId): Proposal
     {
-        $proposal = $this->getProposalById($proposalId, $startupId);
-        $proposal->update(['status' => 'REVIEWED']);
-        return $proposal->fresh();
+        return $this->updateProposalStatus($proposalId, $startupId, 'REVIEWED');
     }
 }

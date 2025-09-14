@@ -218,21 +218,29 @@ class ProposalController extends Controller
     }
 
     /**
-     * Review a proposal - update status to 'reviewed'
+     * Update proposal status (REVIEWING or REVIEWED)
      */
-    public function reviewProposal($id): JsonResponse
+    public function reviewProposal(Request $request, $id): JsonResponse
     {
         try {
+            $request->validate([
+                'status' => 'required|in:REVIEWING,REVIEWED'
+            ]);
+
             $startup = $this->startupService->getCurrentStartup();
-            $proposal = $this->proposalService->reviewProposal((int)$id, $startup->id);
+            $proposal = $this->proposalService->updateProposalStatus((int)$id, $startup->id, $request->input('status'));
+
+            $message = $request->input('status') === 'REVIEWED' 
+                ? 'Proposal review completed successfully' 
+                : 'Proposal status updated to reviewing';
 
             return response()->json([
-                'message' => 'Proposal marked as reviewed successfully',
+                'message' => $message,
                 'data' => $proposal
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to mark proposal as reviewed',
+                'message' => 'Failed to update proposal status',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -65,11 +65,6 @@ class StripeService
                 'stripe_account' => $stripe_id,
             ]);
 
-            \Log::info('Total charges retrieved from Stripe: ' . count($charges->data));
-            \Log::info('Charges with simulated_month metadata: ' . count(array_filter($charges->data, function($charge) {
-                return isset($charge->metadata['simulated_month']);
-            })));
-
             $monthly_revenue = [];
 
             foreach($charges->data as $charge) {
@@ -82,9 +77,6 @@ class StripeService
                     $monthly_revenue[$month] += $amount;
                 }
             }
-
-            \Log::info('Monthly revenue breakdown: ' . json_encode($monthly_revenue));
-
 
             $revenue_q1 = 0;
             $revenue_q2 = 0;

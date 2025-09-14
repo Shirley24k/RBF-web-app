@@ -14,6 +14,7 @@ use App\Models\Investor;
 use App\Services\StripeService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\UploadedFile;
+use App\Jobs\CreateInvestedByInNeo4j;
 
 class AgreementService
 {
@@ -161,13 +162,16 @@ class AgreementService
             }else{
                 throw new \Exception('Failed to transfer funds');
             }
+
+            //create invested_by relationship in neo4j
+            CreateInvestedByInNeo4j::dispatch($application_id, $investor->id);
             
             return $agreement;
         });
         
     }
     
-    public function declineAgreement(Request $request, $user, $application_id): JsonResponse
+    public function declineAgreement(Request $request, $user, $application_id)
     {
         $validate = $request->validate([
             'message' => 'required|string'
@@ -175,8 +179,9 @@ class AgreementService
 
         return DB::transaction(function () use ($request, $user, $application_id){
             $application = Application::findOrFail($application_id);
+            $agreement = $application->agreement;
+            
             if ($application->status == 'Pending') {
-                $agreement = $application->agreement;
                 $agreement->message = $request->message;
                 
                 // If admin is declining (status will be changed to 'In Progress'), 

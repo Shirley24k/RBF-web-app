@@ -33,7 +33,7 @@ class RiskAssessmentService
         $mrr = $revenueQ2 / 3.0;
 
         $predictedGrowthRate = ($predictedRevenue - $revenueQ2) / $revenueQ2;
-        $estimatedFundingAmount = $predictedGrowthRate > 0 ? $mrr * 6.0 : $mrr * 3.0;
+        $estimatedFundingAmount = $predictedGrowthRate > 0 ? $mrr * 6.0 : $mrr * 4.0;
         $pass = $requestedFundingAmount <= $estimatedFundingAmount;
 
         return [

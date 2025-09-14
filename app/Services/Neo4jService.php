@@ -129,4 +129,34 @@ class Neo4jService
             return 'More than RM 5,000,000';
         }
     }
+
+    public function createInvestedByRelationship(int $application_id, int $investor_id): array
+    {
+        try{
+            $response = Http::post(config('flask.url').'/neo4j/invested-by', [
+                'application_id' => $application_id,
+                'investor_id' => $investor_id
+            ]);
+
+            if ($response->failed()) {
+                Log::error('Flask invested-by API failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                throw new \Exception('Failed to create invested_by relationship');
+            }
+
+            return [
+                'message' => 'Relationship created successfully',
+                'data' => $response->json()
+            ];
+        }catch(\Exception $e){
+            Log::error('Failed to create invested_by relationship', [
+                'application_id' => $application_id,
+                'investor_id' => $investor_id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
 }
