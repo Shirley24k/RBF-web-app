@@ -216,11 +216,47 @@ def matching():
             return jsonify({'error': 'No data provided'}), 400
         
         application_id = data['application_id']
+        
         if not application_id:
             return jsonify({'error': 'Missing required field: application_id'}), 400
         
         result = match_investor_application(application_id)
-        response = [{"investor": inv, "score": convert_numpy_types(score)} for inv, score in result]
+
+        # Normalize result to common shape for frontend
+        investors = []
+        fallback = False
+        if result:
+            first = result[0]
+            # Primary shape: (investor, score, sector_investments, tag_overlap_count)
+            if isinstance(first, (list, tuple)) and len(first) == 4:
+                for inv, score, sector_investments, tag_overlap_count in result:
+                    investors.append({
+                        "investor": inv,
+                        "score": convert_numpy_types(score),
+                        "sector_investments": sector_investments,
+                        "tag_overlap_count": tag_overlap_count,
+                    })
+                top_3_tag_overlap = [itm["tag_overlap_count"] for itm in investors[:3]]
+                has_good_matches = any((x or 0) > 0 for x in top_3_tag_overlap)
+            else:
+                # Fallback shape: (investor, past_investments)
+                fallback = True
+                for inv, past_investments in result:
+                    investors.append({
+                        "investor": inv,
+                        "score": int(past_investments),
+                        "sector_investments": 0,
+                        "tag_overlap_count": 0,
+                    })
+                has_good_matches = False
+        else:
+            has_good_matches = False
+
+        response = {
+            "investors": investors,
+            "has_good_matches": has_good_matches,
+            "fallback": fallback
+        }
         return jsonify(response) 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

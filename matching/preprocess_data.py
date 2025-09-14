@@ -1,6 +1,7 @@
 # Preprocess investment data for three-node system (Application, Tag, Investor)
 import pandas as pd
 import uuid
+import os
 
 # Define funding bins and create a function to assign a funding range tag
 funding_bins = [
@@ -31,8 +32,9 @@ def assign_funding_range(amount):
             return label
     return "Unknown"
 
-# Read the dataset
-file_path = "matching/Investment dataset.csv"
+# Read the dataset using path relative to this file's directory
+base_dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(base_dir, "Investment dataset.csv")
 df = pd.read_csv(file_path, encoding="utf-8")
 
 print(f"Original dataset shape: {df.shape}")
@@ -81,13 +83,17 @@ application_tags = application_tags.dropna().drop_duplicates()
 application_tags = application_tags[application_tags['tag'].str.len() > 0]
 application_tags['tag'] = application_tags['tag'].str.strip()
 
-application_tags.to_csv('matching/application_tags.csv', index=False, encoding='utf-8-sig')
+application_tags.to_csv(os.path.join(base_dir, 'application_tags.csv'), index=False, encoding='utf-8-sig')
 
-# --- 2. investor_tags.csv (investor, tag) ---
+# --- 2. investor_tags.csv (investor_id, investor, tag) ---
 # Create tags for each investor based on their investment patterns
 
 # Get unique investors from exploded data
 unique_investors = df_exploded['Investors'].dropna().unique()
+
+# Create deterministic numeric IDs for investors (1..N), sorted by name
+sorted_investors = sorted([inv.strip() for inv in unique_investors if isinstance(inv, str)])
+investor_id_map = {inv: idx for idx, inv in enumerate(sorted_investors, start=1)}
 
 investor_tags_list = []
 
@@ -118,9 +124,16 @@ for investor in unique_investors:
 investor_tags = pd.DataFrame(investor_tags_list).drop_duplicates()
 investor_tags = investor_tags.dropna()
 
-investor_tags.to_csv('matching/investor_tags.csv', index=False, encoding='utf-8-sig')
+# Attach numeric id as 'investor' (as string) and keep string as 'investor_name'
+investor_tags['investor_name'] = investor_tags['investor']
+investor_tags['investor'] = investor_tags['investor_name'].map(investor_id_map).astype(str)
 
-# --- 3. investment_record.csv (application_id, investor) ---
+# Reorder columns: investor (id), investor_name, tag
+investor_tags = investor_tags[['investor', 'investor_name', 'tag']]
+
+investor_tags.to_csv(os.path.join(base_dir, 'investor_tags.csv'), index=False, encoding='utf-8-sig')
+
+# --- 3. investment_record.csv (application_id, investor_id, investor) ---
 # Record which investors actually invested in which applications
 
 investment_record = df_exploded.loc[:, ['application_id', 'Investors']].rename(columns={'Investors': 'investor'})
@@ -128,7 +141,14 @@ investment_record = investment_record.dropna()
 investment_record['investor'] = investment_record['investor'].str.strip()
 investment_record = investment_record[investment_record['investor'].str.len() > 0].drop_duplicates()
 
-investment_record.to_csv('matching/investment_record.csv', index=False, encoding='utf-8-sig')
+# Attach numeric id as 'investor' (as string) and keep string as 'investor_name'
+investment_record['investor_name'] = investment_record['investor']
+investment_record['investor'] = investment_record['investor_name'].map(investor_id_map).astype(str)
+
+# Reorder columns: application_id, investor (id), investor_name
+investment_record = investment_record[['application_id', 'investor', 'investor_name']]
+
+investment_record.to_csv(os.path.join(base_dir, 'investment_record.csv'), index=False, encoding='utf-8-sig')
 
 # Print summary
 print("Files created successfully:")

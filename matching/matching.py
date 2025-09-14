@@ -159,11 +159,34 @@ def match_investor_application(application_id):
                 sum(item.w * initial_resource / toFloat(degree_tag)) AS score,
                 sector_investments,
                 tag_overlap_count
-            ORDER BY score DESC, sector_investments DESC, tag_overlap_count DESC
-            LIMIT 3
+            ORDER BY score DESC, sector_investments DESC, tag_overlap_count DESC, toInteger(i.investor) ASC
+            LIMIT 12
             """
+            
             result = session.run(query, app_id=application_id)
-            return [(record["RecommendedInvestor"], record["score"], record["sector_investments"], record["tag_overlap_count"]) for record in result]
+            primary = [
+                (
+                    record["RecommendedInvestor"],
+                    record["score"],
+                    record["sector_investments"],
+                    record["tag_overlap_count"],
+                )
+                for record in result
+            ]
+
+            if primary:
+                return primary
+
+            # Fallback: suggest investors with highest prior activity (past investments)
+            fallback_query = """
+            MATCH (i:Investor)
+            OPTIONAL MATCH (i)<-[:invested_by]-(app:Application)
+            RETURN i.investor AS investor, COUNT(app) AS past_investments
+            ORDER BY past_investments DESC, toInteger(i.investor) ASC
+            LIMIT 9
+            """
+            fallback_result = session.run(fallback_query)
+            return [(record["investor"], record["past_investments"]) for record in fallback_result]
     return execute_with_retry(operation)
 
 def create_invested_by(application_id, investor_id):
