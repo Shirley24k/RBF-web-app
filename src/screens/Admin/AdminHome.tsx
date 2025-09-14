@@ -1,15 +1,13 @@
 import {
   ChartBarIcon,
-  CheckCircleIcon,
-  ClockIcon,
   CurrencyDollarIcon,
   DocumentTextIcon,
-  UserGroupIcon,
-  XCircleIcon
+  UserGroupIcon
 } from "@heroicons/react/24/outline";
-import { Button, Spinner } from "@material-tailwind/react";
+import { Button, Spinner, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { MonthlyChart } from "../../components/MonthlyChart";
 import { Sidenav } from "../../components/sidenav";
 import { StatCard } from "../../components/StatCard";
 
@@ -24,13 +22,47 @@ export const AdminHome = (): JSX.Element => {
     inProgressApplications: 0,
     activeApplications: 0,
     completedApplications: 0,
+    rejectedApplications: 0,
     failedApplications: 0,
     totalStartups: 0,
     totalInvestors: 0,
     totalFundingAmount: 0,
-    successRate: 0
+    // Monthly analytics - new registrations
+    newApplicationsThisMonth: 0,
+    newStartupsThisMonth: 0,
+    newInvestorsThisMonth: 0,
+    month: ''
   });
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
+
+  // Convert status distribution to MonthlyChart format
+  const createStatusChartData = () => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.toISOString().slice(0, 7); // YYYY-MM format
+    const currentMonthName = currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    
+    return [{
+      month: currentMonth,
+      month_name: currentMonthName,
+      await_review: analytics.awaitReviewApplications,
+      pending: analytics.pendingApplications,
+      in_progress: analytics.inProgressApplications,
+      active: analytics.activeApplications,
+      completed: analytics.completedApplications,
+      failed: analytics.failedApplications,
+      rejected: analytics.rejectedApplications || 0
+    }];
+  };
+
+  // Update chart data when analytics change
+  useEffect(() => {
+    if (analytics.awaitReviewApplications > 0 || analytics.pendingApplications > 0 || analytics.inProgressApplications > 0 || 
+        analytics.activeApplications > 0 || analytics.completedApplications > 0 || analytics.failedApplications > 0) {
+      setChartData(createStatusChartData());
+    }
+  }, [analytics]);
   
   const fetchApplications = async () => {
     await axios.get(`${API_BASE_URL}/pending-applications`, {
@@ -62,10 +94,15 @@ export const AdminHome = (): JSX.Element => {
           activeApplications: data.stats.active || 0,
           completedApplications: data.stats.completed || 0,
           failedApplications: data.stats.failed || 0,
+          rejectedApplications: data.stats.rejected || 0,
           totalStartups: data.stats.total_startups || 0,
           totalInvestors: data.stats.total_investors || 0,
           totalFundingAmount: data.stats.total_funding_amount || 0,
-          successRate: data.stats.success_rate || 0
+          // Monthly analytics - new registrations
+          newApplicationsThisMonth: data.stats.new_applications_this_month || 0,
+          newStartupsThisMonth: data.stats.new_startups_this_month || 0,
+          newInvestorsThisMonth: data.stats.new_investors_this_month || 0,
+          month: data.stats.month || '',
         });
       }
     } catch (error) {
@@ -79,145 +116,170 @@ export const AdminHome = (): JSX.Element => {
     fetchApplications();
     fetchAnalytics();
   }, []);
+
+  const handlePreviousMonth = () => {
+    if (currentMonthIndex > 0) {
+      setCurrentMonthIndex(currentMonthIndex - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonthIndex < chartData.length - 1) {
+      setCurrentMonthIndex(currentMonthIndex + 1);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
+  
   return (
     <div className="bg-white flex flex-row justify-center w-full">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
-      <Sidenav active="home" />
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0 z-20">
+        <Sidenav active="home" />
       </div>
       
       {/* Mobile Layout */}
-      <div className="lg:hidden">
+      <div className="lg:hidden z-20">
         <Sidenav active="home" />
       </div>
 
       {/* Main Content */}
-      <main className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300">
-        <div className="flex-1 p-8 max-md:p-6 max-sm:p-4">
-          <div className="w-full">
+      <main className="ml-32 transition-all duration-300 w-full">
+        <div className="px-6 py-8 lg:px-8 xl:px-12">
+          <div className="max-w-7xl mx-auto">
             {/* Header Section */}
-            <div className="mb-10 max-md:mb-8 max-sm:mb-6">
-              <h1 className="font-section-title font-semibold text-black text-5xl max-lg:text-4xl max-md:text-3xl max-sm:text-2xl tracking-[-0.96px] leading-normal mb-3 max-md:mb-2 max-sm:mb-1">
-          Welcome, Admin!
-        </h1>
-              <p className="text-gray-600 text-xl max-md:text-lg max-sm:text-base">
-                Platform overview and management dashboard
-              </p>
-            </div>
-
-            {loading ? (
-              <div className="flex justify-center items-center h-80 max-md:h-64 max-sm:h-48">
-                <Spinner className="h-16 w-16 max-md:h-12 max-md:w-12 max-sm:h-10 max-sm:w-10 text-dark-plum" />
+            <div className="w-full">
+              <div className="mb-16 max-lg:mb-12 max-sm:mb-8">
+                <Typography variant="h4" className="text-4xl max-lg:text-3xl max-sm:text-2xl font-bold text-gray-900 mb-6 max-lg:mb-4 max-sm:mb-3">
+                  Welcome, Admin!
+                </Typography>
+                <Typography variant="paragraph" className="text-xl max-lg:text-base max-sm:text-sm text-gray-600 max-w-2xl">
+                  Platform overview and management dashboard
+                </Typography>
               </div>
-            ) : (
-              <>
 
-                {/* Analytics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-md:gap-4 max-sm:gap-3 mb-10 max-md:mb-8 max-sm:mb-6">
-                  <StatCard
-                    title="Total Applications"
-                    value={analytics.totalApplications}
-                    icon={DocumentTextIcon}
-                    color="border-l-blue-500"
-                  />
-                  <StatCard
-                    title="Await Review"
-                    value={analytics.awaitReviewApplications}
-                    icon={ClockIcon}
-                    color="border-l-yellow-500"
-                  />
-                  <StatCard
-                    title="Pending"
-                    value={analytics.pendingApplications}
-                    icon={ClockIcon}
-                    color="border-l-orange-500"
-                  />
-                  <StatCard
-                    title="In Progress"
-                    value={analytics.inProgressApplications}
-                    icon={ClockIcon}
-                    color="border-l-indigo-500"
-                  />
-                  <StatCard
-                    title="Active"
-                    value={analytics.activeApplications}
-                    icon={CheckCircleIcon}
-                    color="border-l-green-500"
-                  />
-                  <StatCard
-                    title="Completed"
-                    value={analytics.completedApplications}
-                    icon={CheckCircleIcon}
-                    color="border-l-purple-500"
-                  />
-                  <StatCard
-                    title="Failed/Rejected"
-                    value={analytics.failedApplications}
-                    icon={XCircleIcon}
-                    color="border-l-red-500"
-                  />
-                </div>
-
-                {/* Platform Overview */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-md:gap-4 max-sm:gap-3 mb-8 max-md:mb-6 max-sm:mb-4">
-                  {/* Platform Statistics */}
-                  <div className="bg-white rounded-xl p-6 max-md:p-4 max-sm:p-3 shadow-lg border border-gray-100">
-                    <div className="flex items-center justify-between mb-4 max-md:mb-3 max-sm:mb-2">
-                      <h3 className="text-lg max-md:text-base max-sm:text-sm font-semibold text-gray-900">Platform Stats</h3>
-                      <ChartBarIcon className="w-6 h-6 max-md:w-5 max-md:h-5 max-sm:w-4 max-sm:h-4 text-blue-500" />
+              <div className="space-y-12 max-lg:space-y-8">
+                  {/* Application Status Distribution Chart */}
+                  <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                    <div className="flex flex-row items-center justify-between mb-8 max-lg:mb-6 max-sm:mb-4">
+                      <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">
+                        Current Application Status Distribution
+                      </Typography>
                     </div>
-                    <div className="space-y-3 max-md:space-y-2 max-sm:space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm max-md:text-xs text-gray-600">Total Startups</span>
-                        <span className="font-semibold text-base max-md:text-sm max-sm:text-xs">{analytics.totalStartups}</span>
+                    {chartData.length > 0 ? (
+                      <MonthlyChart
+                        data={chartData}
+                        currentMonthIndex={currentMonthIndex}
+                        onPreviousMonth={handlePreviousMonth}
+                        onNextMonth={handleNextMonth}
+                        canGoPrevious={currentMonthIndex > 0}
+                        canGoNext={currentMonthIndex < chartData.length - 1}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-64">
+                        <Typography variant="paragraph" className="text-gray-500">No data available</Typography>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm max-md:text-xs text-gray-600">Total Investors</span>
-                        <span className="font-semibold text-base max-md:text-sm max-sm:text-xs">{analytics.totalInvestors}</span>
+                    )}
+                  </div>
+
+                  {/* Monthly Analytics */}
+                  <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center mb-8 max-lg:mb-6 max-sm:mb-4">
+                      <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">
+                        This Month's Activity ({analytics.month})
+                      </Typography>
+                    </div>
+                    <div className="grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-6 max-lg:gap-4">
+                    <StatCard
+                        title="New Applications"
+                        value={analytics.newApplicationsThisMonth}
+                      icon={DocumentTextIcon}
+                      color="border-l-blue-500"
+                    />
+                    <StatCard
+                        title="New Startups"
+                        value={analytics.newStartupsThisMonth}
+                        icon={UserGroupIcon}
+                      color="border-l-green-500"
+                    />
+                    <StatCard
+                        title="New Investors"
+                        value={analytics.newInvestorsThisMonth}
+                        icon={UserGroupIcon}
+                      color="border-l-purple-500"
+                    />
+                    
+                    </div>
+                  </div>
+
+
+                  {/* Platform Overview */}
+                  <div className="grid grid-cols-2 max-lg:grid-cols-1 gap-8 max-lg:gap-6">
+                    {/* Platform Statistics */}
+                    <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                      <div className="flex items-center justify-between mb-8 max-lg:mb-6 max-sm:mb-4">
+                        <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">Platform Stats</Typography>
+                        <ChartBarIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-blue-500" />
+                      </div>
+                      <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Total Applications</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">{analytics.totalApplications}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Total Startups</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">{analytics.totalStartups}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Total Investors</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">{analytics.totalInvestors}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Funding Insights */}
+                    <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                      <div className="flex items-center justify-between mb-8 max-lg:mb-6 max-sm:mb-4">
+                        <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">Funding Insights</Typography>
+                        <CurrencyDollarIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-green-500" />
+                      </div>
+                      <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Total Funding</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900 whitespace-nowrap">RM {analytics.totalFundingAmount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Success Rate</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900 whitespace-nowrap">{analytics.totalApplications > 0 ? Math.round(((analytics.completedApplications + analytics.activeApplications) / analytics.totalApplications) * 100) : 0}%</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Completion Rate</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-green-600">
+                            {analytics.totalApplications > 0 ? Math.round((analytics.completedApplications / analytics.totalApplications) * 100) : 0}%
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Funding Insights */}
-                  <div className="bg-white rounded-xl p-6 max-md:p-4 max-sm:p-3 shadow-lg border border-gray-100">
-                    <div className="flex items-center justify-between mb-4 max-md:mb-3 max-sm:mb-2">
-                      <h3 className="text-lg max-md:text-base max-sm:text-sm font-semibold text-gray-900">Funding Insights</h3>
-                      <CurrencyDollarIcon className="w-6 h-6 max-md:w-5 max-md:h-5 max-sm:w-4 max-sm:h-4 text-green-500" />
-                    </div>
-                    <div className="space-y-3 max-md:space-y-2 max-sm:space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm max-md:text-xs text-gray-600">Total Funding</span>
-                        <span className="font-semibold text-base max-md:text-sm max-sm:text-xs">RM {analytics.totalFundingAmount.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm max-md:text-xs text-gray-600">Avg Funding</span>
-                        <span className="font-semibold text-base max-md:text-sm max-sm:text-xs">RM {(analytics.totalFundingAmount / analytics.totalApplications).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm max-md:text-xs text-gray-600">Success Rate</span>
-                        <span className="font-semibold text-base max-md:text-sm max-sm:text-xs text-green-600">
-                          {analytics.successRate > 0 ? analytics.successRate : (analytics.totalApplications > 0 ? Math.round((analytics.completedApplications / analytics.totalApplications) * 100) : 0)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Performance Metrics - removed unsupported/duplicate metrics */}
-                </div>
-
-                {/* Quick Actions Row */}
-                <div className="mb-10 max-md:mb-8 max-sm:mb-6">
-                  <div className="bg-white rounded-xl p-6 max-md:p-4 max-sm:p-3 shadow-lg border border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 max-md:gap-2 max-sm:gap-1">
-                        <UserGroupIcon className="w-6 h-6 max-md:w-5 max-md:h-5 max-sm:w-4 max-sm:h-4 text-orange-500" />
-                        <h3 className="text-lg max-md:text-base max-sm:text-sm font-semibold text-gray-900">Quick Actions</h3>
+                  {/* Quick Actions Row */}
+                  <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                    <div className="flex flex-row items-center justify-between gap-4 max-sm:flex-col max-sm:items-start max-sm:gap-2">
+                      <div className="flex items-center gap-4 max-lg:gap-3 max-sm:gap-2">
+                        <UserGroupIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-orange-500" />
+                        <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">Quick Actions</Typography>
                       </div>
                       <Button 
-                        className={`font-bold py-2.5 max-md:py-2 max-sm:py-1.5 px-6 max-md:px-4 max-sm:px-3 rounded-lg text-sm max-md:text-xs capitalize ${
+                        className={`font-bold py-4 max-lg:py-3 max-sm:py-2.5 px-8 max-lg:px-6 max-sm:px-4 rounded-xl text-lg max-lg:text-base max-sm:text-sm capitalize transition-all duration-200 ${
                           applications && applications.length > 0 
-                            ? 'bg-red-500 hover:bg-red-600 text-white' 
-                            : 'bg-dark-plum hover:bg-light-purple text-white'
+                          ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl' 
+                          : 'bg-dark-plum hover:bg-light-purple text-white shadow-lg hover:shadow-xl'
                         }`}
                         onClick={()=>{
                           if (applications && applications.length > 0) {
@@ -231,9 +293,9 @@ export const AdminHome = (): JSX.Element => {
                       </Button>
                     </div>
                   </div>
-                </div>
-              </>
-            )}
+              </div>
+            </div>
+            
           </div>
         </div>
       </main>

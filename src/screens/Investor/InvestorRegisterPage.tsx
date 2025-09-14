@@ -266,7 +266,7 @@ export const InvestorRegister = (): JSX.Element => {
             if (errorMessage.includes('SCM investor alert list')) {
               setErrors(prev => ({
                 ...prev,
-                submit: "We have found you in the SCM investor alert list. Your registration cannot be processed at this time. Please contact support for assistance."
+                submit: "We have found you in the SCM investor alert list. Your registration cannot be processed at this time. For further assistance, feel free to contact us at rbf@gmail.com."
               }));
             } else {
               setErrors(prev => ({

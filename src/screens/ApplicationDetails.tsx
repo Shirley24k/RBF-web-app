@@ -402,7 +402,7 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 w-full mr-10">
         <div className="ml-32 max-md:ml-24 max-sm:ml-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 max-sm:gap-2 transition-all duration-300">
           <div className="py-8 max-md:py-6 max-sm:py-4 flex items-center">
               <IconButton
@@ -469,8 +469,8 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                   <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                     RM{application.funding_amount}
                   </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                    {application.funding_stage}
+                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center capitalize">
+                    {application.funding_stage.replace(/_/g, ' ')}
                   </Typography>
                   <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
                     {application.funding_purpose}
@@ -525,8 +525,8 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
                   
                   <div className="flex flex-col gap-y-1">
                     <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Funding Stage</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                      {application.funding_stage}
+                    <Typography color="gray" className="font-[400] text-sm max-sm:text-xs capitalize">
+                      {application.funding_stage.replace(/_/g, ' ')}
                     </Typography>
                   </div>
                   

@@ -318,21 +318,6 @@ export const AdminUserManagement = (): JSX.Element => {
     }
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'red';
-      case 'startup':
-        return 'blue';
-      case 'investor':
-        return 'green';
-      case 'staff':
-        return 'purple';
-      default:
-        return 'gray';
-    }
-  };
-
   // Account creation functions
   const resetForms = () => {
     setStartupForm({
@@ -653,151 +638,165 @@ export const AdminUserManagement = (): JSX.Element => {
   }
 
   return (
-    <div className="flex h-screen bg-white">
-      {/* Sidebar */}
-      <div className="hidden lg:block fixed w-32 h-full left-0 top-0 z-20">
+    <div className="bg-white flex flex-row justify-center w-full">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0 z-20">
+        <Sidenav active="user-management" />
+      </div>
+      {/* Mobile Layout */}
+      <div className="lg:hidden z-20">
         <Sidenav active="user-management" />
       </div>
 
-      {/* Mobile sidebar */}
-      <div className="lg:hidden">
-        <Sidenav active="user-management" />
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 ml-32 max-md:ml-24 max-sm:ml-20 transition-all duration-300">
-        {/* Header */}
-        <div className="ml-10 transition-all duration-300">
-          <div className="px-6 py-8 max-md:py-6 max-sm:py-4">
-            <div className="flex items-center justify-between gap-4 max-sm:gap-2">
-              <div>
-                <Typography variant="h3" className="mb-2 font-bold text-dark-plum text-3xl max-md:text-2xl max-sm:text-xl">
-                  User Management
-                </Typography>
-                <Typography variant="paragraph" color="gray" className="font-normal text-lg max-md:text-base max-sm:text-sm">
-                  Manage all platform users and create new accounts
-                </Typography>
+      {/* Main Content */}
+      <main className="ml-20 transition-all duration-300 min-h-screen flex-1 w-[calc(100%-16rem)] max-sm:w-[calc(100%-5rem)]">
+        <div className="px-6 py-8 lg:px-8 xl:px-12 max-md:px-4 max-sm:px-3 w-full">
+          <div className="max-w-7xl mx-auto w-full">
+            {/* Header Section */}
+            <div className="w-full">
+              <div className="mb-16 max-lg:mb-12 max-sm:mb-8">
+                <div className="flex flex-row lg:items-center lg:justify-between gap-4 max-sm:gap-2">
+                  <div className="flex-1">
+                    <Typography variant="h4" className="text-4xl max-lg:text-3xl max-sm:text-2xl font-bold text-gray-900 mb-6 max-lg:mb-4 max-sm:mb-3">
+                      User Management
+                    </Typography>
+                    <Typography variant="paragraph" className="text-xl max-lg:text-base max-sm:text-sm text-gray-600 max-w-2xl">
+                      Manage all platform users and create new accounts
+                    </Typography>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <Button
+                      className="flex items-center gap-3 bg-dark-plum hover:bg-light-purple text-white px-6 py-3 max-md:px-5 max-md:py-2.5 max-sm:px-3 max-sm:py-2 rounded-lg font-semibold text-base max-md:text-sm max-sm:text-xs capitalize w-full lg:w-auto"
+                      onClick={openCreateModal}
+                    >
+                      <PlusIcon className="hidden sm:block h-5 w-5" />
+                      <span className="max-sm:hidden">Create New Account</span>
+                      <span className="sm:hidden">Create Account</span>
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <Button
-                className="flex items-center gap-3 bg-dark-plum hover:bg-light-purple text-white px-6 py-3 max-md:px-5 max-md:py-2.5 max-sm:px-3 max-sm:py-2 rounded-lg font-semibold text-base max-md:text-sm max-sm:text-xs capitalize"
-                onClick={openCreateModal}
-              >
-                <PlusIcon className="h-5 w-5" />
-                Create New Account
-              </Button>
             </div>
-          </div>
-        </div>
 
-        {/* Content */}
-        <div className="p-8 max-md:p-6 max-sm:p-4">
+          {/* Content */}
           {/* Grouped Users Table */}
           <div className="space-y-8">
             {/* Startups Group */}
-            <Card className="shadow-xl border-0 rounded-2xl overflow-hidden">
+            <Card className="mb-8 max-md:mb-6 max-sm:mb-4 shadow-xl border-0 rounded-2xl overflow-hidden">
               <CardHeader
                 variant="gradient"
-                className="bg-gradient-to-r from-dark-plum to-light-purple mx-0 my-0 grid py-3 place-items-center"
+                className="bg-gradient-to-r from-dark-plum to-light-purple mx-0 my-0 grid py-3 max-md:py-2 place-items-center"
               >
                 <Typography variant="h4" color="white" className="flex items-center gap-3 font-bold text-2xl max-md:text-xl max-sm:text-lg">
-                  <BuildingOfficeIcon className="h-6 w-6" />
+                  <BuildingOfficeIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
                   Startups
                 </Typography>
               </CardHeader>
-              <CardBody className="overflow-x-auto px-0 pt-0 pb-2">
+              <CardBody className="px-0 pt-0 pb-2">
                 {users.filter(u => u.role === 'startup' || u.role === 'staff').length === 0 ? (
-                  <div className="text-center py-12">
-                    <Typography variant="h5" color="gray" className="mb-3 font-semibold">
+                  <div className="text-center py-12 max-md:py-8 max-sm:py-6">
+                    <Typography variant="h5" color="gray" className="mb-3 max-md:mb-2 max-sm:mb-1 font-semibold text-2xl max-md:text-xl max-sm:text-lg">
                       No Startups Found
                     </Typography>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px] table-auto">
-                      <thead>
+                  <div className="w-full">
+                    <table className="w-full table-auto">
+                      <thead className="border-b border-blue-gray-50">
                         <tr className="bg-gray-50">
-                          {["Startup / Staff", "Email", "Role", "Actions"].map((el) => (
-                            <th key={el} className="border-b border-blue-gray-50 py-4 px-6 text-left">
-                              <Typography variant="small" className="text-xs font-bold uppercase text-blue-gray-600 tracking-wide">
-                                {el}
-                              </Typography>
-                            </th>
-                          ))}
+                          <th className="p-4 max-sm:p-3 text-left">
+                            <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                              Startup / Staff
+                            </Typography>
+                          </th>
+                          <th className="hidden sm:table-cell p-4 max-sm:p-3 text-left">
+                            <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                              Role
+                            </Typography>
+                          </th>
+                          <th className="p-4 max-sm:p-3 text-left">
+                            <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                              Actions
+                            </Typography>
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {users
                           .filter(u => u.role === 'startup')
-                          .map((startupUser, idx) => {
-                            const className = `py-4 px-6 ${idx === users.length - 1 ? '' : 'border-b border-blue-gray-50'}`;
+                          .map((startupUser) => {
                             const staffForStartup = users.filter(u => u.role === 'staff' && (u.profile?.startup_user_id === startupUser.id));
                             return (
                               <>
-                                <tr key={`startup-${startupUser.id}`} className="hover:bg-gray-50 transition-colors">
-                                  <td className={className}>
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                                <tr key={`startup-${startupUser.id}`} className="hover:bg-gray-50 transition-colors border-b border-blue-gray-50">
+                                  <td className="p-4 max-sm:p-3">
+                                    <div className="flex items-center gap-3 max-sm:gap-2">
+                                      <div className="w-10 h-10 max-sm:w-8 max-sm:h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         {getRoleIcon('startup')}
                                       </div>
-                                      <div className="flex flex-col">
-                                        <Typography variant="small" className="font-semibold text-gray-900">
+                                      <div className="flex flex-col min-w-0 flex-1">
+                                        <Typography variant="small" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs truncate">
                                           {startupUser.profile?.name || 'N/A'}
                                         </Typography>
-                                        <Typography variant="small" color="gray" className="text-xs">
+                                        <Typography variant="small" color="gray" className="text-xs max-sm:text-[10px]">
                                           ID: {startupUser.id}
                                         </Typography>
+                                        {/* Show email and role on mobile under the name */}
+                                        <div className="sm:hidden mt-1 space-y-1">
+                                          <div className="text-xs font-medium text-gray-600">STARTUP</div>
+                                        </div>
                                       </div>
                                     </div>
                                   </td>
-                                  <td className={className}>
-                                    <Typography variant="small" className="font-medium text-gray-900">
-                                      {startupUser.email}
-                                    </Typography>
+                                  <td className="hidden sm:table-cell p-4 max-sm:p-3">
+                                    <div className="flex items-center">
+                                      <span className="text-sm max-md:text-xs max-sm:text-[10px] font-medium">STARTUP</span>
+                                    </div>
                                   </td>
-                                  <td className={className}>
-                                    STARTUP
-                                  </td>
-                                  <td className={className}>
-                                    <div className="flex items-center gap-2">
-                                      <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2" onClick={() => openUserModal(startupUser)} title="View Details">
-                                        <EyeIcon className="h-4 w-4" />
+                                  <td className="p-4 max-sm:p-3 flex justify-start">
+                                    <div className="flex items-center gap-2 max-sm:gap-1 justify-end max-sm:flex-col">
+                                      <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1" onClick={() => openUserModal(startupUser)} title="View Details">
+                                        <EyeIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                       </Button>
-                                      <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2" onClick={() => openChangePasswordModal(startupUser)} title="Change Password">
-                                        <ShieldCheckIcon className="h-4 w-4" />
+                                      <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(startupUser)} title="Change Password">
+                                        <ShieldCheckIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                       </Button>
                                     </div>
                                   </td>
                                 </tr>
                                 {staffForStartup.length > 0 && staffForStartup.map((staffUser) => (
-                                  <tr key={`staff-${staffUser.id}`} className="hover:bg-gray-50 transition-colors">
-                                    <td className="py-3 px-6 pl-16 border-b border-blue-gray-50">
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center">
+                                  <tr key={`staff-${staffUser.id}`} className="hover:bg-gray-50 transition-colors border-b border-blue-gray-50">
+                                    <td className="p-3 max-sm:p-2 pl-10 max-sm:pl-6">
+                                      <div className="flex items-center gap-2 max-sm:gap-1">
+                                        <div className="w-6 h-6 max-sm:w-5 max-sm:h-5 bg-gray-50 rounded-full flex items-center justify-center flex-shrink-0">
                                           {getRoleIcon('staff')}
                                         </div>
-                                        <div className="flex flex-col">
-                                          <Typography variant="small" className="font-semibold text-gray-900">
+                                        <div className="flex flex-col min-w-0 flex-1">
+                                          <Typography variant="small" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs truncate">
                                             {staffUser.profile?.name || 'N/A'}
                                           </Typography>
-                                          <Typography variant="small" color="gray" className="text-xs">
+                                          <Typography variant="small" color="gray" className="text-xs max-sm:text-[10px]">
                                             ID: {staffUser.id}
                                           </Typography>
+                                          {/* Show email and role on mobile under the name */}
+                                          <div className="sm:hidden mt-1 space-y-1">
+                                            <div className="text-xs font-medium text-gray-600">STAFF</div>
+                                          </div>
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="py-3 px-6 border-b border-blue-gray-50">
-                                      <Typography variant="small" className="font-medium text-gray-900">{staffUser.email}</Typography>
+                                    <td className="hidden sm:table-cell p-3 max-sm:p-2 border-b border-blue-gray-50">
+                                      <div className="flex items-center">
+                                        <span className="text-sm max-md:text-xs max-sm:text-[10px] font-medium">STAFF</span>
+                                      </div>
                                     </td>
-                                    <td className="py-3 px-6 border-b border-blue-gray-50">
-                                        STAFF
-                                    </td>
-                                    <td className="py-3 px-6 border-b border-blue-gray-50">
-                                      <div className="flex items-center gap-2">
-                                        <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2" onClick={() => openUserModal(staffUser)} title="View Details">
-                                          <EyeIcon className="h-4 w-4" />
+                                    <td className="p-3 max-sm:p-2 border-blue-gray-50 flex justify-start">
+                                      <div className="flex items-center gap-2 max-sm:gap-1 justify-end max-sm:flex-col">
+                                        <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1" onClick={() => openUserModal(staffUser)} title="View Details">
+                                          <EyeIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                         </Button>
-                                        <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2" onClick={() => openChangePasswordModal(staffUser)} title="Change Password">
-                                          <ShieldCheckIcon className="h-4 w-4" />
+                                        <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(staffUser)} title="Change Password">
+                                          <ShieldCheckIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                         </Button>
                                       </div>
                                     </td>
@@ -807,47 +806,6 @@ export const AdminUserManagement = (): JSX.Element => {
                             );
                           })}
 
-                        {/* Unassigned Staff */}
-                        {users.filter(u => u.role === 'staff' && !u.profile?.startup_id).length > 0 && (
-                          <tr className="bg-gray-50">
-                            <td colSpan={4} className="py-3 px-6 text-xs font-bold uppercase text-blue-gray-600 tracking-wide">
-                              Unassigned Staff
-                            </td>
-                          </tr>
-                        )}
-                        {users
-                          .filter(u => u.role === 'staff' && !u.profile?.startup_id)
-                          .map((staffUser) => (
-                            <tr key={`staff-unassigned-${staffUser.id}`} className="hover:bg-gray-50 transition-colors">
-                              <td className="py-3 px-6 pl-8 border-b border-blue-gray-50">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center">
-                                    {getRoleIcon('staff')}
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <Typography variant="small" className="font-semibold text-gray-900">{staffUser.profile?.name || 'N/A'}</Typography>
-                                    <Typography variant="small" color="gray" className="text-xs">ID: {staffUser.id}</Typography>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="py-3 px-6 border-b border-blue-gray-50">
-                                <Typography variant="small" className="font-medium text-gray-900">{staffUser.email}</Typography>
-                              </td>
-                              <td className="py-3 px-6 border-b border-blue-gray-50">
-                                STAFF
-                              </td>
-                              <td className="py-3 px-6 border-b border-blue-gray-50">
-                                <div className="flex items-center gap-2">
-                                  <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2" onClick={() => openUserModal(staffUser)} title="View Details">
-                                    <EyeIcon className="h-4 w-4" />
-                                  </Button>
-                                  <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2" onClick={() => openChangePasswordModal(staffUser)} title="Change Password">
-                                    <ShieldCheckIcon className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
                       </tbody>
                     </table>
                   </div>
@@ -856,66 +814,76 @@ export const AdminUserManagement = (): JSX.Element => {
             </Card>
 
             {/* Investors Group */}
-            <Card className="shadow-xl border-0 rounded-2xl overflow-hidden">
+            <Card className="mb-8 max-md:mb-6 max-sm:mb-4 shadow-xl border-0 rounded-2xl overflow-hidden">
               <CardHeader
                 variant="gradient"
-                className="bg-gradient-to-r from-dark-plum to-light-purple mx-0 my-0 grid py-3 place-items-center"
+                className="bg-gradient-to-r from-dark-plum to-light-purple mx-0 my-0 grid py-3 max-md:py-2 place-items-center"
               >
                 <Typography variant="h4" color="white" className="flex items-center gap-3 font-bold text-2xl max-md:text-xl max-sm:text-lg">
-                  <UserGroupIcon className="h-6 w-6" />
+                  <UserGroupIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
                   Investors
                 </Typography>
               </CardHeader>
-              <CardBody className="overflow-x-auto px-0 pt-0 pb-2">
+              <CardBody className="px-0 pt-0 pb-2">
                 {users.filter(u => u.role === 'investor').length === 0 ? (
-                  <div className="text-center py-12">
-                    <Typography variant="h5" color="gray" className="mb-3 font-semibold">
+                  <div className="text-center py-12 max-md:py-8 max-sm:py-6">
+                    <Typography variant="h5" color="gray" className="mb-3 max-md:mb-2 max-sm:mb-1 font-semibold text-2xl max-md:text-xl max-sm:text-lg">
                       No Investors Found
                     </Typography>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px] table-auto">
-                      <thead>
+                  <div className="w-full">
+                    <table className="w-full table-auto">
+                      <thead className="border-b border-blue-gray-50">
                         <tr className="bg-gray-50">
-                          {["Investor", "Email", "Role", "Actions"].map((el) => (
-                            <th key={el} className="border-b border-blue-gray-50 py-4 px-6 text-left">
-                              <Typography variant="small" className="text-xs font-bold uppercase text-blue-gray-600 tracking-wide">
-                                {el}
-                              </Typography>
-                            </th>
-                          ))}
+                          <th className="p-4 max-sm:p-3 text-left">
+                            <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                              Investor
+                            </Typography>
+                          </th>
+                          <th className="hidden sm:table-cell p-4 max-sm:p-3 text-left">
+                            <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                              Role
+                            </Typography>
+                          </th>
+                          <th className="p-4 max-sm:p-3 text-left">
+                            <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                              Actions
+                            </Typography>
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {users.filter(u => u.role === 'investor').map((investor, idx) => {
-                          const className = `py-4 px-6 ${idx === users.length - 1 ? '' : 'border-b border-blue-gray-50'}`;
                           return (
-                            <tr key={investor.id} className="hover:bg-gray-50 transition-colors">
-                              <td className={className}>
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                            <tr key={investor.id} className="hover:bg-gray-50 transition-colors border-b border-blue-gray-50">
+                              <td className="p-4 max-sm:p-3">
+                                <div className="flex items-center gap-3 max-sm:gap-2">
+                                  <div className="w-10 h-10 max-sm:w-8 max-sm:h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                                     {getRoleIcon('investor')}
                                   </div>
-                                  <div className="flex flex-col">
-                                    <Typography variant="small" className="font-semibold text-gray-900">{investor.profile?.name || 'N/A'}</Typography>
-                                    <Typography variant="small" color="gray" className="text-xs">ID: {investor.id}</Typography>
+                                  <div className="flex flex-col min-w-0 flex-1">
+                                    <Typography variant="small" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs truncate">{investor.profile?.name || 'N/A'}</Typography>
+                                    <Typography variant="small" color="gray" className="text-xs max-sm:text-[10px]">ID: {investor.id}</Typography>
+                                    {/* Show email and role on mobile under the name */}
+                                    <div className="sm:hidden mt-1 space-y-1">
+                                      <div className="text-xs font-medium text-gray-600">INVESTOR</div>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
-                              <td className={className}>
-                                <Typography variant="small" className="font-medium text-gray-900">{investor.email}</Typography>
+                              <td className="hidden sm:table-cell p-4 max-sm:p-3">
+                                <div className="flex items-center">
+                                  <span className="text-sm max-md:text-xs max-sm:text-[10px] font-medium">INVESTOR</span>
+                                </div>
                               </td>
-                              <td className={className}>
-                                INVESTOR
-                              </td>
-                              <td className={className}>
-                                <div className="flex items-center gap-2">
-                                  <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2" onClick={() => openUserModal(investor)} title="View Details">
-                                    <EyeIcon className="h-4 w-4" />
+                              <td className="p-4 max-sm:p-3 flex justify-start">
+                                <div className="flex items-center gap-2 max-sm:gap-1 justify-end max-sm:flex-col">
+                                  <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1" onClick={() => openUserModal(investor)} title="View Details">
+                                    <EyeIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                   </Button>
-                                  <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2" onClick={() => openChangePasswordModal(investor)} title="Change Password">
-                                    <ShieldCheckIcon className="h-4 w-4" />
+                                  <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(investor)} title="Change Password">
+                                    <ShieldCheckIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                   </Button>
                                 </div>
                               </td>
@@ -929,22 +897,23 @@ export const AdminUserManagement = (): JSX.Element => {
               </CardBody>
             </Card>
           </div>
+          </div>
         </div>
-      </div>
+      </main>
 
       {/* User Details Modal */}
-      <Dialog open={showUserModal} handler={closeUserModal} size="lg" className="rounded-2xl">
+      <Dialog open={showUserModal} handler={closeUserModal} size="lg" className="rounded-2xl max-w-[95vw] max-h-[95vh]" placeholder={undefined}>
         <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
           <Typography variant="h4" color="white" className="font-bold">
             User Details
           </Typography>
         </DialogHeader>
-        <DialogBody className="p-8">
+        <DialogBody className="p-8 max-md:p-6 max-sm:p-4 max-h-[70vh] overflow-y-auto bg-beige">
           {selectedUser && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Typography variant="h6" className="mb-3 font-bold text-dark-plum">
+                  <Typography variant="h6" className="mb-3 font-bold text-dark-plum underline">
                     Account Information
                   </Typography>
                   <div className="space-y-3">
@@ -993,7 +962,7 @@ export const AdminUserManagement = (): JSX.Element => {
 
                 {selectedUser.profile && (
                   <div>
-                    <Typography variant="h6" className="mb-3 font-bold text-dark-plum">
+                    <Typography variant="h6" className="mb-3 font-bold text-dark-plum underline">
                       Profile Information
                     </Typography>
                     <div className="space-y-3">
@@ -1126,10 +1095,10 @@ export const AdminUserManagement = (): JSX.Element => {
             </div>
           )}
         </DialogBody>
-        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
+        <DialogFooter className="p-6 max-md:p-4 max-sm:p-3 bg-gray-50 rounded-b-2xl">
           <Button 
             onClick={closeUserModal}
-            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6"
+            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6 max-md:px-4 max-sm:px-3"
           >
             Close
           </Button>
@@ -1137,15 +1106,23 @@ export const AdminUserManagement = (): JSX.Element => {
       </Dialog>
 
       {/* Create Account Modal */}
-      <Dialog open={showCreateModal} handler={closeCreateModal} size="xl" className="rounded-2xl">
+      <Dialog 
+        open={showCreateModal} 
+        handler={closeCreateModal} 
+        size="xl" 
+        className="rounded-2xl max-w-[95vw] max-h-[95vh]"
+        placeholder={undefined}
+        style={{ zIndex: 9999 }}
+      >
         <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
           <Typography variant="h4" color="white" className="font-bold">
             Create New {accountType.charAt(0).toUpperCase() + accountType.slice(1)} Account
           </Typography>
         </DialogHeader>
-        <DialogBody className="p-8 max-h-[80vh] overflow-y-auto bg-beige">
-          {/* Account Type Selector */}
-          <div className="mb-6">
+        <DialogBody className="p-8 max-md:p-6 max-sm:p-4 max-h-[70vh] overflow-y-auto bg-beige">
+          <div className="space-y-6">
+            {/* Account Type Selector */}
+            <div>
             <Typography variant="h6" className="mb-3 font-bold text-dark-plum">
               Account Type
             </Typography>
@@ -1177,8 +1154,8 @@ export const AdminUserManagement = (): JSX.Element => {
             </div>
           </div>
 
-          {/* Success/Error Messages */}
-          {successMessage && (
+            {/* Success/Error Messages */}
+            {successMessage && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center gap-2">
                 <CheckCircleIcon className="h-5 w-5 text-green-500" />
@@ -1189,7 +1166,7 @@ export const AdminUserManagement = (): JSX.Element => {
             </div>
           )}
 
-          {errorMessage && (
+            {errorMessage && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex items-center gap-2">
                 <XCircleIcon className="h-5 w-5 text-red-500" />
@@ -1200,9 +1177,9 @@ export const AdminUserManagement = (): JSX.Element => {
             </div>
           )}
 
-          {/* Startup Form */}
-          {accountType === 'startup' && (
-            <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
+            {/* Startup Form */}
+            {accountType === 'startup' && (
+              <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1 max-sm:grid-cols-1">
                 <div className="flex flex-col">
                     <Input
                         id="startup-name"
@@ -1340,10 +1317,10 @@ export const AdminUserManagement = (): JSX.Element => {
             </div>
           )}
 
-          {/* Investor Form */}
-          {accountType === 'investor' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
+            {/* Investor Form */}
+            {accountType === 'investor' && (
+              <div className="space-y-6">
+              <div className="flex flex-col gap-6">
                 <div>
                   <Typography variant="h6" className="mb-3 font-bold text-dark-plum">
                     Investor Type
@@ -1375,8 +1352,6 @@ export const AdminUserManagement = (): JSX.Element => {
                     </Button>
                   </div>
                 </div>
-
-                <div></div>
 
                 <div className="flex flex-col">
                   <Input
@@ -1506,12 +1481,12 @@ export const AdminUserManagement = (): JSX.Element => {
                   Investment Preferences
                 </Typography>
                 
-                <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
+                <div className="flex flex-col gap-6">
                   <div>
                     <Typography variant="small" className="mb-2 font-medium text-gray-700">
                       Preferred Industries
                     </Typography>
-                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-3 bg-gray-50 rounded-lg">
+                    <div className="flex flex-col gap-2 max-h-32 overflow-y-auto p-3 bg-gray-50 rounded-lg">
                       {industryOptions.map((industry) => (
                         <label key={industry.value} className="flex items-center gap-2 cursor-pointer">
                           <input
@@ -1601,19 +1576,20 @@ export const AdminUserManagement = (): JSX.Element => {
               </div>
             </div>
           )}
+          </div>
         </DialogBody>
-        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
+        <DialogFooter className="p-6 max-md:p-4 max-sm:p-3 bg-gray-50 rounded-b-2xl">
           <Button 
             variant="text" 
             onClick={closeCreateModal}
-            className="mr-3 font-semibold capitalize"
+            className="mr-3 max-md:mr-2 max-sm:mr-1 font-semibold capitalize"
           >
             Cancel
           </Button>
           <Button 
             onClick={handleCreateAccount} 
             disabled={submitting}
-            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6"
+            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6 max-md:px-4 max-sm:px-3"
           >
             {submitting ? <Spinner className="h-5 w-5" /> : 'Create Account'}
           </Button>
@@ -1621,13 +1597,13 @@ export const AdminUserManagement = (): JSX.Element => {
       </Dialog>
 
       {/* Change Password Modal */}
-      <Dialog open={showChangePasswordModal} handler={closeChangePasswordModal} size="md" className="rounded-2xl">
+      <Dialog open={showChangePasswordModal} handler={closeChangePasswordModal} size="md" className="rounded-2xl max-w-[95vw] max-h-[95vh]" placeholder={undefined}>
         <DialogHeader className="bg-avocado-green rounded-t-2xl">
           <Typography variant="h4" color="blue-gray" className="font-bold">
             Change Password
           </Typography>
         </DialogHeader>
-        <DialogBody className="p-8">
+        <DialogBody className="p-8 max-md:p-6 max-sm:p-4 max-h-[70vh] overflow-y-auto bg-beige">
           {selectedUser && (
             <div className="space-y-6">
               <div className="text-center">
@@ -1689,18 +1665,18 @@ export const AdminUserManagement = (): JSX.Element => {
             </div>
           )}
         </DialogBody>
-        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
+        <DialogFooter className="p-6 max-md:p-4 max-sm:p-3 bg-gray-50 rounded-b-2xl">
           <Button 
             variant="text" 
             onClick={closeChangePasswordModal}
-            className="mr-3 font-semibold capitalize"
+            className="mr-3 max-md:mr-2 max-sm:mr-1 font-semibold capitalize"
           >
             Cancel
           </Button>
           <Button 
             onClick={handleChangePassword} 
             disabled={changingPassword}
-            className="bg-avocado-green hover:bg-avocado-green/80 text-blue-gray font-semibold capitalize px-6"
+            className="bg-avocado-green hover:bg-avocado-green/80 text-blue-gray font-semibold capitalize px-6 max-md:px-4 max-sm:px-3"
           >
             {changingPassword ? <Spinner className="h-5 w-5" /> : 'Change Password'}
           </Button>

@@ -25,7 +25,6 @@ export const industryOptions: IndustryOption[] = [
   { value: 'Gaming', label: 'Gaming & Entertainment Tech' },
   { value: 'Social_Media', label: 'Social Media & Communication' },
   { value: 'Other_Tech', label: 'Other Technology' },
-  { value: 'Non_Tech', label: 'Non-Technology' }
 ];
 
 export const getIndustryLabel = (value: string): string => {

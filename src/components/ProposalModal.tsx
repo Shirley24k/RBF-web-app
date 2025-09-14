@@ -60,7 +60,7 @@ export const ProposalModal = ({
       open={open} 
       handler={onClose}
       size="xl"
-      className="max-h-[90vh] overflow-y-auto"
+      className="max-h-[80vh] overflow-y-auto"
     >
       <DialogHeader>
         <Typography variant="h5" color="blue-gray">

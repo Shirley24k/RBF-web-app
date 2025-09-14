@@ -54,7 +54,7 @@ export const StatusBadge = ({ status, compact = false }: StatusBadgeProps) => {
     <div className="flex items-center gap-1.5">
       <span className={`h-2 w-2 rounded-full ${style.dotColor}`} />
       {!compact && (
-        <span className={clsx("text-[14px] font-bold", style.textColor)}>
+        <span className={clsx("text-xs max-sm:text-[10px] font-bold whitespace-nowrap", style.textColor)}>
           {status}
         </span>
       )}
@@ -66,7 +66,7 @@ export const StatusBadge = ({ status, compact = false }: StatusBadgeProps) => {
       <Chip
         variant="ghost"
         size="sm"
-        className={`${style.bgColor} ${style.textColor} px-2 py-1 font-medium rounded`}
+        className={`${style.bgColor} ${style.textColor} px-2 py-1 max-sm:px-1.5 max-sm:py-0.5 font-medium rounded`}
         value={badgeContent}
       />
     );
@@ -74,7 +74,7 @@ export const StatusBadge = ({ status, compact = false }: StatusBadgeProps) => {
 
   return (
     <div
-      className={`inline-flex h-6 items-center justify-center px-2 py-1 ${style.bgColor} rounded`}
+      className={`inline-flex h-6 max-sm:h-5 items-center justify-center px-2 py-1 max-sm:px-1.5 max-sm:py-0.5 ${style.bgColor} rounded`}
     >
       {badgeContent}
     </div>

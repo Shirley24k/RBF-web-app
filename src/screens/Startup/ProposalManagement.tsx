@@ -1,5 +1,5 @@
-import { ArrowUpTrayIcon, ChevronLeftIcon, ChevronRightIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
-import { Button, Card, CardBody, Input, Option, Select, Spinner, Textarea, Typography } from "@material-tailwind/react";
+import { ArrowUpTrayIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { Button, Card, CardBody, IconButton, Input, Option, Select, Spinner, Textarea, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -60,8 +60,20 @@ export const ProposalManagement = (): JSX.Element => {
   const [currentSection, setCurrentSection] = useState<SectionType>('company');
   const [errors, setErrors] = useState<Partial<Record<keyof ProposalFormData, string>>>({});
   const [touchedFields, setTouchedFields] = useState<Set<keyof ProposalFormData>>(new Set());
+  const [sectionComments, setSectionComments] = useState<{ [key in SectionType]?: Array<{message: string, user_type: string, user_name: string, created_at: string}> }>({});
+  const [resolvedReviews, setResolvedReviews] = useState<{ [key in SectionType]?: boolean }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  
+  // Staff review state
+  const [isSubmittingStaffResponse, setIsSubmittingStaffResponse] = useState(false);
+  
+  // Draft comments (what user is currently typing)
+  const [draftComments, setDraftComments] = useState<{ [key in SectionType]?: string }>({});
+  
+  // Get user info
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isStaff = user.role === 'staff';
 
   // Form data state
   const [formData, setFormData] = useState<ProposalFormData>({
@@ -123,6 +135,8 @@ export const ProposalManagement = (): JSX.Element => {
     }
   }, [isEditMode, isReviewMode, editProposalId, reviewProposalId]);
 
+  // Close dropdown when clicking outside
+
   const fetchProposalData = async (proposalId: string) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/startup/proposals/${proposalId}`, {
@@ -162,12 +176,58 @@ export const ProposalManagement = (): JSX.Element => {
           cash_flow_analysis: String(proposal.cash_flow_analysis || ""),
         });
         
+        // If in review mode or staff edit mode, also fetch existing reviews
+        if (isReviewMode || (isStaff && isEditMode)) {
+          await fetchExistingReviews(proposalId);
+        }
       }
     } catch (error: any) {
       console.error("Error fetching proposal:", error);
       alert("Failed to load proposal data. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchExistingReviews = async (proposalId: string) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/proposals/${proposalId}/reviews`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.status === 200) {
+        const proposal = response.data.data;
+        
+        // Try to get review data from review_summary first, then from reviews array
+        let reviewData = proposal.review_summary || {};
+        
+            // If review_summary is empty, try to parse from reviews array
+              if (!reviewData.company && proposal.reviews && Array.isArray(proposal.reviews)) {
+                const reviewsArray = proposal.reviews;
+                reviewData = {
+                  company: reviewsArray.find((r: any) => r.section_type === 'company') || {},
+                  funding: reviewsArray.find((r: any) => r.section_type === 'funding') || {},
+                  financial: reviewsArray.find((r: any) => r.section_type === 'financial') || {}
+                };
+              }
+        
+        setSectionComments({
+          company: reviewData.company?.comments || [],
+          funding: reviewData.funding?.comments || [],
+          financial: reviewData.financial?.comments || []
+        });
+        
+        setResolvedReviews({
+          company: reviewData.company?.is_resolved || false,
+          funding: reviewData.funding?.is_resolved || false,
+          financial: reviewData.financial?.is_resolved || false
+        });
+      }
+    } catch (error: any) {
+      console.error("Error fetching reviews:", error);
+      // Don't show error alert for reviews as they might not exist yet
     }
   };
 
@@ -239,13 +299,85 @@ export const ProposalManagement = (): JSX.Element => {
     return !isReadOnly && touchedFields.has(fieldName) && errors[fieldName] === undefined && formData[fieldName] !== "" && formData[fieldName] !== 0;
   };
 
+  const handleDraftCommentChange = (section: SectionType, value: string) => {
+    setDraftComments(prev => ({ ...prev, [section]: value }));
+  };
+
+  const submitDraftComment = (section: SectionType) => {
+    const draftText = draftComments[section];
+    if (draftText && draftText.trim() !== '') {
+      const newComment = {
+        message: draftText,
+        user_type: isStaff ? 'staff' : 'startup_owner',
+        user_name: isStaff ? 'Staff' : 'Startup Owner', // Will be replaced by backend with actual names
+        created_at: new Date().toISOString()
+      };
+      
+      // Add to local state for immediate UI update
+      const existingComments = sectionComments[section] || [];
+      setSectionComments(prev => ({ 
+        ...prev, 
+        [section]: [...existingComments, newComment] 
+      }));
+      setDraftComments(prev => ({ ...prev, [section]: '' }));
+      
+      // Send only the new comment to backend
+      if (isStaff) {
+        // For staff, we'll handle this in the staff response submission
+        return;
+      } else {
+        // For startup owners, send immediately
+        sendNewCommentToBackend(section, [newComment]);
+      }
+    }
+  };
+
+  const sendNewCommentToBackend = async (section: SectionType, newComments: Array<{message: string, user_type: string, user_name: string, created_at: string}>) => {
+    if (!reviewProposalId) return;
+    
+    try {
+      await axios.post(`${API_BASE_URL}/startup/reviews/${reviewProposalId}`, {
+        reviews: {
+          [section]: newComments
+        }
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error sending new comment:", error);
+      // Revert the local state if backend fails
+      const existingComments = sectionComments[section] || [];
+      setSectionComments(prev => ({ 
+        ...prev, 
+        [section]: existingComments.slice(0, -newComments.length)
+      }));
+      alert("Failed to save comment. Please try again.");
+    }
+  };
+
+  const hasReview = (section: SectionType) => {
+    return sectionComments[section] && sectionComments[section].length > 0;
+  };
+
+  const isReviewResolved = (section: SectionType) => {
+    return resolvedReviews[section] === true;
+  };
+
+
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (isReadOnly) return; // Disable file selection in review mode
     
     const file = event.target.files?.[0];
-    if (file) {
+    //check file is pdf
+    if (file && file.type === "application/pdf") {
       setSelectedFile(file);
       setUploadError(null);
+    } else {
+      setUploadError("Please select a PDF file to upload.");
+      setSelectedFile(null);
     }
   };
 
@@ -329,68 +461,189 @@ export const ProposalManagement = (): JSX.Element => {
     }
   };
 
-  const handleCreateProposal = async () => {
-    if (isReviewMode) {
-      // Handle review functionality - update proposal status to 'reviewed'
-      try {
-        setIsSubmitting(true);
-        
-        // Update proposal status to 'reviewed'
-        const response = await axios.put(`${API_BASE_URL}/startup/review-proposals/${reviewProposalId}`, {
-          status: 'REVIEWED'
-        }, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        if (response.status === 200) {
-          alert("Proposal reviewed successfully!");
-          navigate("/proposal-listings");
-        }
-      } catch (error: any) {
-        console.error("Error updating proposal status:", error);
-        const errorMessage = error.response?.data?.message || "Failed to update proposal status. Please try again.";
-        alert(errorMessage);
-      } finally {
-        setIsSubmitting(false);
-      }
-      return;
-    }
-
-    setIsSubmitting(true);
+  const handleReviewSubmission = async () => {
     try {
-      if (isEditMode && editProposalId) {
-        // Update existing proposal
-        const response = await axios.put(`${API_BASE_URL}/startup/proposals/${editProposalId}`, formData, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        if (response.status === 200) {
-          alert("Proposal updated successfully!");
-          navigate("/proposal-listings");
-        }
+      setIsSubmitting(true);
+      
+      // Check if this is the final approval (all reviews completed and resolved)
+      const isFinalApproval = Object.keys(sectionComments).every(section => 
+        !hasReview(section as SectionType) || isReviewResolved(section as SectionType)
+      );
+      
+      if (isFinalApproval) {
+        await handleFinalApproval();
       } else {
-        // Create new proposal
-        const response = await axios.post(`${API_BASE_URL}/startup/proposals`, formData, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        if (response.status === 201) {
-          alert("Proposal created successfully!");
-          navigate("/proposal-listings");
-        }
+        await handleRequestStaffReview();
       }
     } catch (error: any) {
-      console.error("Error saving proposal:", error);
-      const action = isEditMode ? "updating" : "creating";
-      alert(`Failed to ${action} proposal. Please try again.`);
+      console.error("Error submitting reviews:", error);
+      const errorMessage = error.response?.data?.message || "Failed to submit reviews. Please try again.";
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleFinalApproval = async () => {
+    try {
+      // Final approval - change status to 'REVIEWED'
+      const statusResponse = await axios.put(`${API_BASE_URL}/startup/review-proposals/${reviewProposalId}`, {
+        status: 'REVIEWED'
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (statusResponse.status === 200) {
+        alert("Proposal review completed successfully!");
+        navigate("/proposal-listings");
+      }
+    } catch (error: any) {
+      console.error("Error completing review:", error);
+      alert("Failed to complete review. Please try again.");
+    }
+  };
+
+  const handleRequestStaffReview = async () => {
+    try {
+      // Request staff review - change status to 'REVIEWING'
+      const statusResponse = await axios.put(`${API_BASE_URL}/startup/review-proposals/${reviewProposalId}`, {
+        status: 'REVIEWING'
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (statusResponse.status === 200) {
+        alert("Reviews submitted successfully! Staff will review your feedback.");
+        navigate("/proposal-listings");
+      }
+    } catch (error: any) {
+      console.error("Error requesting staff review:", error);
+      alert("Failed to request staff review. Please try again.");
+    }
+  };
+
+  const handleUpdateProposal = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const response = await axios.put(`${API_BASE_URL}/startup/proposals/${editProposalId}`, formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.status === 200) {
+        alert("Proposal updated successfully!");
+        navigate("/proposal-listings");
+      }
+    } catch (error: any) {
+      console.error("Error updating proposal:", error);
+      alert("Failed to update proposal. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateNewProposal = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const response = await axios.post(`${API_BASE_URL}/startup/proposals`, formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.status === 201) {
+        alert("Proposal created successfully!");
+        navigate("/proposal-listings");
+      }
+    } catch (error: any) {
+      console.error("Error creating proposal:", error);
+      alert("Failed to create proposal. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStaffResponseSubmission = async () => {
+    if (!isStaff || !editProposalId) return;
+    
+    // Check if there are any staff responses
+    const hasAnyResponse = Object.values(sectionComments).some(comments => 
+      comments && comments.some(comment => comment.user_type === 'staff')
+    );
+    
+    if (!hasAnyResponse) {
+      return;
+    }
+    
+    setIsSubmittingStaffResponse(true);
+    try {
+      // Extract only staff responses for submission
+      const staffResponses = Object.keys(sectionComments).reduce((acc, section) => {
+        const staffComments = sectionComments[section as SectionType]?.filter(comment => comment.user_type === 'staff') || [];
+        if (staffComments.length > 0) {
+          acc[section as SectionType] = staffComments;
+        }
+        return acc;
+      }, {} as { [key in SectionType]?: Array<{message: string, user_type: string, user_name: string, created_at: string}> });
+
+      const response = await axios.post(`${API_BASE_URL}/staff/proposals/${editProposalId}/responses`, {
+        responses: staffResponses
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error submitting staff responses:", error);
+      alert("Failed to submit staff responses. Please try again.");
+    } finally {
+      setIsSubmittingStaffResponse(false);
+    }
+  };
+
+  const handleCreateProposal = async () => {
+    if (isStaff){
+      await handleStaffResponseSubmission();
+    }
+
+    if (isEditMode) {
+      await handleUpdateProposal();
+      return;
+    } else if (isReviewMode) {
+      await handleReviewSubmission();
+      return;
+    } else {
+      await handleCreateNewProposal();
+      return;
+    }
+  };
+
+  const handleMarkResolved = (section: SectionType) => {
+    const newResolvedStatus = !resolvedReviews[section];
+    setResolvedReviews(prev => ({ ...prev, [section]: newResolvedStatus }));
+    
+    // Save resolution status to backend
+    if (reviewProposalId) {
+      axios.patch(`${API_BASE_URL}/startup/reviews/${reviewProposalId}/resolution`, {
+        section: section,
+        is_resolved: newResolvedStatus
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }).catch(error => {
+        console.error("Error updating resolution status:", error);
+        // Revert the local state if backend update fails
+        setResolvedReviews(prev => ({ ...prev, [section]: !newResolvedStatus }));
+        alert("Failed to update resolution status. Please try again.");
+      });
     }
   };
 
@@ -775,6 +1028,9 @@ export const ProposalManagement = (): JSX.Element => {
                 <span className="text-red-500 text-sm">{errors.customer_segments}</span>
               )}
             </div>
+            
+            {/* Comments Section */}
+            {(isEditMode || isReviewMode) && renderCommentBox('company')}
           </div>
         );
 
@@ -834,6 +1090,9 @@ export const ProposalManagement = (): JSX.Element => {
                 <span className="text-red-500 text-sm">{errors.funding_purpose}</span>
               )}
             </div>
+            
+            {/* Comments Section */}
+            {(isEditMode || isReviewMode) && renderCommentBox('funding')}
           </div>
         );
 
@@ -960,12 +1219,116 @@ export const ProposalManagement = (): JSX.Element => {
                 <span className="text-red-500 text-sm">{errors.cash_flow_analysis}</span>
               )}
             </div>
+            
+            {/* Comments Section */}
+            {(isEditMode || isReviewMode) && renderCommentBox('financial')}
           </div>
         );
 
       default:
         return null;
     }
+  };
+
+  const renderCommentBox = (section: SectionType) => {
+    const hasComments = sectionComments[section] && sectionComments[section].length > 0;
+    const isResolved = resolvedReviews[section];
+    
+    return (
+        <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <Typography variant="small" className="font-medium text-gray-700">
+            Comments
+          </Typography>
+          {isResolved && (
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+              Resolved
+            </span>
+          )}
+        </div>
+        
+        {/* Existing Comments */}
+        <div className="space-y-3 mb-3">
+          {hasComments && sectionComments[section]?.map((comment, index) => (
+            <div key={index} className="flex gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                comment.user_type === 'staff' ? 'bg-green-900' : 'bg-light-purple'
+              }`}>
+                <span className="text-white text-xs font-medium">
+                  {comment.user_type === 'staff' ? 'ST' : 'SO'}
+                </span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <Typography variant="small" className="font-medium text-gray-900">
+                    {comment.user_name}
+                  </Typography>
+                  <Typography variant="small" className="text-gray-500">
+                    {new Date(comment.created_at).toLocaleString()}
+                  </Typography>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-3">
+                  <Typography variant="small" className="text-gray-700">
+                    {comment.message}
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Add Comment Input */}
+        {(isStaff || isReviewMode) && !isResolved && (
+          <div className="space-y-2">
+            <div className="flex gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isStaff ? 'bg-green-900' : 'bg-light-purple'}`}>
+                <span className="text-white text-xs font-medium">{isStaff ? 'ST' : 'SO'}</span>
+              </div>
+              <div className="flex-1">
+                <Textarea
+                  value={draftComments[section] || ''}
+                  onChange={(e) => handleDraftCommentChange(section, e.target.value)}
+                  placeholder="Add a comment..."
+                  rows={2}
+                  className="border-gray-300 focus:border-dark-plum text-sm"
+                />
+              </div>
+            </div>
+            {draftComments[section] && draftComments[section].trim() !== '' && (
+              <div className="flex justify-end">
+                <IconButton
+                  size="sm"
+                  variant="text"
+                  className="bg-transparent text-dark-plum text-xs px-3 py-1m"
+                  onClick={() => submitDraftComment(section)}
+                >
+                  <CheckIcon className="h-5 w-5" />
+                </IconButton>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mark Resolved Button - Only show if there are comments and user is in review mode */}
+        {isReviewMode && !isStaff && hasComments && (
+          <div className="flex justify-end mt-3">
+            <Button
+              size="sm"
+              variant={isResolved ? "filled" : "outlined"}
+              className={`text-xs px-3 py-2 ${
+                isResolved 
+                  ? 'bg-green-900 text-white border-green-900 capitalize' 
+                  : 'text-green-600 border-green-600 hover:bg-green-50 capitalize'
+              }`}
+              onClick={() => handleMarkResolved(section)}
+              disabled={isResolved}
+            >
+              {isResolved ? 'Marked Resolved' : 'Mark Resolved'}
+            </Button>
+          </div>
+        )}
+      </div>
+    )
   };
 
   if (isLoading) {
@@ -979,7 +1342,7 @@ export const ProposalManagement = (): JSX.Element => {
   return (
     <div className="bg-white flex flex-row justify-center w-full">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0 z-10">
         <Sidenav active="proposal" />
       </div>
 
@@ -990,9 +1353,9 @@ export const ProposalManagement = (): JSX.Element => {
 
       {/* Main Content */}
       <div className={`ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300`}>
-        <div className="max-w-4xl px-4 max-md:px-6 max-sm:px-4 mx-auto">
+        <div className="max-w-7xl px-4 max-md:px-6 max-sm:px-4 mx-0">
           {/* Header */}
-          <div className="text-center mb-8 max-md:mb-6 max-sm:mb-4">
+          <div className="text-start mb-8 max-md:mb-6 max-sm:mb-4">
             <div className="py-8 max-md:py-6 max-sm:py-4">
               <Typography variant="h4" color="blue-gray" className="text-3xl max-md:text-2xl max-sm:text-xl mb-2">
                 {isReviewMode ? 'Review Proposal' : isEditMode ? 'Edit Proposal' : 'Create Proposal'}
@@ -1065,118 +1428,135 @@ export const ProposalManagement = (): JSX.Element => {
                       onClick={handleAutoExtract}
                       disabled={isProcessing}
                       >
-                      Extract Details
+                        {isProcessing ? (
+                          <span className="flex items-center gap-2">
+                            <Spinner className="h-4 w-4" />
+                            Extracting...
+                          </span>
+                        ) : (
+                          'Extract Details'
+                        )}
                       </Button>
                   </div>
                 )}
               </CardBody>
             </Card>
           )}
-
-          {/* Progress Indicator */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              {sections.map((section, index) => (
-                <div key={section.key} className="flex flex-col items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold mb-2 ${
-                    index < currentSectionIndex 
-                      ? 'bg-green-500 text-white' 
-                      : index === currentSectionIndex 
-                        ? 'bg-dark-plum text-white' 
-                        : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {index < currentSectionIndex ? '✓' : index + 1}
-                  </div>
-                  <Typography variant="small" className={`text-center ${index === currentSectionIndex ? 'text-dark-plum font-semibold' : 'text-gray-500'}`}>
-                    {section.title}
-                  </Typography>
+          <div className="flex flex-row gap-6 w-full justify-center">
+            {/* Main Content - Takes full width */}
+            <div className="w-full min-w-0">          
+              {/* Progress Indicator */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  {sections.map((section, index) => (
+                    <div key={section.key} className="flex flex-col items-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold mb-2 ${
+                        index < currentSectionIndex 
+                          ? 'bg-green-500 text-white' 
+                          : index === currentSectionIndex 
+                            ? 'bg-dark-plum text-white' 
+                            : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {index < currentSectionIndex ? '✓' : index + 1}
+                      </div>
+                      <Typography variant="small" className={`text-center ${index === currentSectionIndex ? 'text-dark-plum font-semibold' : 'text-gray-500'}`}>
+                        {section.title}
+                      </Typography>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-dark-plum to-light-purple h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentSectionIndex + 1) / sections.length) * 100}%` }}
-              ></div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-dark-plum to-light-purple h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${((currentSectionIndex + 1) / sections.length) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              
+            {/* Current Section Form */}
+              <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
+                <CardBody className="p-6 max-md:p-4 max-sm:p-3">
+                  <div className="mb-6">
+                    <Typography variant="h5" color="blue-gray" className="mb-2">
+                      {sections[currentSectionIndex].title}
+                    </Typography>
+                    <Typography variant="paragraph" color="gray">
+                      {sections[currentSectionIndex].description}
+                    </Typography>
+                  </div>
+                  
+                  {renderSectionContent()}
+
+                  {/* Section Navigation */}
+                  <div className="flex flex-col items-center gap-4 mt-8 pt-6 border-t border-gray-200">
+                      {/* Reset button - Hidden in review mode */}
+                      {!isReviewMode && (
+                      <div className="flex justify-end w-full">
+                        <Button
+                          variant="outlined"
+                          className="border-gray-300 text-gray-600 hover:border-gray-400 px-4 py-2 capitalize text-sm font-semibold"
+                          onClick={resetForm}
+                          disabled={isSubmitting}
+                        >
+                          Reset Form
+                        </Button>
+                      </div>
+                      )}
+                    
+
+                    <div className="flex justify-between w-full">
+                      <Button
+                        variant="outlined"
+                        className="border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
+                        onClick={prevSection}
+                        disabled={isFirstSection}
+                      >
+                        <span className="flex items-center gap-2">
+                          <ChevronLeftIcon className="h-4 w-4" />
+                          Previous
+                        </span>
+                      </Button>
+                      
+                      {isLastSection ? (
+                        <Button
+                          className="bg-dark-plum hover:bg-light-purple text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
+                          onClick={handleCreateProposal}
+                          disabled={isSubmitting || (!isReviewMode && !canProceedToNext())}
+                          size="lg"
+                        >
+                          {isSubmitting ? (
+                            <span className="flex items-center gap-2">
+                              <Spinner className="h-4 w-4" />
+                              Submitting...
+                            </span>
+                           ) : (
+                          isEditMode ? 'Update Proposal' :
+                          isReviewMode ? 
+                            (Object.keys(sectionComments).every(section => 
+                              !hasReview(section as SectionType) || isReviewResolved(section as SectionType)
+                            ) ? 'Complete Review' : 'Request Staff Review') : 
+                            'Create Proposal'
+                        )}
+                        </Button>
+                      ) : (
+                        <Button
+                          className="bg-dark-plum hover:bg-light-purple text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
+                          onClick={nextSection}
+                          disabled={!canProceedToNext()}
+                        >
+                          <span className="flex items-center gap-2">
+                            Next
+                            <ChevronRightIcon className="h-4 w-4" />
+                          </span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
             </div>
           </div>
-
-          {/* Current Section Form */}
-          <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
-            <CardBody className="p-6 max-md:p-4 max-sm:p-3">
-              <div className="mb-6">
-                <Typography variant="h5" color="blue-gray" className="mb-2">
-                  {sections[currentSectionIndex].title}
-                </Typography>
-                <Typography variant="paragraph" color="gray">
-                  {sections[currentSectionIndex].description}
-                </Typography>
-              </div>
-              
-              {renderSectionContent()}
-
-              {/* Section Navigation */}
-              <div className="flex flex-col items-center gap-4 mt-8 pt-6 border-t border-gray-200">
-                  {/* Reset button - Hidden in review mode */}
-                  {!isReviewMode && (
-                  <div className="flex justify-end w-full">
-                    <Button
-                      variant="outlined"
-                      className="border-gray-300 text-gray-600 hover:border-gray-400 px-4 py-2 capitalize text-sm font-semibold"
-                      onClick={resetForm}
-                      disabled={isSubmitting}
-                    >
-                      Reset Form
-                    </Button>
-                  </div>
-                  )}
-                
-
-                <div className="flex justify-between w-full">
-                  <Button
-                    variant="outlined"
-                    className="border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
-                    onClick={prevSection}
-                    disabled={isFirstSection}
-                  >
-                    <span className="flex items-center gap-2">
-                      <ChevronLeftIcon className="h-4 w-4" />
-                      Previous
-                    </span>
-                  </Button>
-                  
-                  {isLastSection ? (
-                    <Button
-                      className="bg-dark-plum hover:bg-light-purple text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
-                      onClick={handleCreateProposal}
-                      disabled={isSubmitting || (!isReviewMode && !canProceedToNext())}
-                      size="lg"
-                    >
-                      {isSubmitting ? (
-                        <span className="flex items-center gap-2">
-                          <Spinner className="h-4 w-4" />
-                          {isReviewMode ? 'Processing...' : isEditMode ? 'Updating...' : 'Creating...'}
-                        </span>
-                      ) : (
-                        isReviewMode ? 'Review Proposal' : isEditMode ? 'Update Proposal' : 'Create Proposal'
-                      )}
-                    </Button>
-                  ) : (
-                    <Button
-                      className="bg-dark-plum hover:bg-light-purple text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
-                      onClick={nextSection}
-                      disabled={!canProceedToNext()}
-                    >
-                      <span className="flex items-center gap-2">
-                        Next
-                        <ChevronRightIcon className="h-4 w-4" />
-                      </span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardBody>
-          </Card>
         </div>
       </div>
     </div>

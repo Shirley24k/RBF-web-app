@@ -1,4 +1,5 @@
 import {
+  BriefcaseIcon,
   BuildingOfficeIcon,
   EnvelopeIcon,
   EyeIcon,
@@ -31,7 +32,7 @@ import { useEffect, useState } from "react";
 import { ChangePasswordModal } from "../../components/ChangePasswordModal";
 import { Sidenav } from "../../components/sidenav";
 import { isValidPhoneNumber } from "../../lib/utils";
-import { industryOptions } from "../../utils/industryOptions";
+import { getIndustryLabel, industryOptions } from "../../utils/industryOptions";
 
 interface StaffMember {
   id: number;
@@ -654,114 +655,140 @@ export const StartupProfile = (): JSX.Element => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="hidden lg:block fixed w-32 h-full left-0 top-0 z-20">
+    <div className="bg-white flex flex-row justify-center w-full">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0 z-20">
+        <Sidenav active="profile" />
+      </div>
+      
+      {/* Mobile Layout */}
+      <div className="lg:hidden z-20">
         <Sidenav active="profile" />
       </div>
 
-      {/* Mobile sidebar */}
-      <div className="lg:hidden">
-        <Sidenav active="profile" />
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 ml-32 max-md:ml-24 max-sm:ml-20 transition-all duration-300">
-        {/* Header */}
-        <div className="ml-10 transition-all duration-300">
-          <div className="px-6 py-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="h3" className="mb-2 font-bold text-dark-plum">
-                  Organization Management
-                </Typography>
-                <Typography variant="paragraph" color="gray" className="font-normal text-lg">
-                  Manage your company details and team members
-                </Typography>
+      {/* Main Content */}
+      <main className="ml-24 max-sm:ml-16 transition-all duration-300 w-full">
+        <div className="px-6 py-8 lg:px-8 xl:px-12 max-md:px-4 max-sm:px-3">
+          <div className="max-w-7xl mx-auto">
+            {/* Header Section */}
+            <div className="w-full">
+              <div className="mb-16 max-lg:mb-12 max-sm:mb-8">
+                <div className="flex flex-row lg:items-center lg:justify-between gap-4 max-sm:gap-2">
+                  <div className="flex-1">
+                    <Typography variant="h4" className="text-4xl max-lg:text-3xl max-sm:text-2xl font-bold text-gray-900 mb-6 max-lg:mb-4 max-sm:mb-3">
+                      Organization Management
+                    </Typography>
+                    <Typography variant="paragraph" className="text-xl max-lg:text-base max-sm:text-sm text-gray-600 max-w-2xl">
+                      Manage your company details and team members
+                    </Typography>
+                  </div>
+                  {userRole === 'startup' && (
+                    <div className="flex-shrink-0">
+                      <Button
+                        className="flex items-center gap-3 bg-dark-plum hover:bg-light-purple text-white px-6 py-3 max-md:px-5 max-md:py-2.5 max-sm:px-3 max-sm:py-2 rounded-lg font-semibold text-base max-md:text-sm max-sm:text-xs capitalize w-full lg:w-auto"
+                        onClick={openInviteModal}
+                      >
+                        <UserPlusIcon className="hidden sm:block h-5 w-5" />
+                        <span className="max-sm:hidden">Invite Staff Member</span>
+                        <span className="sm:hidden">Invite Staff</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-              {userRole === 'startup' && (
-              <Button
-                className="flex items-center gap-3 bg-dark-plum hover:bg-light-purple text-white px-6 py-3 rounded-lg font-semibold text-base capitalize"
-                onClick={openInviteModal}
-              >
-                <UserPlusIcon className="h-5 w-5" />
-                Invite Staff Member
-              </Button>
-              )}
             </div>
-          </div>
-        </div>
 
-        {/* Content */}
-        <div className="p-8">
+            {/* Content */}
           {/* Company Details */}
           {userRole == "startup" && startupInfo && (
-            <Card className="mb-8 shadow-xl border-0 rounded-2xl overflow-hidden">
+            <Card className="mb-8 max-md:mb-6 max-sm:mb-4 shadow-xl border-0 rounded-xl overflow-hidden">
               <CardHeader
                 variant="gradient"
-                className="bg-gradient-to-r from-dark-plum to-light-purple mb-0 grid mx-0 my-0 py-3 place-items-center"
+                className="bg-gradient-to-r from-dark-plum to-light-purple mb-0 grid mx-0 my-0 py-3 max-md:py-2 place-items-center"
               >
-                <div className="flex items-center justify-between w-full px-4">
-                <Typography variant="h4" color="white" className="flex items-center gap-3 font-bold">
-                  <BuildingOfficeIcon className="h-6 w-6" />
-                  Company Information
-                </Typography>
-                <div className="flex items-center gap-3">
-                  <Button
-                      variant="text"
-                      className="text-white hover:bg-white/20 p-2"
-                      onClick={() => setShowChangePasswordModal(true)}
-                    >
-                      <ShieldCheckIcon className="h-5 w-5" />
-                    </Button>
+                <div className="flex flex-row items-center justify-between w-full px-4 max-sm:px-2 gap-2 max-sm:gap-1">
+                  <Typography variant="h4" color="white" className="flex items-center gap-3 font-bold text-2xl max-md:text-xl max-sm:text-lg">
+                    <BuildingOfficeIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
+                    Company Information
+                  </Typography>
+                  <div className="flex items-center gap-3 max-sm:gap-2">
                     <Button
-                      variant="text"
-                      className="text-white hover:bg-white/20 p-2"
-                      onClick={openEditProfileModal}
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </Button>
-                </div>
+                        variant="text"
+                        className="text-white hover:bg-white/20 p-2 max-sm:p-1"
+                        onClick={() => setShowChangePasswordModal(true)}
+                      >
+                        <ShieldCheckIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />
+                      </Button>
+                      <Button
+                        variant="text"
+                        className="text-white hover:bg-white/20 p-2 max-sm:p-1"
+                        onClick={openEditProfileModal}
+                      >
+                        <PencilIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />
+                      </Button>
+                  </div>
                 </div>
               </CardHeader>
-              <CardBody className="p-8">
-                <div className="flex flex-col gap-4">
-                  <div className="space-y-6">
+              <CardBody className="p-8 max-md:p-6 max-sm:p-4">
+                <div className="flex flex-col gap-4 max-md:gap-3 max-sm:gap-2">
+                  <div className="space-y-6 max-md:space-y-4 max-sm:space-y-3">
                     <div>
-                      <Typography variant="h4" className="mb-4 font-bold text-dark-plum">
-                        {startupInfo.company_name}
+                      <Typography variant="h4" className="mb-4 max-md:mb-3 max-sm:mb-2 font-bold text-dark-plum text-2xl max-md:text-xl max-sm:text-lg">
+                        {startupInfo.name}
                       </Typography>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                          <EnvelopeIcon className="h-6 w-6 text-dark-plum flex-shrink-0" />
-                          <div>
-                            <Typography variant="small" color="gray" className="font-medium uppercase tracking-wide">
+                      <div className="space-y-4 max-md:space-y-3 max-sm:space-y-2">
+                        <div className="flex items-start gap-4 max-sm:gap-3 p-4 max-md:p-3 max-sm:p-2 bg-gray-50 rounded-lg">
+                          <EnvelopeIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4 text-dark-plum flex-shrink-0 mt-1" />
+                          <div className="flex-1 min-w-0">
+                            <Typography variant="small" color="gray" className="font-medium uppercase tracking-wide text-sm max-sm:text-xs">
                               Email Address
                             </Typography>
-                            <Typography variant="paragraph" className="font-semibold text-gray-900">
+                            <Typography variant="paragraph" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs break-all">
                               {startupInfo.user.email}
                             </Typography>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                          <PhoneIcon className="h-6 w-6 text-dark-plum flex-shrink-0" />
-                          <div>
-                            <Typography variant="small" color="gray" className="font-medium uppercase tracking-wide">
+                        <div className="flex items-start gap-4 max-sm:gap-3 p-4 max-md:p-3 max-sm:p-2 bg-gray-50 rounded-lg">
+                          <PhoneIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4 text-dark-plum flex-shrink-0 mt-1" />
+                          <div className="flex-1 min-w-0">
+                            <Typography variant="small" color="gray" className="font-medium uppercase tracking-wide text-sm max-sm:text-xs">
                               Contact Number
                             </Typography>
-                            <Typography variant="paragraph" className="font-semibold text-gray-900">
+                            <Typography variant="paragraph" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs">
                               {startupInfo.contact_no}
                             </Typography>
                           </div>
                         </div>
-                        <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
-                          <MapPinIcon className="h-6 w-6 text-dark-plum flex-shrink-0 mt-1" />
-                          <div>
-                            <Typography variant="small" color="gray" className="font-medium uppercase tracking-wide">
+                        <div className="flex items-start gap-4 max-sm:gap-3 p-4 max-md:p-3 max-sm:p-2 bg-gray-50 rounded-lg">
+                          <BuildingOfficeIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4 text-dark-plum flex-shrink-0 mt-1" />
+                          <div className="flex-1 min-w-0">
+                            <Typography variant="small" color="gray" className="font-medium uppercase tracking-wide text-sm max-sm:text-xs">
+                              Company Name
+                            </Typography>
+                            <Typography variant="paragraph" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs">
+                              {startupInfo.company_name}
+                            </Typography>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4 max-sm:gap-3 p-4 max-md:p-3 max-sm:p-2 bg-gray-50 rounded-lg">
+                          <MapPinIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4 text-dark-plum flex-shrink-0 mt-1" />
+                          <div className="flex-1 min-w-0">
+                            <Typography variant="small" color="gray" className="font-medium uppercase tracking-wide text-sm max-sm:text-xs">
                               Company Address
                             </Typography>
-                            <Typography variant="paragraph" className="font-semibold text-gray-900">
+                            <Typography variant="paragraph" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs">
                               {startupInfo.company_address}
+                            </Typography>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4 max-sm:gap-3 p-4 max-md:p-3 max-sm:p-2 bg-gray-50 rounded-lg">
+                          <BriefcaseIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4 text-dark-plum flex-shrink-0 mt-1" />
+                          <div className="flex-1 min-w-0">
+                            <Typography variant="small" color="gray" className="font-medium uppercase tracking-wide text-sm max-sm:text-xs">
+                              Company Sector
+                            </Typography>
+                            <Typography variant="paragraph" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs">
+                              {getIndustryLabel(startupInfo.company_sector)}
                             </Typography>
                           </div>
                         </div>
@@ -775,28 +802,28 @@ export const StartupProfile = (): JSX.Element => {
 
           {/* Staff Details Card - Only show when user role is staff */}
           {userRole === 'staff' && startupInfo && (
-            <Card className="mb-8 shadow-xl border-0 rounded-2xl overflow-hidden">
+            <Card className="mb-8 max-md:mb-6 max-sm:mb-4 shadow-xl border-0 rounded-xl overflow-hidden">
               <CardHeader
                 variant="gradient"
-                className="bg-gradient-to-r from-dark-plum to-light-purple mb-0 grid mx-0 my-0 py-3 place-items-center"
+                className="bg-gradient-to-r from-dark-plum to-light-purple mb-0 grid mx-0 my-0 py-3 max-md:py-2 place-items-center"
               >
-                <div className="flex items-center justify-between w-full px-4">
-                  <Typography variant="h4" color="white" className="flex items-center gap-3 font-bold">
-                    <UserIcon className="h-6 w-6" />
+                <div className="flex flex-row items-center justify-between w-full px-4 max-sm:px-2 gap-2 max-sm:gap-1">
+                  <Typography variant="h4" color="white" className="flex items-center gap-3 font-bold text-2xl max-md:text-xl max-sm:text-lg">
+                    <UserIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
                     Staff Information
                   </Typography>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 max-sm:gap-2">
                     <Button
                       variant="text"
-                      className="text-white hover:bg-white/20 p-2"
+                      className="text-white hover:bg-white/20 p-2 max-sm:p-1"
                       onClick={() => setShowChangePasswordModal(true)}
                     >
-                      <ShieldCheckIcon className="h-5 w-5" />
+                      <ShieldCheckIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardBody className="p-8">
+              <CardBody className="p-8 max-md:p-6 max-sm:p-4">
                 <div className="flex flex-col gap-4">
                   <div className="space-y-6">
                     <div>
@@ -861,105 +888,113 @@ export const StartupProfile = (): JSX.Element => {
           <Card className="shadow-xl border-0 rounded-2xl overflow-hidden">
             <CardHeader
               variant="gradient"
-              className="bg-gradient-to-r from-dark-plum to-light-purple mx-0 my-0 grid py-3 place-items-center"
+              className="bg-gradient-to-r from-dark-plum to-light-purple mx-0 my-0 grid py-3 max-md:py-2 place-items-center"
             >
-              <Typography variant="h4" color="white" className="flex items-center gap-3 font-bold">
-                <UserIcon className="h-6 w-6" />
+              <Typography variant="h4" color="white" className="flex items-center gap-3 font-bold text-2xl max-md:text-xl max-sm:text-lg">
+                <UserIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
                 Organization Members ({staff.length})
               </Typography>
             </CardHeader>
             <CardBody className="overflow-x-auto px-0 pt-0 pb-2">
               {staff.length === 0 ? (
-                <div className="text-center py-12 flex flex-col items-center justify-center gap-4">
-                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <UserIcon className="h-12 w-12 text-gray-400" />
+                <div className="text-center py-12 max-md:py-8 max-sm:py-6 flex flex-col items-center justify-center gap-4 max-sm:gap-2">
+                  <div className="w-24 h-24 max-md:w-20 max-md:h-20 max-sm:w-16 max-sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 max-md:mb-4 max-sm:mb-3">
+                    <UserIcon className="h-12 w-12 max-md:h-10 max-md:w-10 max-sm:h-8 max-sm:w-8 text-gray-400" />
                   </div>
-                  <Typography variant="h5" color="gray" className="mb-3 font-semibold">
+                  <Typography variant="h5" color="gray" className="mb-3 max-md:mb-2 max-sm:mb-1 font-semibold text-2xl max-md:text-xl max-sm:text-lg">
                     No Team Members Yet
                   </Typography>
-                  <Typography variant="paragraph" color="gray" className="mb-6 text-lg">
+                  <Typography variant="paragraph" color="gray" className="mb-6 max-md:mb-4 max-sm:mb-3 text-lg max-md:text-base max-sm:text-sm px-4">
                     Start building your team by inviting staff members to collaborate
                   </Typography>
                   <Button 
-                    className="bg-dark-plum hover:bg-light-purple text-white px-8 py-3 rounded-lg font-semibold text-base capitalize flex items-center gap-2"
+                    className="bg-dark-plum hover:bg-light-purple text-white px-8 py-3 max-md:px-6 max-md:py-2.5 max-sm:px-4 max-sm:py-2 rounded-lg font-semibold text-base max-md:text-sm max-sm:text-xs capitalize flex items-center gap-2 max-sm:gap-1"
                     onClick={openInviteModal}
                   >
-                    <UserPlusIcon className="h-5 w-5" />
-                    Invite Team Member
+                    <UserPlusIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />
+                    <span className="max-sm:hidden">Invite Team Member</span>
+                    <span className="sm:hidden">Invite Member</span>
                   </Button>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[640px] table-auto">
-                    <thead>
+                <div className="w-full">
+                  <table className="w-full table-auto">
+                    <thead className="border-b border-blue-gray-50">
                       <tr className="bg-gray-50">
-                        {["Name", "Status", "Actions"].map((el) => (
-                          <th
-                            key={el}
-                            className="border-b border-blue-gray-50 py-4 px-6 text-left"
-                          >
-                            <Typography
-                              variant="small"
-                              className="text-md font-bold text-blue-gray-600 tracking-wide"
-                            >
-                              {el}
-                            </Typography>
-                          </th>
-                        ))}
+                        <th className="py-4 px-6 text-left">
+                          <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                            Name
+                          </Typography>
+                        </th>
+                        <th className="hidden sm:block py-4 px-6 text-left">
+                          <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                            Status
+                          </Typography>
+                        </th>
+                        <th className="py-4 px-6 text-left">
+                          <Typography variant="small" className="text-md max-md:text-sm max-sm:text-xs font-bold text-blue-gray-600 tracking-wide">
+                            Actions
+                          </Typography>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {staff.map((member, key) => {
-                        const className = `py-4 px-6 ${key === staff.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                      {staff.map((member) => {
                         return (
-                          <tr key={member.id} className="hover:bg-gray-50 transition-colors">
-                            <td className={className}>
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-dark-plum/10 rounded-full flex items-center justify-center">
-                                  <UserIcon className="h-5 w-5 text-dark-plum" />
+                          <tr key={member.id} className="hover:bg-gray-50 transition-colors border-b border-blue-gray-50">
+                            <td className="py-4 px-6 max-md:px-4 max-sm:px-3">
+                              <div className="flex items-center gap-3 max-sm:gap-2">
+                                <div className="w-10 h-10 max-sm:w-8 max-sm:h-8 bg-dark-plum/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <UserIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4 text-dark-plum" />
                                 </div>
-                                <div className="flex flex-col">
-                                  <Typography variant="small" className="font-semibold text-gray-900">
+                                <div className="flex flex-col min-w-0 flex-1">
+                                  <Typography variant="small" className="font-semibold text-gray-900 text-base max-md:text-sm max-sm:text-xs truncate">
                                     {member.name}
                                   </Typography>
                                   <Typography variant="small" color="gray" className="text-xs">
                                     ID: {member.id}
                                   </Typography>
+                                  {/* Show status on mobile under the name */}
+                                  <div className="sm:hidden mt-1">
+                                    <span className="text-xs font-medium text-gray-600">{member.status}</span>
+                                  </div>
                                 </div>
                               </div>
                             </td>
                             
-                            <td className={className}>
-                                {member.status}
+                            <td className="hidden sm:table-cell py-4 px-6">
+                              <div className="flex items-center">
+                                <span className="text-sm max-md:text-xs max-sm:text-[10px] font-medium">{member.status}</span>
+                              </div>
                             </td>
-                            <td className={className}>
-                              <div className="flex items-center gap-2">
+                            <td className="py-4 px-6 flex items-center justify-start">
+                              <div className="flex items-center gap-2 max-sm:gap-1 justify-end">
                                 <Button
                                   size="sm"
                                   variant="text"
-                                  className="text-dark-plum hover:bg-light-purple/10 p-2"
+                                  className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1"
                                   onClick={() => openViewModal(member)}
                                   title="View"
                                 >
-                                  <EyeIcon className="h-4 w-4" />
+                                  <EyeIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="text"
-                                  className="text-dark-plum hover:bg-light-purple/10 p-2"
+                                  className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1"
                                   onClick={() => openEditModal(member)}
                                 >
-                                  <PencilIcon className="h-4 w-4" />
+                                  <PencilIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="text"
                                   color="red"
-                                  className="p-2"
+                                  className="p-2 max-sm:p-1"
                                   onClick={() => openDeleteModal(member)}
                                   disabled={member.status === 'INACTIVE'}
                                 >
-                                  <TrashIcon className="h-4 w-4" />
+                                  <TrashIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
                                 </Button>
                               </div>
                             </td>
@@ -973,17 +1008,24 @@ export const StartupProfile = (): JSX.Element => {
             </CardBody>
           </Card>
           )}
+          </div>
         </div>
-      </div>
+      </main>
 
       {/* Invite Staff Modal */}
-      <Dialog open={showInviteModal} handler={() => setShowInviteModal(false)} size="lg" className="rounded-2xl">
+      <Dialog 
+        open={showInviteModal} 
+        handler={() => setShowInviteModal(false)} 
+        size="lg" 
+        className="rounded-2xl"
+        placeholder={undefined}
+      >
         <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
           <Typography variant="h4" color="white" className="font-bold">
             Invite New Team Member
           </Typography>
         </DialogHeader>
-        <DialogBody className="p-8 bg-beige">
+        <DialogBody className="p-8 max-h-[70vh] overflow-y-auto bg-beige">
           <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1 max-sm:grid-cols-1">
             <div className="flex flex-col">
             <Input
@@ -1101,16 +1143,16 @@ export const StartupProfile = (): JSX.Element => {
       </Dialog>
 
       {/* View Staff Modal */}
-      <Dialog open={showViewModal} handler={() => setShowViewModal(false)} size="lg" className="rounded-2xl">
+      <Dialog open={showViewModal} handler={() => setShowViewModal(false)} size="lg" className="rounded-2xl" placeholder={undefined}>
         <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
           <Typography variant="h4" color="white" className="font-bold">
             Staff Details
           </Typography>
         </DialogHeader>
-        <DialogBody className="p-8">
+        <DialogBody className="p-8 max-h-[70vh] overflow-y-auto bg-beige">
           {selectedStaff && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1 max-sm:grid-cols-1">
+              <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">
                 <div>
                   <Typography variant="h6" className="mb-3 font-bold text-dark-plum">
                     Basic Information
@@ -1186,13 +1228,13 @@ export const StartupProfile = (): JSX.Element => {
       </Dialog>
 
       {/* Edit Staff Modal */}
-      <Dialog open={showEditModal} handler={() => setShowEditModal(false)} size="lg" className="rounded-2xl">
+      <Dialog open={showEditModal} handler={() => setShowEditModal(false)} size="lg" className="rounded-2xl" placeholder={undefined}>
         <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
           <Typography variant="h4" color="white" className="font-bold">
             Edit Team Member
           </Typography>
         </DialogHeader>
-        <DialogBody className="p-8">
+        <DialogBody className="p-8 max-h-[70vh] overflow-y-auto bg-beige">
           <div className="grid grid-cols-1 gap-6">
             <div className="flex flex-col">
             <Input
@@ -1272,13 +1314,13 @@ export const StartupProfile = (): JSX.Element => {
       </Dialog>
 
       {/* Delete Staff Modal */}
-      <Dialog open={showDeleteModal} handler={() => setShowDeleteModal(false)} size="md" className="rounded-2xl">
+      <Dialog open={showDeleteModal} handler={() => setShowDeleteModal(false)} size="md" className="rounded-2xl" placeholder={undefined}>
         <DialogHeader className="bg-red-900 text-white rounded-t-2xl">
           <Typography variant="h4" color="white" className="font-bold">
             Deactivate Team Member
           </Typography>
         </DialogHeader>
-        <DialogBody className="p-8">
+        <DialogBody className="p-8 max-h-[70vh] overflow-y-auto bg-beige">
           <div className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <TrashIcon className="h-8 w-8 text-red-500" />
@@ -1301,24 +1343,24 @@ export const StartupProfile = (): JSX.Element => {
             Cancel
           </Button>
           <Button 
-            color="red" 
+            variant="outlined"
             onClick={handleDeleteStaff} 
             disabled={submitting}
-            className="font-semibold capitalize px-6"
+            className="font-semibold capitalize px-6 border-red-700 text-red-700 hover:bg-red-700 hover:text-white"
           >
             {submitting ? <Spinner className="h-5 w-5" /> : 'Deactivate'}
           </Button>
         </DialogFooter>
       </Dialog>
 
-      <Dialog open={showEditProfileModal} handler={() => setShowEditProfileModal(false)} size="lg" className="rounded-2xl">
+      <Dialog open={showEditProfileModal} handler={() => setShowEditProfileModal(false)} size="lg" className="rounded-2xl" placeholder={undefined}>
         <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
           <Typography variant="h4" color="white" className="font-bold">
             {userRole === 'staff' ? 'Change Password' : 'Edit Company Profile'}
           </Typography>
         </DialogHeader>
         <DialogBody className="p-8 bg-beige">
-            <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1 max-sm:grid-cols-1">
+            <div className="flex flex-col gap-6">
               <div className="flex flex-col">
                 <Input
                   label="Full Name"
@@ -1381,6 +1423,10 @@ export const StartupProfile = (): JSX.Element => {
                   error={!!profileFormTouched.company_sector && !!profileFormErrors.company_sector}
                   className="bg-white text-blue-gray300"
                   size="lg"
+                  menuProps={{
+                    className: "z-[9999]",
+                    style: { zIndex: 9999 }
+                  }}
                 >
                   {industryOptions.map((industry) => (
                     <Option key={industry.value} value={industry.value}>

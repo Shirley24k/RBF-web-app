@@ -7,7 +7,7 @@ import {
   DocumentTextIcon,
   XCircleIcon
 } from "@heroicons/react/24/outline";
-import { Button, Spinner } from "@material-tailwind/react";
+import { Button, Spinner, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { Sidenav } from "../../components/sidenav";
@@ -23,6 +23,7 @@ export const StartupHome = (): JSX.Element => {
   const [analytics, setAnalytics] = useState({
     totalApplications: 0,
     awaitReviewApplications: 0,
+    pendingApplications: 0,
     ongoingApplications: 0,
     completedApplications: 0,
     failedApplications: 0,
@@ -69,8 +70,9 @@ export const StartupHome = (): JSX.Element => {
         setAnalytics({
           totalApplications: data.stats.total || 0,
           awaitReviewApplications: data.stats.await_review || 0,
+          pendingApplications: data.stats.pending || 0,
           ongoingApplications: data.stats.ongoing || 0,
-          completedApplications: data.stats.completed || 0,
+          completedApplications: data.stats.completed + data.stats.active || 0,
           failedApplications: data.stats.failed || 0,
           totalFundingReceived: data.stats.total_funding_received || 0
         });
@@ -199,32 +201,33 @@ export const StartupHome = (): JSX.Element => {
   return (
     <div className="bg-white flex flex-row justify-center w-full">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0 z-20">
         <Sidenav active="home" />
       </div>
       
       {/* Mobile Layout */}
-      <div className="lg:hidden">
+      <div className="lg:hidden z-20">
         <Sidenav active="home" />
       </div>
 
       {/* Main Content */}
-      <main className="ml-72 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1 transition-all duration-300">
-        <div className="flex-1 p-8 max-md:p-6 max-sm:p-4">
+      <main className="ml-16 transition-all duration-300 w-full">
+        <div className="px-6 py-8 lg:px-8 xl:px-12">
+          <div className="max-w-7xl mx-auto">
           {isStripeLinked ? (
             <div className="w-full">
               {/* Header Section */}
-              <div className="mb-10 max-md:mb-8 max-sm:mb-6">
-                <h1 className="font-section-title font-[600] text-black text-5xl max-lg:text-4xl max-md:text-3xl max-sm:text-2xl tracking-[-0.96px] leading-[normal] [font-style:normal] mb-3 max-md:mb-2 max-sm:mb-1">
+              <div className="mb-16 max-lg:mb-12 max-sm:mb-8">
+                <Typography variant="h4" className="text-4xl max-lg:text-3xl max-sm:text-2xl font-bold text-gray-900 mb-6 max-lg:mb-4 max-sm:mb-3">
                   Welcome back, Startup!
-                </h1>
-                <p className="text-gray-600 text-xl max-md:text-lg max-sm:text-base">
+                </Typography>
+                <Typography variant="paragraph" className="text-xl max-lg:text-base max-sm:text-sm text-gray-600 max-w-2xl">
                   Here's your funding journey overview
-                </p>
+                </Typography>
               </div>
   
                   {/* Analytics Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-md:gap-6 max-sm:gap-4 mb-10 max-md:mb-8 max-sm:mb-6">
+                  <div className="grid grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-6 max-lg:gap-4 mb-12 max-lg:mb-8 max-sm:mb-6">
                     <StatCard
                       title="Total Applications"
                       value={analytics.totalApplications}
@@ -252,57 +255,57 @@ export const StartupHome = (): JSX.Element => {
                   </div>
 
                   {/* Performance Metrics */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-md:gap-6 max-sm:gap-4 mb-10 max-md:mb-8 max-sm:mb-6">
-                    <div className="bg-white rounded-xl p-8 max-md:p-6 max-sm:p-4 shadow-lg border border-gray-100">
-                      <div className="flex items-center justify-between mb-6 max-md:mb-4 max-sm:mb-3">
-                        <h3 className="text-xl max-md:text-lg max-sm:text-base font-semibold text-gray-900">Funding Overview</h3>
-                        <CurrencyDollarIcon className="w-8 h-8 max-md:w-6 max-md:h-6 max-sm:w-5 max-sm:h-5 text-green-500" />
+                  <div className="grid grid-cols-3 max-lg:grid-cols-1 gap-8 max-lg:gap-6 mb-12 max-lg:mb-8 max-sm:mb-6">
+                    <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                      <div className="flex items-center justify-between mb-8 max-lg:mb-6 max-sm:mb-4">
+                        <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">Funding Overview</Typography>
+                        <CurrencyDollarIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-green-500" />
                       </div>
-                      <div className="space-y-4 max-md:space-y-3 max-sm:space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-base max-md:text-sm max-sm:text-xs text-gray-600">Total Funding Received</span>
-                          <span className="font-semibold text-lg max-md:text-base max-sm:text-sm">RM {analytics.totalFundingReceived.toLocaleString()}</span>
+                      <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Total Funding Received</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-base font-bold text-gray-900 whitespace-nowrap">RM {analytics.totalFundingReceived.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-base max-md:text-sm max-sm:text-xs text-gray-600">Success Rate</span>
-                          <span className="font-semibold text-lg max-md:text-base max-sm:text-sm text-green-600">
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Success Rate</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-green-600">
                             {analytics.totalApplications > 0 ? Math.round((analytics.completedApplications / analytics.totalApplications) * 100) : 0}%
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-8 max-md:p-6 max-sm:p-4 shadow-lg border border-gray-100">
-                      <div className="flex items-center justify-between mb-6 max-md:mb-4 max-sm:mb-3">
-                        <h3 className="text-xl max-md:text-lg max-sm:text-base font-semibold text-gray-900">Processing Time</h3>
-                        <ArrowTrendingUpIcon className="w-8 h-8 max-md:w-6 max-md:h-6 max-sm:w-5 max-sm:h-5 text-blue-500" />
+                    <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                      <div className="flex items-center justify-between mb-8 max-lg:mb-6 max-sm:mb-4">
+                        <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">Application Status</Typography>
+                        <ArrowTrendingUpIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-blue-500" />
                       </div>
-                      <div className="space-y-4 max-md:space-y-3 max-sm:space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-base max-md:text-sm max-sm:text-xs text-gray-600">Average Days</span>
-                          <span className="font-semibold text-lg max-md:text-base max-sm:text-sm">1 - 3 days</span>
+                      <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Pending Admin Review</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">{analytics.pendingApplications}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-base max-md:text-sm max-sm:text-xs text-gray-600">Pending Reviews</span>
-                          <span className="font-semibold text-lg max-md:text-base max-sm:text-sm text-yellow-600">{analytics.awaitReviewApplications}</span>
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Await Investor Review</span>
+                          <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-yellow-600">{analytics.awaitReviewApplications}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-8 max-md:p-6 max-sm:p-4 shadow-lg border border-gray-100">
-                      <div className="flex items-center justify-between mb-6 max-md:mb-4 max-sm:mb-3">
-                        <h3 className="text-xl max-md:text-lg max-sm:text-base font-semibold text-gray-900">Quick Actions</h3>
-                        <ChartBarIcon className="w-8 h-8 max-md:w-6 max-md:h-6 max-sm:w-5 max-sm:h-5 text-purple-500" />
+                    <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                      <div className="flex items-center justify-between mb-8 max-lg:mb-6 max-sm:mb-4">
+                        <h3 className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">Quick Actions</h3>
+                        <ChartBarIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-purple-500" />
                       </div>
-                      <div className="space-y-4 max-md:space-y-3 max-sm:space-y-2">
+                      <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
                         <Button 
-                          className="w-full bg-dark-plum hover:bg-light-purple text-white font-bold py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4 max-sm:px-3 rounded-lg text-base max-md:text-sm max-sm:text-xs capitalize"
+                          className="w-full bg-dark-plum hover:bg-light-purple text-white font-bold py-4 max-lg:py-3 max-sm:py-2.5 px-8 max-lg:px-6 max-sm:px-4 rounded-xl text-lg max-lg:text-base max-sm:text-sm capitalize"
                           onClick={()=>{window.location.href="/submit-funding"}}
                         >
                           Submit New Application
                         </Button>
                         <Button 
-                          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4 max-sm:px-3 rounded-lg text-base max-md:text-sm max-sm:text-xs capitalize"
+                          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 max-lg:py-3 max-sm:py-2.5 px-8 max-lg:px-6 max-sm:px-4 rounded-xl text-lg max-lg:text-base max-sm:text-sm capitalize"
                           onClick={()=>{window.location.href="/proposal-management"}}
                         >
                           Create Proposal
@@ -312,56 +315,56 @@ export const StartupHome = (): JSX.Element => {
                   </div>
 
                   {/* Recent Activity */}
-                  <div className="bg-white rounded-xl p-8 max-md:p-6 max-sm:p-4 shadow-lg border border-gray-100">
-                    <div className="flex items-center mb-6 max-md:mb-4 max-sm:mb-3">
-                      <h3 className="text-xl max-md:text-lg max-sm:text-base font-semibold text-gray-900">Recent Activity</h3>
+                  <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center mb-8 max-lg:mb-6 max-sm:mb-4">
+                      <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">Recent Activity</Typography>
                     </div>
-                    <div className="space-y-4 max-md:space-y-3 max-sm:space-y-2">
+                    <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
                       {recentApplications.length > 0 ? (
                         recentApplications.map((app: any) => (
                           <div 
                             key={app.id} 
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 max-md:p-3 max-sm:p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                            className="flex flex-row items-center justify-between p-6 max-lg:p-4 max-sm:p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                           >
-                            <div className="flex-1 mb-3 sm:mb-0">
-                              <p className="font-medium text-base max-md:text-sm max-sm:text-xs">Application #{app.id}</p>
-                              <p className="text-sm max-md:text-xs max-sm:text-xs text-gray-600 mt-1">
+                            <div className="flex-1">
+                              <Typography variant="small" className="font-bold text-lg max-lg:text-base max-sm:text-sm text-gray-900">Application #{app.id}</Typography>
+                              <Typography variant="small" className="text-base max-lg:text-sm max-sm:text-xs text-gray-600 mt-1">
                                 {app.status === 'Completed' ? 'Funding process completed' : app.status === 'In Progress' ? 'Waiting for agreement upload' : app.status === 'Pending' ? 'Pending approval from admin' : app.status === 'Active' ? 'Funding process ongoing' : app.status === 'Failed' ? 'Funding application failed' : app.status === 'Rejected' ? 'Funding application rejected' : 'Await review from investor'}
-                              </p>
-                              <p className="text-sm max-md:text-xs max-sm:text-xs text-gray-600 mt-1">{formatDate(app.date)}</p>
+                              </Typography>
+                              <Typography variant="small" className="text-base max-lg:text-sm max-sm:text-xs text-gray-600 mt-1">{formatDate(app.date)}</Typography>
                             </div>
-                            <div className="sm:ml-4 max-md:sm:ml-3 max-sm:sm:ml-2">
+                            <div className="ml-4 max-lg:ml-3 max-sm:ml-2">
                               <StatusBadge status={app.status} />
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="text-center py-8 max-md:py-6 max-sm:py-4">
-                          <p className="text-base max-md:text-sm max-sm:text-xs text-gray-500">No recent applications</p>
+                        <div className="text-center py-8 max-lg:py-6 max-sm:py-4">
+                          <p className="text-lg max-lg:text-base max-sm:text-sm text-gray-500">No recent applications</p>
                         </div>
                       )}
                     </div>
                   </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-              <div className="w-full max-w-[595px] text-center px-6 max-md:px-4 max-sm:px-3">
-                <h1 className="font-section-title font-[600] text-black text-5xl max-lg:text-4xl max-md:text-3xl max-sm:text-2xl tracking-[-0.96px] leading-[normal] [font-style:normal] mb-8 max-md:mb-6 max-sm:mb-4">
+            <div className="flex flex-col items-center justify-center min-h-screen">
+              <div className="w-full max-w-2xl text-center px-6 max-lg:px-4 max-sm:px-3">
+                <Typography variant="h4" className="text-6xl max-xl:text-5xl max-lg:text-3xl max-sm:text-2xl font-bold text-gray-900 mb-8 max-lg:mb-6 max-sm:mb-4">
                   Welcome, Startup!
-                </h1>
+                </Typography>
 
-                <div className="flex flex-col items-center gap-8 max-md:gap-6 max-sm:gap-4">
-                  <h2 className="font-text-3xl-font-medium font-[500] text-black text-2xl max-md:text-xl max-sm:text-lg tracking-[0px] leading-[150%] [font-style:normal]">
+                <div className="flex flex-col items-center gap-8 max-lg:gap-6 max-sm:gap-4">
+                  <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-semibold text-gray-900">
                     Link your Stripe account now!
-                  </h2>
+                  </Typography>
 
-                  <p className="font-text-xl-font-normal font-[400] text-gray-600 text-lg max-md:text-base max-sm:text-sm tracking-[0px] leading-[150%] [font-style:normal]">
+                  <Typography variant="paragraph" className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">
                     Connect your Stripe account before accessing our funding
                     services
-                  </p>
+                  </Typography>
 
                   <Button
-                    className="mt-8 max-md:mt-6 max-sm:mt-4 bg-dark-plum hover:bg-light-purple text-white font-bold h-14 max-md:h-12 max-sm:h-10 py-4 max-md:py-3 max-sm:py-2 px-10 max-md:px-8 max-sm:px-6 rounded-lg text-base max-md:text-sm max-sm:text-xs capitalize w-full sm:w-auto"
+                    className="mt-8 max-lg:mt-6 max-sm:mt-4 bg-dark-plum hover:bg-light-purple text-white font-bold py-4 max-lg:py-3 max-sm:py-2.5 px-10 max-lg:px-8 max-sm:px-6 rounded-xl text-lg max-lg:text-base max-sm:text-sm capitalize w-full sm:w-auto"
                     onClick={handleStripeLinking}
                   >
                     Connect Stripe Account
@@ -370,6 +373,7 @@ export const StartupHome = (): JSX.Element => {
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
     </div>

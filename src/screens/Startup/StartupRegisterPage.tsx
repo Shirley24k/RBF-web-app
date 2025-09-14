@@ -170,7 +170,7 @@ export const StartupRegister = (): JSX.Element => {
     We currently only accept startups that are based in Malaysia. 
     If your company is based in Malaysia, please ensure that your contact number and company 
     address is complete and accurate in your profile. 
-    For further assistance, feel free to contact us at rbfsupport@gmail.com.`);
+    For further assistance, feel free to contact us at rbf@gmail.com.`);
           return;
         }
       } else {

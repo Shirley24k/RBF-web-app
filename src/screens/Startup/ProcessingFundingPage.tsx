@@ -53,20 +53,9 @@ export const ProcessingFundingPage = (): JSX.Element => {
 
   const processApplicationSteps = async () => {
     try {
-      // Step 1: Submit Application (starts at 0% progress)
+      // Step 1: Submit Application (starts and stops at 0% progress)
       setCurrentStep(0);
       setOverallProgress(0);
-      
-      // Start continuous progress for submit application (0% to 50%)
-      const submitTimer = setInterval(() => {
-        setOverallProgress(prev => {
-          if (prev >= 50) {
-            clearInterval(submitTimer);
-            return 50;
-          }
-          return prev + 1; // Increment by 1% every 50ms for smooth movement
-        });
-      }, 50);
       
       // Get proposal ID from location state
       const proposalId = location.state?.proposal_id;
@@ -85,19 +74,18 @@ export const ProcessingFundingPage = (): JSX.Element => {
       const appId = submitResponse.data.application_id;
       setApplicationId(appId);
       
-      setOverallProgress(50);
-
-      // Step 2: Risk Assessment
+      // Step 1 complete - progress stays at 0%
+      // Move to Step 2: Risk Assessment
       setCurrentStep(1);
       
-      // Start continuous progress for risk assessment (50% to 100%)
+      // Animate progress from 0% to 50% (center)
       const riskTimer = setInterval(() => {
         setOverallProgress(prev => {
-          if (prev >= 100) {
+          if (prev >= 50) {
             clearInterval(riskTimer);
-            return 100;
+            return 50;
           }
-          return prev + 0.5;
+          return prev + 0.5; // Increment by 0.5% every 50ms for smooth movement
         });
       }, 50);
       
@@ -105,19 +93,26 @@ export const ProcessingFundingPage = (): JSX.Element => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
 
-      setOverallProgress(66.67);
-
       if (riskRes.data.current_step === 'risk_assessment_failed') {
         // Risk assessment failed, application is soft deleted
         setIsProcessing(false);
         return;
       }
 
-      // Step 3: Investor Matching
+      // Step 2 complete - progress at 50% (center)
+      // Move to Step 3: Investor Matching
       setCurrentStep(2);
       
-      // Investor matching completes immediately since we're already at 100%
-      setOverallProgress(100);
+      // Animate progress from 50% to 100%
+      const matchTimer = setInterval(() => {
+        setOverallProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(matchTimer);
+            return 100;
+          }
+          return prev + 1; // Increment by 1% every 50ms for smooth movement
+        });
+      }, 50);
       
       const matchRes = await axios.post(`${API_BASE_URL}/startup/match-investors/${appId}`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -126,18 +121,21 @@ export const ProcessingFundingPage = (): JSX.Element => {
       setOverallProgress(100);
 
       // Check if matching was successful and get investor data
-      if (matchRes.data.matching_response && Array.isArray(matchRes.data.matching_response)) {
+      if (matchRes.data.matching_response && matchRes.data.matching_response.investors && Array.isArray(matchRes.data.matching_response.investors)) {
         navigate('/select-investor', {
           state: {
-            investorMatches: matchRes.data.matching_response,
-            applicationId: appId
+            investorMatches: matchRes.data.matching_response.investors,
+            applicationId: appId,
+            hasGoodMatches: matchRes.data.matching_response.has_good_matches
           }
         });
       } else {
         // No investors found or unexpected response format
+        console.log("fail navigate");
         console.warn('No investor matches found or unexpected response format:', matchRes.data);
         setIsProcessing(false);
       }
+      console.log("no navigate");
     } catch (error) {
       console.error('Error during processing:', error);
       setIsProcessing(false);

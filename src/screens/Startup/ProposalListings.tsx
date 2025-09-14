@@ -1,4 +1,5 @@
 import {
+  ExclamationTriangleIcon,
   EyeIcon,
   PencilSquareIcon,
   PlusIcon
@@ -7,6 +8,7 @@ import {
   Button,
   Card,
   CardBody,
+  Tooltip,
   Typography
 } from "@material-tailwind/react";
 import axios from "axios";
@@ -107,7 +109,7 @@ export const ProposalListings = (): JSX.Element => {
       </div>
 
       {/* Mobile Layout */}
-      <div className="lg:hidden z-10">
+      <div className="lg:hidden z-20">
         <Sidenav active="proposal" />
       </div>
 
@@ -162,9 +164,18 @@ export const ProposalListings = (): JSX.Element => {
                   <Card key={proposal.id} className="hover:shadow-lg transition-shadow relative">
                     <CardBody className="p-6 max-md:p-4 max-sm:p-3">
                       <div className="flex justify-between items-start mb-4">
-                        <Typography variant="h6" color="blue-gray" className="line-clamp-2">
-                          {proposal.title}
-                        </Typography>
+                        <div className="flex items-center gap-2">
+                          <Typography variant="h6" color="blue-gray" className="line-clamp-2 flex-1">
+                            {proposal.title}
+                          </Typography>
+                          {proposal.status === 'REVIEWING' && (
+                            <Tooltip 
+                            className="bg-gray-300 text-black w-72"
+                            content="There are changes required for this proposal. Please edit the proposal to view the reviews and make the changes.">
+                              <ExclamationTriangleIcon className="h-6 w-6 text-red-500 flex-shrink-0" />
+                            </Tooltip>
+                          )}
+                        </div>
                       </div>
                       
                       <div className="space-y-2 mb-4">
@@ -178,7 +189,7 @@ export const ProposalListings = (): JSX.Element => {
                           <strong>Funding:</strong> RM{proposal.funding_amount.toLocaleString()}
                         </Typography>
                         <Typography variant="small" color="gray">
-                          <strong>Stage:</strong> {proposal.funding_stage}
+                          <strong>Stage:</strong> {proposal.funding_stage.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
                         </Typography>
                       </div>
 
@@ -192,7 +203,7 @@ export const ProposalListings = (): JSX.Element => {
                           <EyeIcon className="h-4 w-4" />
                           View
                         </Button>
-                        {proposal.status === 'DRAFT' && (
+                        {proposal.status !== 'REVIEWED' && (
                           <>
                           {/* Review button - only visible to startup owners */}
                           {isStartupOwner && (

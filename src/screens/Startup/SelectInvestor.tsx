@@ -10,11 +10,17 @@ export const SelectInvestor = (): JSX.Element => {
   const [selectedInvestorIndex, setSelectedInvestorIndex] = useState<number | null>(null);
   const [investors, setInvestors] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [allInvestorMatches, setAllInvestorMatches] = useState<any[]>([]);
 
   const [selectedInvestor, setSelectedInvestor] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const location = useLocation();
   const investorMatches = location.state?.investorMatches || [];
+  const hasGoodMatches = location.state?.hasGoodMatches;
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const applicationId = location.state?.applicationId;
 
@@ -25,26 +31,49 @@ export const SelectInvestor = (): JSX.Element => {
   useEffect(() => {
     const fetchInvestors = async () => {
       if (investorMatches.length === 0) { setLoading(false); return; }
-      const tempInvestorList = [];
-      for (const investor of investorMatches) {
-        try{
-          const response = await axios.get(`${API_BASE_URL}/investor/${investor.investor}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          });
-          tempInvestorList.push(response.data.data);
-        } catch (error) {
-          console.error(error);
+      
+      try {
+        // Store all investor matches for pagination
+        setAllInvestorMatches(investorMatches);
+        
+        // Calculate total pages based on all available matches
+        const totalPages = Math.ceil(investorMatches.length / 3);
+        setTotalPages(totalPages);
+        
+        // Get first page of investors (first 3)
+        const firstPageInvestors = investorMatches.slice(0, 3);
+        
+        const tempInvestorList: any[] = [];
+        for (const investor of firstPageInvestors) {
+          try{
+            const response = await axios.get(`${API_BASE_URL}/investor/${investor.investor}`, {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            });
+            tempInvestorList.push({
+              ...response.data.data,
+              score: investor.score,
+              sector_investments: investor.sector_investments,
+              tag_overlap_count: investor.tag_overlap_count
+            });
+          } catch (error) {
+            console.error(error);
+          }
         }
+        
+        setInvestors(tempInvestorList);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching investors:', error);
+        setLoading(false);
       }
-      setInvestors(tempInvestorList);
-      setLoading(false);
     };
     fetchInvestors();
-  }, [investorMatches, API_BASE_URL]);
+  }, [investorMatches, hasGoodMatches, API_BASE_URL]);
 
   const sendSelectedInvestor = async (investorId: string) => {
+    setIsSending(true);
     try {
       const response = await axios.patch(`${API_BASE_URL}/startup/select-investor/${applicationId}`, {
         investor_id: investorId,
@@ -58,6 +87,8 @@ export const SelectInvestor = (): JSX.Element => {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsSending(false);
     }
   }
 
@@ -69,6 +100,46 @@ export const SelectInvestor = (): JSX.Element => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedInvestor(null);
+  };
+
+  const goToPage = async (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    
+    setLoadingMore(true);
+    setCurrentPage(page);
+    
+    try {
+      // Calculate start and end indices for the requested page
+      const startIndex = (page - 1) * 3;
+      const endIndex = startIndex + 3;
+      const pageInvestors = allInvestorMatches.slice(startIndex, endIndex);
+
+      const tempInvestorList: any[] = [];
+      for (const investor of pageInvestors) {
+        try{
+          const response = await axios.get(`${API_BASE_URL}/investor/${investor.investor}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+          tempInvestorList.push({
+            ...response.data.data,
+            score: investor.score,
+            sector_investments: investor.sector_investments,
+            tag_overlap_count: investor.tag_overlap_count
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      
+      setInvestors(tempInvestorList);
+      setSelectedInvestorIndex(null); // Reset selection when changing pages
+    } catch (error) {
+      console.error('Error loading page:', error);
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   return (
@@ -97,9 +168,19 @@ export const SelectInvestor = (): JSX.Element => {
                 variant="h6"
                 className="text-gray-600 font-normal mb-6 max-md:mb-4 max-sm:mb-3 text-base max-md:text-sm max-sm:text-sm"
               >
-                Congratulations! We have found some investors that fit your
-                funding requirements. You can proceed to send your application to
-                any of them.
+                {hasGoodMatches ? (
+                  <>
+                    Congratulations! We have found some investors that fit your
+                    funding requirements. You can proceed to send your application to
+                    any of them.
+                  </>
+                ) : (
+                  <>
+                    We couldn't find investors with perfect matches for your requirements.
+                    However, here are some suggested investors who might be interested
+                    in your business. You can still send your application to any of them.
+                  </>
+                )}
               </Typography>
 
               <div className="space-y-6 mb-12">
@@ -172,15 +253,77 @@ export const SelectInvestor = (): JSX.Element => {
                 ))}
               </div>
 
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mb-8 flex flex-col items-center gap-3">
+                  {/* Page Info */}
+                  <Typography variant="small" className="text-gray-600 text-sm">
+                    Page {currentPage} of {totalPages}
+                  </Typography>
+                  
+                  {/* Pagination Controls */}
+                  <div className="flex justify-center items-center gap-2">
+                  {/* Previous Button */}
+                  <Button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1 || loadingMore}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-sm max-md:text-xs rounded-lg px-4 py-2 max-sm:py-1.5 capitalize"
+                  >
+                    Previous
+                  </Button>
+
+                  {/* Page Numbers */}
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                      <Button
+                        key={pageNum}
+                        onClick={() => goToPage(pageNum)}
+                        disabled={loadingMore}
+                        className={`font-bold text-sm max-md:text-xs rounded-lg px-3 py-2 max-sm:py-1.5 ${
+                          currentPage === pageNum
+                            ? 'bg-dark-plum text-white'
+                            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {/* Next Button */}
+                  <Button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages || loadingMore}
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold text-sm max-md:text-xs rounded-lg px-4 py-2 max-sm:py-1.5 capitalize"
+                  >
+                    More suggestions
+                  </Button>
+
+                    {/* Loading Indicator */}
+                    {loadingMore && (
+                      <div className="ml-2">
+                        <Spinner className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <Button
                   className="bg-dark-plum hover:bg-light-purple text-white font-bold text-sm max-md:text-xs rounded-lg px-8 py-4 max-sm:py-3 capitalize"
                   onClick={() => {
                     selectedInvestorIndex !== null && sendSelectedInvestor(investors[selectedInvestorIndex].id);
                   }}
-                  disabled={selectedInvestorIndex === null}
+                  disabled={selectedInvestorIndex === null || isSending}
                 >
-                  Send
+                  {isSending ? (
+                    <span className="flex items-center gap-2">
+                      <Spinner className="h-4 w-4" />
+                    </span>
+                  ) : (
+                    'Send'
+                  )}
                 </Button>
               </div>
             </div>

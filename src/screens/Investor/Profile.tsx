@@ -368,19 +368,21 @@ export const InvestorProfile = () => {
   ];
 
   return (
-    <div className="bg-white flex flex-row justify-center w-full pb-10">
+    <div className="bg-white flex flex-row justify-center w-full">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed w-64 h-full left-0 top-0">
+      <div className="hidden lg:block fixed w-64 h-full left-0 top-0 z-20">
         <Sidenav active="profile" />
       </div>
+      
       {/* Mobile Layout */}
-      <div className="lg:hidden">
+      <div className="lg:hidden z-20">
         <Sidenav active="profile" />
       </div>
 
       {/* Main Content */}
-      <div className="ml-40 max-md:ml-24 max-sm:ml-22 mr-10 flex flex-col flex-1">
-        <div className="flex-1 p-6 max-md:p-4 max-sm:p-3 overflow-y-auto">
+      <main className="ml-24 max-sm:ml-16 transition-all duration-300 w-full">
+        <div className="px-6 py-8 lg:px-8 xl:px-12">
+          <div className="max-w-7xl mx-auto">
           {profile === null ? (
             <div className="flex justify-center items-center min-h-screen">
               <Spinner className="h-12 w-12 text-dark-plum" />
@@ -602,8 +604,9 @@ export const InvestorProfile = () => {
             </div>
           </div>
           )}
+          </div>
         </div>
-      </div>
+      </main>
 
       {/* Edit Profile Modal */}
       <Dialog open={showEditModal} handler={() => setShowEditModal(false)} size="xl" className="rounded-2xl">
@@ -612,7 +615,7 @@ export const InvestorProfile = () => {
             Edit Profile
           </Typography>
         </DialogHeader>
-        <DialogBody className="p-8 max-h-[80vh] overflow-y-auto bg-beige">
+        <DialogBody className="p-8 max-h-[70vh] overflow-y-auto bg-beige">
           <div className="space-y-6">
             {/* Investor Type */}
             <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1">

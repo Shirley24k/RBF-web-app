@@ -1,4 +1,5 @@
-import { ChevronLeftIcon, ClockIcon, CurrencyDollarIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, CurrencyDollarIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { Button, Card, CardBody, IconButton, Progress, Spinner, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -17,17 +18,15 @@ export const TransactionDetails = (): JSX.Element => {
   const [repaymentAmount, setRepaymentAmount] = useState(0);
   const [isStartup] = useState(localStorage.getItem('role') === 'startup');
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [sendReminder, setSendReminder] = useState(false);
-  const [processingPayment, setProcessingPayment] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [searchParams] = useSearchParams();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
+  
   const fetchTransactionData = async () => {
     try {
       setIsLoading(true);
-      setError(null);
       
       const response = await axios.get(`${API_BASE_URL}/transaction-details/${id}`, {
         headers: {
@@ -45,7 +44,6 @@ export const TransactionDetails = (): JSX.Element => {
       console.log('Transaction Data', response.data);
     } catch (error) {
       console.error('Error fetching transaction data:', error);
-      setError('Failed to load transaction details. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +51,6 @@ export const TransactionDetails = (): JSX.Element => {
 
   const handleStripeSuccess = async (sessionId: string) => {
     try {
-      setProcessingPayment(true);      
       const response = await axios.post(`${API_BASE_URL}/transactions/process-success`, {
         session_id: sessionId,
         application_id: id
@@ -73,9 +70,7 @@ export const TransactionDetails = (): JSX.Element => {
     } catch (error) {
       console.error('Error processing successful payment:', error);
       alert('Payment was successful but there was an error updating the transaction. Please contact support.');
-    } finally {
-      setProcessingPayment(false);
-    }
+    } 
   };
   
   const handleRepayment = async () => {
@@ -129,17 +124,22 @@ export const TransactionDetails = (): JSX.Element => {
   // Check if payment is overdue
   const isPaymentOverdue = () => {
     if (isApplicationCompleted()) return false;
-    return overdue_detail !== null;
+    if (!next_repayment_date) return false;
+    
+    // Payment is overdue if it's past the due date (not just due today)
+    const today = new Date().toISOString().split('T')[0];
+    const paymentDate = new Date(next_repayment_date).toISOString().split('T')[0];
+    return today > paymentDate;
   };
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case 'FUND_TRANSFER':
-        return <CurrencyDollarIcon className="h-5 w-5 text-green-500" />;
+        return <CurrencyDollarIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4 text-green-700" />;
       case 'REPAYMENT':
-        return <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />;
+        return <CurrencyDollarIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4 text-dark-plum" />;
       default:
-        return <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />;
+        return <CurrencyDollarIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4 text-gray-500" />;
     }
   };
 
@@ -202,282 +202,311 @@ export const TransactionDetails = (): JSX.Element => {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 w-full mr-10">
-        {/* Header */}
-        <div className="ml-32 max-md:ml-24 max-sm:ml-20 py-8 max-md:py-6 max-sm:py-4 flex flex-row items-center justify-between gap-4 max-sm:gap-2 transition-all duration-300">
-          <div className="flex items-center">
-            <IconButton
-              variant="text"
-              className="mr-4 max-md:mr-3 max-sm:mr-2 flex items-center justify-center"
-              onClick={(e) => {
-                e.preventDefault();
-                {isStartup ? navigate('/startup-transaction') : window.history.back()}
-              }}
-            >
-              <ChevronLeftIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
-            </IconButton>
-            <div>
-              <Typography variant="h4" color="blue-gray" className="text-2xl max-md:text-xl max-sm:text-base">
-                Transaction Details
-              </Typography>
-              <Typography variant="small" color="gray" className="mt-1 text-xs max-md:text-xs">
-                Application ID: {applicationData.id}
-              </Typography>
-            </div>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex flex-row gap-3 max-md:gap-2 max-sm:gap-2">
-            {/* Repayment Button for Startups - Only show when payment is due and not completed */}
-            {isStartup && applicationData.status === 'Active' && !isApplicationCompleted() && isPaymentDue() && (
-              <Button
-                color={isPaymentOverdue() ? "red" : "blue"}
-                className="flex items-center gap-2 capitalize text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-1"
-                onClick={() => setShowRepaymentModal(true)}
-              >
-                <CurrencyDollarIcon className="hidden md:block h-4 w-4 max-md:h-3 max-md:w-3 max-sm:h-3 max-sm:w-3" />
-                {isPaymentOverdue() ? "Pay Overdue Amount" : "Pay Monthly Repayment"}
-              </Button>
-            )}
-
-            {/* Reminder Button for Investors - Only show when payment is overdue and not completed */}
-            {!isStartup && applicationData.status === 'Active' && !isApplicationCompleted() && isPaymentOverdue() && (
-              <Button
-                color="orange"
-                variant="outlined"
-                className="flex items-center gap-2 border-orange-500 text-orange-500 hover:bg-orange-50 text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-1"
-                onClick={handleSendReminder}
-                disabled={sendingReminder || sendReminder}
-              >
-                <svg className="hidden md:block h-4 w-4 max-md:h-3 max-md:w-3 max-sm:h-3 max-sm:w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                {sendingReminder ? (<Spinner className="h-4 w-4" />) : (sendReminder ? 'Sent' : 'Send Reminder')}
-              </Button>
-            )}
-          </div>
-        </div>
-        <div className="ml-32 max-md:ml-24 max-sm:ml-20 px-4 max-md:px-6 max-sm:px-4 transition-all duration-300">
-          {/* Application Overview Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-md:gap-4 max-sm:gap-3 mb-6 max-md:mb-4 max-sm:mb-3">
-            <Card className="p-4 max-md:p-3 max-sm:p-2">
-              <CardBody className="p-0">
-                <Typography variant="small" color="gray" className="mb-2 text-xs max-md:text-xs">
-                  Repayment Cap
-                </Typography>
-                <Typography variant="h5" color="blue-gray" className="font-bold text-lg max-md:text-base max-sm:text-sm">
-                  {formatCurrency(applicationData.repayment_cap)}
-                </Typography>
-              </CardBody>
-            </Card>
-
-            <Card className="p-4 max-md:p-3 max-sm:p-2">
-              <CardBody className="p-0">
-                <Typography variant="small" color="gray" className="mb-2 text-xs max-md:text-xs">
-                  Funding Amount
-                </Typography>
-                <Typography variant="h5" color="green" className="font-bold text-lg max-md:text-base max-sm:text-sm">
-                  {formatCurrency(applicationData.funding_amount)}
-                </Typography>
-              </CardBody>
-            </Card>
-
-            <Card className="p-4 max-md:p-3 max-sm:p-2">
-              <CardBody className="p-0">
-                <Typography variant="small" color="gray" className="mb-2 text-xs max-md:text-xs">
-                  Remaining Balance
-                </Typography>
-                <Typography variant="h5" color="orange" className="font-bold text-lg max-md:text-base max-sm:text-sm">
-                  {formatCurrency(applicationData.repayment_cap - applicationData.total_repaid)}
-                </Typography>
-              </CardBody>
-            </Card>
-
-            <Card className="p-4 max-md:p-3 max-sm:p-2">
-              <CardBody className="p-0">
-                <Typography variant="small" color="gray" className="mb-2 text-xs max-md:text-xs">
-                  Revenue Share Percentage
-                </Typography>
-                <Typography variant="h5" color="blue-gray" className="font-bold text-lg max-md:text-base max-sm:text-sm">
-                  {applicationData.revenue_share_percentage}%
-                </Typography>
-              </CardBody>
-            </Card>
-          </div>
-
-          {/* Repayment Progress */}
-          <div className="mb-6 max-md:mb-4 max-sm:mb-3">
-            <Card className="p-6 max-md:p-4 max-sm:p-3">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 max-md:mb-3 max-sm:mb-2 gap-2">
-                <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm">
-                  Repayment Progress
-                </Typography>
-                <Typography variant="small" color="gray" className="text-xs max-md:text-xs">
-                  {Math.round(calculateProgress())}% Complete
-                </Typography>
-              </div>
-              <Progress 
-                value={calculateProgress()} 
-                color="blue" 
-                className="h-3 max-md:h-2 max-sm:h-2"
-              />
-              <div className="flex flex-col sm:flex-row justify-between mt-2 text-sm max-md:text-xs max-sm:text-xs text-gray-600 gap-1">
-                <span>Fund Transfer Date: {transactionData && transactionData.length > 0 ? formatDate(transactionData[transactionData.length - 1].transaction_datetime) : '-'}</span>
-                <span>Revenue Share Percentage: {applicationData.revenue_share_percentage}%</span>
-              </div>
-            </Card>
-          </div>
-
-          {/* Next Payment Alert */}
-          <div className="mb-6 max-md:mb-4 max-sm:mb-3">
-            {isApplicationCompleted() ? (
-              <Card className="p-4 max-md:p-3 max-sm:p-2 bg-green-50 border-green-200">
-                <div className="flex items-center gap-3 max-md:gap-2 max-sm:gap-2">
-                  <div className="w-8 h-8 max-md:w-6 max-md:h-6 max-sm:w-5 max-sm:h-5 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <Typography variant="h6" color="green" className="font-semibold text-base max-md:text-sm max-sm:text-sm">
-                      Application Completed
+      <main className="ml-16 transition-all duration-300 w-full">
+        <div className="px-6 py-8 lg:px-8 xl:px-12">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="mb-16 max-lg:mb-12 max-sm:mb-8">
+              <div className="flex flex-row items-center justify-between gap-4 max-sm:gap-2">
+                <div className="flex items-center">
+                  <IconButton
+                    variant="text"
+                    className="mr-4 max-md:mr-3 max-sm:mr-2 flex items-center justify-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      {isStartup ? navigate('/startup-transaction') : window.history.back()}
+                    }}
+                  >
+                    <ChevronLeftIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
+                  </IconButton>
+                  <div>
+                    <Typography variant="h4" color="blue-gray" className="text-4xl max-lg:text-3xl max-sm:text-lg font-bold text-gray-900">
+                      Transaction Details
                     </Typography>
-                    <Typography variant="small" color="gray" className="text-xs max-md:text-xs">
-                      All payments have been successfully completed
+                    <Typography variant="small" color="gray" className="mt-1 text-xl max-lg:text-base max-sm:text-xs text-gray-600">
+                      Application ID: {applicationData.id}
                     </Typography>
                   </div>
                 </div>
-              </Card>
-            ) : (
-              <Card className={`p-4 max-md:p-3 max-sm:p-2 ${isPaymentOverdue() ? 'bg-red-50 border-red-200' : isPaymentDue() ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
-                <div className="flex items-center gap-3 max-md:gap-2 max-sm:gap-2">
-                  <ExclamationTriangleIcon className={`h-5 w-5 max-md:h-4 max-md:w-4 max-sm:h-3 max-sm:w-3 ${isPaymentOverdue() ? 'text-red-500' : isPaymentDue() ? 'text-orange-500' : 'text-blue-500'}`} />
-                  <div className="flex-1">
-                    <Typography variant="h6" color={isPaymentOverdue() ? "red" : isPaymentDue() ? "orange" : "blue"} className="font-semibold text-base max-md:text-sm max-sm:text-sm">
-                      {isPaymentOverdue() ? "Payment Overdue" : isPaymentDue() ? "Payment Due Today" : "Next Payment Due"}
-                    </Typography>
-                    {isPaymentDue() && (
-                      <Typography variant="small" color="gray" className="text-xs max-md:text-xs">
-                        {formatDate(next_repayment_date)} - {formatCurrency(repaymentAmount)}
-                      </Typography>
-                    )}
-                    
-                    {!isPaymentDue() && (
-                      <Typography variant="small" color="gray" className="mt-1 text-xs max-md:text-xs">
-                        Next payment: {formatDate(next_repayment_date)}
-                      </Typography>
-                    )}
-                  </div>
-                  
-                  {/* Investor-specific overdue information */}
-                  {!isStartup && isPaymentOverdue() && (
-                    <div className="text-right">
-                      <Typography variant="small" color="red" className="font-semibold text-xs max-md:text-xs">
-                        {overdue_detail.days_overdue} days overdue
-                      </Typography>
-                      <Typography variant="small" color="gray" className="text-xs max-md:text-xs">
-                        Startup: {startupData.company_name}
-                      </Typography>
-                    </div>
+            
+                {/* Action Buttons */}
+                <div className="flex flex-row gap-4 max-lg:gap-3 max-sm:gap-2">
+                  {/* Repayment Button for Startups - Only show when payment is due and not completed */}
+                  {isStartup && applicationData.status === 'Active' && !isApplicationCompleted() && isPaymentDue() && (
+                    <Button
+                      variant="outlined"
+                      className={`flex items-center gap-2 capitalize text-lg max-lg:text-base max-sm:text-xs py-4 max-lg:py-3 max-sm:py-2 px-8 max-lg:px-6 max-sm:px-3 rounded-xl ${isPaymentOverdue() ? "border-red-800 text-red-800 hover:bg-red-600 hover:text-white" : "border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white"}`}
+                      onClick={() => setShowRepaymentModal(true)}
+                    >
+                      <CurrencyDollarIcon className="max-sm:hidden w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-4 max-sm:h-4" />
+                      <span className="max-sm:hidden">{isPaymentOverdue() ? "Pay Overdue Amount" : "Pay Monthly Repayment"}</span>
+                      <span className="sm:hidden">{isPaymentOverdue() ? "Pay Overdue" : "Pay Now"}</span>
+                    </Button>
+                  )}
+
+                  {/* Reminder Button for Investors - Only show when payment is overdue and not completed */}
+                  {!isStartup && applicationData.status === 'Active' && !isApplicationCompleted() && isPaymentOverdue() && (
+                    <Button
+                      variant="outlined"
+                      className="flex items-center gap-2 border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white text-lg max-lg:text-base max-sm:text-xs py-4 max-lg:py-3 max-sm:py-2 px-8 max-lg:px-6 max-sm:px-3 rounded-xl"
+                      onClick={handleSendReminder}
+                      disabled={sendingReminder || sendReminder}
+                    >
+                      <EnvelopeIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-4 max-sm:h-4" />
+                      <span className="max-sm:hidden">{sendingReminder ? (<Spinner className="h-8 w-8 max-lg:h-6 max-lg:w-6 max-sm:h-4 max-sm:w-4" />) : (sendReminder ? 'Sent' : 'Send Reminder')}</span>
+                      <span className="sm:hidden">{sendingReminder ? (<Spinner className="h-4 w-4" />) : (sendReminder ? 'Sent' : 'Remind')}</span>
+                    </Button>
                   )}
                 </div>
-              </Card>
-            )}
-          </div>
+              </div>
+            </div>
 
-          {/* Transaction History */}
-          <div>
-            <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-              Transaction History
-            </Typography>
-            
-            <div className="space-y-4 max-md:space-y-3 max-sm:space-y-2 pb-10">
-              {transactionData && transactionData.map((transaction: any) => (
-                <Card key={transaction.id} className="p-4 max-md:p-3 max-sm:p-2">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-md:gap-2 max-sm:gap-2">
-                    <div className="flex items-center gap-4 max-md:gap-3 max-sm:gap-2">
-                      <div className="hidden md:block">
-                        {getTransactionIcon(transaction.type)}
-                      </div>
-                      <div className="flex-1">
-                        <Typography variant="h6" color="blue-gray" className="font-semibold text-base max-md:text-sm max-sm:text-sm">
-                          {transaction.type === 'FUND_TRANSFER' ? 'Fund Transfer' : 'MonthlyRepayment'}
-                        </Typography>
-                        <Typography variant="small" color="gray" className="text-xs max-md:text-xs">
-                          {transaction.type === 'FUND_TRANSFER' ? 'Initial transfer for investment fund' : 'Monthly principal and interest payment'}
-                        </Typography>
-                        <div className="flex items-center gap-2 mt-1">
-                          <ClockIcon className="h-3 w-3 max-md:h-2 max-md:w-2 max-sm:h-2 max-sm:w-2 text-gray-400" />
-                          <Typography variant="small" color="gray" className="text-xs max-md:text-xs">
-                            {formatDate(transaction.transaction_datetime)}
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right sm:text-left flex flex-col justify-end">
-                      <Typography 
-                        variant="h6" 
-                        color={transaction.type === 'FUND_TRANSFER' ? "green" : "blue-gray"}
-                        className="font-bold text-base max-md:text-sm max-sm:text-sm"
-                      >
-                        {transaction.type === 'FUND_TRANSFER' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                      </Typography>
-                      <StatusBadge status={transaction.status} />
-                    </div>
+            <div className="space-y-12 max-lg:space-y-8">
+              {/* Application Overview Cards */}
+              <div className="grid grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-2 gap-6 max-lg:gap-4 max-sm:gap-3">
+                <Card className="p-8 max-lg:p-6 max-sm:p-4 shadow-sm border border-gray-200 rounded-2xl">
+                  <CardBody className="p-0">
+                    <Typography variant="small" color="gray" className="mb-2 text-lg max-lg:text-base max-sm:text-xs text-gray-600">
+                      Repayment Cap
+                    </Typography>
+                    <Typography variant="h5" color="blue-gray" className="font-bold text-2xl max-lg:text-xl max-sm:text-xs text-gray-900">
+                      {formatCurrency(applicationData.repayment_cap)}
+                    </Typography>
+                  </CardBody>
+                </Card>
+
+                <Card className="p-8 max-lg:p-6 max-sm:p-4 shadow-sm border border-gray-200 rounded-2xl">
+                  <CardBody className="p-0">
+                    <Typography variant="small" color="gray" className="mb-2 text-lg max-lg:text-base max-sm:text-xs text-gray-600">
+                      Funding Amount
+                    </Typography>
+                    <Typography variant="h5" className="font-bold text-2xl max-lg:text-xl max-sm:text-xs text-green-700">
+                      {formatCurrency(applicationData.funding_amount)}
+                    </Typography>
+                  </CardBody>
+                </Card>
+
+                <Card className="p-8 max-lg:p-6 max-sm:p-4 shadow-sm border border-gray-200 rounded-2xl">
+                  <CardBody className="p-0">
+                    <Typography variant="small" color="gray" className="mb-2 text-lg max-lg:text-base max-sm:text-xs text-gray-600">
+                      Remaining Balance
+                    </Typography>
+                    <Typography variant="h5" className="font-bold text-2xl max-lg:text-xl max-sm:text-xs text-orange-600">
+                      {formatCurrency(applicationData.repayment_cap - applicationData.total_repaid)}
+                    </Typography>
+                  </CardBody>
+                </Card>
+
+                <Card className="p-8 max-lg:p-6 max-sm:p-4 shadow-sm border border-gray-200 rounded-2xl">
+                  <CardBody className="p-0">
+                    <Typography variant="small" color="gray" className="mb-2 text-lg max-lg:text-base max-sm:text-xs text-gray-600">
+                      Revenue Share
+                    </Typography>
+                    <Typography variant="h5" color="blue-gray" className="font-bold text-2xl max-lg:text-xl max-sm:text-xs text-gray-900">
+                      {applicationData.revenue_share_percentage}%
+                    </Typography>
+                  </CardBody>
+                </Card>
+              </div>
+
+              {/* Repayment Progress */}
+              <div>
+                <Card className="p-8 max-lg:p-6 max-sm:p-4 shadow-sm border border-gray-200 rounded-2xl">
+                  <div className="flex flex-row items-center justify-between mb-8 max-lg:mb-6 max-sm:mb-4 max-sm:flex-col max-sm:items-start max-sm:gap-2">
+                    <Typography variant="h6" color="blue-gray" className="text-2xl max-lg:text-xl max-sm:text-sm font-bold text-gray-900">
+                      Repayment Progress
+                    </Typography>
+                    <Typography variant="small" color="gray" className="text-lg max-lg:text-base max-sm:text-xs text-gray-600">
+                      {Math.round(calculateProgress())}% Complete
+                    </Typography>
+                  </div>
+                  <Progress 
+                    value={calculateProgress()} 
+                    color="purple" 
+                    className="h-4 max-lg:h-3 max-sm:h-2 [&>div]:!bg-light-purple"
+                  />
+                  <div className="flex flex-row justify-between mt-4 text-lg max-lg:text-base max-sm:text-sm text-gray-600 gap-4 max-sm:flex-col max-sm:gap-2">
+                    <span className="max-sm:text-xs">Fund Transfer on: {transactionData && transactionData.length > 0 ? formatDate(transactionData[transactionData.length - 1].transaction_datetime) : '-'}</span>
                   </div>
                 </Card>
-              ))}
+              </div>
+
+              {/* Next Payment Alert */}
+              <div>
+                {isApplicationCompleted() ? (
+                  <Card className="p-8 max-lg:p-6 max-sm:p-4 bg-green-50 rounded-2xl shadow-sm">
+                    <div className="flex items-center gap-4 max-lg:gap-3 max-sm:gap-2">
+                      <div className="w-12 h-12 max-lg:w-10 max-lg:h-10 max-sm:w-8 max-sm:h-8 rounded-full flex items-center justify-center">
+                        <CheckCircleIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <Typography variant="h6" className="font-bold text-2xl max-lg:text-xl max-sm:text-sm text-green-800">
+                          Application Completed
+                        </Typography>
+                        <Typography variant="small" color="gray" className="text-lg max-lg:text-base max-sm:text-xs text-gray-600">
+                          All payments have been successfully completed
+                        </Typography>
+                      </div>
+                    </div>
+                  </Card>
+                ) : (
+                  <Card className={`p-8 max-lg:p-6 max-sm:p-4 rounded-2xl shadow-sm ${isPaymentOverdue() ? 'bg-red-50' : isPaymentDue() ? 'bg-orange-50' : 'bg-beige'}`}>
+                    <div className="flex items-center justify-between gap-4 max-lg:gap-3 max-sm:gap-2 max-sm:flex-col max-sm:items-start">
+                      <div className="flex items-center gap-4 max-lg:gap-3 max-sm:gap-2">
+                        <ExclamationTriangleIcon className={`w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 ${isPaymentOverdue() ? 'text-red-800' : isPaymentDue() ? 'text-orange-500' : 'text-light-purple'}`} />
+                        <div className="flex-1">
+                          <Typography variant="h6" className={`font-bold text-2xl max-lg:text-xl max-sm:text-sm ${isPaymentOverdue() ? "text-red-800" : isPaymentDue() ? "text-orange-500" : "text-dark-plum"}`}>
+                            {isPaymentOverdue() ? "Payment Overdue" : isPaymentDue() ? "Payment Due Today" : "Next Payment Due"}
+                          </Typography>
+                          {isPaymentDue() && (
+                            <Typography variant="small" color="gray" className="text-lg max-lg:text-base max-sm:text-xs text-gray-600">
+                              {formatDate(next_repayment_date)} - {formatCurrency(repaymentAmount)}
+                            </Typography>
+                          )}
+                          
+                          {!isPaymentDue() && (
+                            <Typography variant="small" color="gray" className="mt-1 text-lg max-lg:text-base max-sm:text-xs text-gray-600">
+                              Next payment: {formatDate(next_repayment_date)}
+                            </Typography>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {isPaymentOverdue() && (
+                        <div className="text-right max-sm:text-left max-sm:w-full max-sm:ml-6">
+                          <Typography variant="small" className="font-bold text-lg max-lg:text-base max-sm:text-xs text-red-800">
+                            {overdue_detail.days_overdue} days overdue
+                          </Typography>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )}
+              </div>
+
+              {/* Transaction History */}
+              <div>
+                <Typography variant="h5" color="blue-gray" className="mb-8 max-lg:mb-6 max-sm:mb-4 text-2xl max-lg:text-xl max-sm:text-sm font-bold text-gray-900">
+                  Transaction History
+                </Typography>
+                
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <tbody className="divide-y divide-gray-200">
+                        {transactionData && transactionData.map((transaction: any) => (
+                          <tr key={transaction.id} className="hover:bg-gray-50">
+                            <td className="px-8 py-6 max-lg:px-6 max-sm:px-4 max-sm:py-3">
+                              <div className="flex flex-row items-center justify-between gap-4 max-lg:gap-3 max-sm:gap-2">
+                                <div className="flex items-center gap-6 max-lg:gap-4 max-sm:gap-3">
+                                  <div className="max-sm:flex-shrink-0">
+                                    {getTransactionIcon(transaction.type)}
+                                  </div>
+                                  <div className="flex-1 max-sm:min-w-0">
+                                    <Typography variant="h6" color="blue-gray" className="font-bold text-lg max-lg:text-base max-sm:text-xs text-gray-900">
+                                      {transaction.type === 'FUND_TRANSFER' ? 'Fund Transfer' : 'Monthly Repayment'}
+                                    </Typography>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <Typography variant="small" color="gray" className="text-base max-lg:text-sm max-sm:text-xs text-gray-600 truncate">
+                                        {formatDate(transaction.transaction_datetime)}
+                                      </Typography>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="text-right flex flex-col justify-end">
+                                  <Typography 
+                                    variant="h6" 
+                                    className={`font-bold text-lg max-lg:text-base max-sm:text-xs mb-2 ${transaction.type === 'FUND_TRANSFER' ? 'text-green-700' : 'text-dark-plum'}`}
+                                  >
+                                    {transaction.type === 'FUND_TRANSFER' 
+                                      ? (isStartup ? '+' : '-') 
+                                      : (isStartup ? '-' : '+')
+                                    }{formatCurrency(transaction.amount)}
+                                  </Typography>
+                                  <StatusBadge status={transaction.status} />
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Repayment Modal */}
       {showRepaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="p-6 max-md:p-4 max-sm:p-3 w-96 max-md:w-80 max-sm:w-72">
-            <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-lg max-md:text-base max-sm:text-base">
-              {isPaymentOverdue() ? "Pay Overdue Amount" : "Pay Monthly Installment"}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 max-sm:p-2">
+          <Card className="p-8 max-lg:p-6 max-sm:p-4 w-96 max-lg:w-80 max-sm:w-full max-sm:max-w-sm rounded-2xl shadow-sm border border-gray-200">
+            <Typography variant="h5" color="blue-gray" className="mb-8 max-lg:mb-6 max-sm:mb-4 text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">
+              {isPaymentOverdue() ? "Pay Overdue Amount" : "Pay Monthly Repayment"}
             </Typography>
             
-            <div className="space-y-4 max-md:space-y-3 max-sm:space-y-2">
-              <div className="p-3 max-md:p-2 max-sm:p-2 bg-gray-50 rounded-lg">
-                <Typography variant="small" color="gray" className="mb-1 text-xs max-md:text-xs">
+            <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
+              <div className="p-6 max-lg:p-4 max-sm:p-3 bg-gray-50 rounded-xl">
+                <Typography variant="small" color="gray" className="mb-2 text-lg max-lg:text-base max-sm:text-sm text-gray-600">
                   Scheduled Payment Date
                 </Typography>
-                <Typography variant="h6" color="blue-gray" className="text-base max-md:text-sm max-sm:text-sm">
+                <Typography variant="h6" color="blue-gray" className="text-xl max-lg:text-lg max-sm:text-base font-bold text-gray-900">
                   {formatDate(next_repayment_date)}
                 </Typography>
               </div>
 
               <div>
-                <Typography variant="small" color="gray" className="mb-2 text-xs max-md:text-xs">
+                <Typography variant="small" color="gray" className="mb-4 max-lg:mb-3 max-sm:mb-2 text-lg max-lg:text-base max-sm:text-sm text-gray-600">
                   Monthly Payment Amount (RM)
                 </Typography>
                 <input
                   type="number"
-                  value={repaymentAmount}
+                  value={repaymentAmount.toFixed(2)}
                   onChange={(e) => setRepaymentAmount(Number(e.target.value))}
-                  className="w-full p-3 max-md:p-2 max-sm:p-2 border border-gray-300 rounded-lg text-sm max-md:text-xs"
-                  placeholder="Enter amount"
+                  className="w-full p-4 max-lg:p-3 max-sm:p-2 border border-gray-300 rounded-xl text-lg max-lg:text-base max-sm:text-sm"
                   disabled={true} // Fixed amount for scheduled payments
                 />
-                <Typography variant="small" color="gray" className="mt-1 text-xs max-md:text-xs">
-                  This is your scheduled monthly payment amount
+                <Typography variant="small" color="gray" className="mt-2 text-lg max-lg:text-base max-sm:text-sm text-gray-600">
+                  This is your scheduled net monthly payment amount
                 </Typography>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-3 max-md:gap-2 max-sm:gap-2">
+              {/* Fee Breakdown */}
+              <div className="p-6 max-lg:p-4 max-sm:p-3 bg-blue-50 rounded-xl border border-blue-200">
+                <Typography variant="small" className="text-blue-700 font-bold mb-4 max-lg:mb-3 max-sm:mb-2 text-lg max-lg:text-base max-sm:text-sm">
+                  Processing Fee Breakdown
+                </Typography>
+                <div className="space-y-2 text-lg max-lg:text-base max-sm:text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-600">Net Payment Amount:</span>
+                    <span className="font-bold text-blue-700">RM {repaymentAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-600">Processing Fee (4% + RM 1):</span>
+                    <span className="font-bold text-blue-700">RM {((repaymentAmount + 1) / 0.96 - repaymentAmount).toFixed(2)}</span>
+                  </div>
+                  <div className="border-t border-blue-300 pt-2 mt-2">
+                    <div className="flex justify-between font-bold">
+                      <span className="text-blue-800">Total Amount Charged:</span>
+                      <span className="text-blue-800">RM {((repaymentAmount + 1) / 0.96).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-row gap-4 max-lg:gap-3 max-sm:gap-2">
                 <Button
                   variant="outlined"
-                  className="flex-1 capitalize bg-transparent text-dark-plum hover:bg-gray-50 border-dark-plum text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1"
+                  className="flex-1 capitalize bg-transparent text-dark-plum hover:bg-gray-50 border-dark-plum text-lg max-lg:text-base max-sm:text-sm py-4 max-lg:py-3 max-sm:py-2.5 rounded-xl"
                   onClick={() => setShowRepaymentModal(false)}
                 >
                   Cancel
                 </Button>
                 <Button
-                  className="flex-1 capitalize bg-dark-plum text-white hover:bg-light-purple text-sm max-md:text-xs py-2"
+                  className="flex-1 capitalize bg-dark-plum text-white hover:bg-light-purple text-lg max-lg:text-base max-sm:text-sm py-4 max-lg:py-3 max-sm:py-2.5 rounded-xl"
                   onClick={handleRepayment}
                 >
                   {isPaymentOverdue() ? "Pay Overdue Amount" : "Confirm Payment"}
