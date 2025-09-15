@@ -1,6 +1,6 @@
 import { CheckCircleIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, CurrencyDollarIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-import { Button, Card, CardBody, IconButton, Progress, Spinner, Typography } from "@material-tailwind/react";
+import { Button, Card, CardBody, Dialog, DialogBody, DialogFooter, DialogHeader, IconButton, Progress, Spinner, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -441,13 +441,14 @@ export const TransactionDetails = (): JSX.Element => {
       </main>
 
       {/* Repayment Modal */}
-      {showRepaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 max-sm:p-2">
-          <Card className="p-8 max-lg:p-6 max-sm:p-4 w-96 max-lg:w-80 max-sm:w-full max-sm:max-w-sm rounded-2xl shadow-sm border border-gray-200">
-            <Typography variant="h5" color="blue-gray" className="mb-8 max-lg:mb-6 max-sm:mb-4 text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">
+      {(
+        <Dialog open={showRepaymentModal} handler={() => setShowRepaymentModal(false)} size="xs" className="rounded-2xl">
+          <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
+            <Typography variant="h4" color="white" className="font-bold">
               {isPaymentOverdue() ? "Pay Overdue Amount" : "Pay Monthly Repayment"}
             </Typography>
-            
+          </DialogHeader>
+          <DialogBody className="p-8 max-h-[70vh] overflow-y-auto bg-beige">
             <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
               <div className="p-6 max-lg:p-4 max-sm:p-3 bg-gray-50 rounded-xl">
                 <Typography variant="small" color="gray" className="mb-2 text-lg max-lg:text-base max-sm:text-sm text-gray-600">
@@ -475,46 +476,47 @@ export const TransactionDetails = (): JSX.Element => {
               </div>
               
               {/* Fee Breakdown */}
-              <div className="p-6 max-lg:p-4 max-sm:p-3 bg-blue-50 rounded-xl border border-blue-200">
-                <Typography variant="small" className="text-blue-700 font-bold mb-4 max-lg:mb-3 max-sm:mb-2 text-lg max-lg:text-base max-sm:text-sm">
+              <div className="p-6 max-lg:p-4 max-sm:p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <Typography variant="small" className="text-gray-700 font-bold mb-4 max-lg:mb-3 max-sm:mb-2 text-lg max-lg:text-base max-sm:text-sm">
                   Processing Fee Breakdown
                 </Typography>
                 <div className="space-y-2 text-lg max-lg:text-base max-sm:text-sm">
                   <div className="flex justify-between">
-                    <span className="text-blue-600">Net Payment Amount:</span>
-                    <span className="font-bold text-blue-700">RM {repaymentAmount.toFixed(2)}</span>
+                    <span className="text-gray-600">Net Payment Amount:</span>
+                    <span className="font-bold text-gray-700">RM {repaymentAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-600">Processing Fee (4% + RM 1):</span>
-                    <span className="font-bold text-blue-700">RM {((repaymentAmount + 1) / 0.96 - repaymentAmount).toFixed(2)}</span>
+                    <span className="text-gray-600">Processing Fee (4% + RM 1):</span>
+                    <span className="font-bold text-gray-700">RM {((repaymentAmount + 1) / 0.96 - repaymentAmount).toFixed(2)}</span>
                   </div>
-                  <div className="border-t border-blue-300 pt-2 mt-2">
+                  <div className="border-t border-gray-300 pt-2 mt-2">
                     <div className="flex justify-between font-bold">
-                      <span className="text-blue-800">Total Amount Charged:</span>
-                      <span className="text-blue-800">RM {((repaymentAmount + 1) / 0.96).toFixed(2)}</span>
+                      <span className="text-gray-800">Total Amount Charged:</span>
+                      <span className="text-gray-800">RM {((repaymentAmount + 1) / 0.96).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div className="flex flex-row gap-4 max-lg:gap-3 max-sm:gap-2">
-                <Button
-                  variant="outlined"
-                  className="flex-1 capitalize bg-transparent text-dark-plum hover:bg-gray-50 border-dark-plum text-lg max-lg:text-base max-sm:text-sm py-4 max-lg:py-3 max-sm:py-2.5 rounded-xl"
-                  onClick={() => setShowRepaymentModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 capitalize bg-dark-plum text-white hover:bg-light-purple text-lg max-lg:text-base max-sm:text-sm py-4 max-lg:py-3 max-sm:py-2.5 rounded-xl"
-                  onClick={handleRepayment}
-                >
-                  {isPaymentOverdue() ? "Pay Overdue Amount" : "Confirm Payment"}
-                </Button>
-              </div>
             </div>
-          </Card>
-        </div>
+          </DialogBody>
+          <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
+            <div className="flex flex-row gap-4 max-lg:gap-3 max-sm:gap-2 w-full justify-end">
+              <Button
+                variant="outlined"
+                className="capitalize bg-transparent text-dark-plum hover:bg-gray-50 border-dark-plum text-lg max-lg:text-base max-sm:text-sm py-3 px-6 rounded-xl"
+                onClick={() => setShowRepaymentModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="capitalize bg-dark-plum text-white hover:bg-light-purple text-lg max-lg:text-base max-sm:text-sm py-3 px-6 rounded-xl"
+                onClick={handleRepayment}
+              >
+                {isPaymentOverdue() ? "Pay Overdue Amount" : "Confirm Payment"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </Dialog>
       )}
     </div>
   );

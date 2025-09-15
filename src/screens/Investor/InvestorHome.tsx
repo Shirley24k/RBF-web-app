@@ -202,13 +202,13 @@ export const InvestorHome = (): JSX.Element => {
                         {analytics.totalApplications > 0 ? Math.round((analytics.completedApplications / analytics.totalApplications) * 100) : 0}%
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Await Review</span>
-                      <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-yellow-600">{analytics.awaitReviewApplications}</span>
-                    </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Pending Admin Review</span>
                       <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">{analytics.pendingApplications}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Await Review</span>
+                      <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-yellow-600">{analytics.awaitReviewApplications}</span>
                     </div>
                   </div>
                 </div>
@@ -225,7 +225,7 @@ export const InvestorHome = (): JSX.Element => {
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-lg max-lg:text-base max-sm:text-sm text-gray-600">Total Invested</span>
-                      <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-blue-600 whitespace-nowrap">RM {analytics.totalInvested.toLocaleString()}</span>
+                      <span className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900 whitespace-nowrap">RM {analytics.totalInvested.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>

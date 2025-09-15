@@ -1,4 +1,4 @@
-import { Alert, Button, Spinner, Typography } from "@material-tailwind/react";
+import { Alert, Button, Dialog, DialogBody, DialogFooter, DialogHeader, Spinner, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -129,62 +129,6 @@ export const InvestorTransaction = (): JSX.Element => {
                 </div>
               </div>
             </div>
-
-        {/* Top Up Modal */}
-        {showTopUpModal && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 p-4">
-            <div className="bg-white rounded-lg shadow-lg p-4 max-md:p-6 max-sm:p-4 w-full max-w-xs max-md:max-w-sm max-sm:max-w-xs">
-              <Typography variant="h5" className="text-lg max-md:text-xl max-sm:text-lg font-bold mb-4">Top Up Amount</Typography>
-              <input
-                type="number"
-                min="1"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-dark-plum text-sm max-md:text-base max-sm:text-sm"
-                placeholder="Enter amount (RM)"
-                value={topUpAmount}
-                onChange={e => setTopUpAmount(e.target.value)}
-              />
-              {/* Fee Breakdown */}
-              {topUpAmount && Number(topUpAmount) > 0 && (
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <Typography variant="small" className="text-gray-600 font-medium mb-2 text-xs">
-                    Fee Breakdown
-                  </Typography>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Net Top-up Amount:</span>
-                      <span className="font-medium">RM {Number(topUpAmount).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Processing Fee (4% + RM 1):</span>
-                      <span className="font-medium">RM {((Number(topUpAmount) + 1) / 0.96 - Number(topUpAmount)).toFixed(2)}</span>
-                    </div>
-                    <div className="border-t border-gray-300 pt-1 mt-1">
-                      <div className="flex justify-between font-semibold">
-                        <span className="text-dark-plum">Total Amount Charged:</span>
-                        <span className="text-dark-plum">RM {((Number(topUpAmount) + 1) / 0.96).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="flex flex-col sm:flex-row justify-end gap-2">
-                <button
-                  className="px-3 max-md:px-4 max-sm:px-3 py-2 rounded-md bg-white border border-light-purple text-dark-plum cursor-pointer hover:text-light-purple text-sm max-md:text-base max-sm:text-sm"
-                  onClick={() => setShowTopUpModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-3 max-md:px-4 max-sm:px-3 py-2 rounded-md bg-dark-plum text-white hover:bg-light-purple cursor-pointer text-sm max-md:text-base max-sm:text-sm"
-                  onClick={handleTopUp}
-                  disabled={!topUpAmount || Number(topUpAmount) <= 0}
-                >
-                  Top Up
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
             {/* Transactions Table */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -415,6 +359,69 @@ export const InvestorTransaction = (): JSX.Element => {
           </Alert>
         </div>
       )}
+
+        {/* Top Up Modal */}
+        <Dialog open={showTopUpModal} handler={() => setShowTopUpModal(false)} size="xs" className="rounded-2xl">
+          <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
+            <Typography variant="h4" color="white" className="font-bold">
+              Top Up Amount
+            </Typography>
+          </DialogHeader>
+          <DialogBody className="p-8 max-h-[70vh] overflow-y-auto bg-beige">
+            <div className="space-y-4">
+              <input
+                type="number"
+                min="1"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-dark-plum text-sm max-md:text-base max-sm:text-sm"
+                placeholder="Enter amount (RM)"
+                value={topUpAmount}
+                onChange={e => setTopUpAmount(e.target.value)}
+              />
+              {/* Fee Breakdown */}
+              {topUpAmount && Number(topUpAmount) > 0 && (
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <Typography variant="small" className="text-gray-600 font-medium mb-2 text-xs">
+                    Fee Breakdown
+                  </Typography>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Net Top-up Amount:</span>
+                      <span className="font-medium">RM {Number(topUpAmount).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Processing Fee (4% + RM 1):</span>
+                      <span className="font-medium">RM {((Number(topUpAmount) + 1) / 0.96 - Number(topUpAmount)).toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-gray-300 pt-1 mt-1">
+                      <div className="flex justify-between font-semibold">
+                        <span className="text-dark-plum">Total Amount Charged:</span>
+                        <span className="text-dark-plum">RM {((Number(topUpAmount) + 1) / 0.96).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogBody>
+          <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
+            <div className="flex flex-row gap-4 max-lg:gap-3 max-sm:gap-2 w-full justify-end">
+              <Button
+                variant="outlined"
+                className="capitalize bg-transparent text-dark-plum hover:bg-gray-50 border-dark-plum text-sm max-md:text-base max-sm:text-sm py-2 px-4 rounded-xl"
+                onClick={() => setShowTopUpModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="capitalize bg-dark-plum text-white hover:bg-light-purple text-sm max-md:text-base max-sm:text-sm py-2 px-4 rounded-xl"
+                onClick={handleTopUp}
+                disabled={!topUpAmount || Number(topUpAmount) <= 0}
+              >
+                Top Up
+              </Button>
+            </div>
+          </DialogFooter>
+        </Dialog>
     </div>
   );
 };
