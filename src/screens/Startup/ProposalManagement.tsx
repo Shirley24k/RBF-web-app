@@ -1,14 +1,15 @@
 import { ArrowUpTrayIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 import { Card, CardBody, IconButton, Input, Option, Select, Textarea, Typography } from "@material-tailwind/react";
 import axios from "axios";
+import Lottie from "lottie-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
 import { AppButton } from "../../components/ui/AppButton";
 import { Sidenav } from "../../components/ui/sidenav";
 import { isValidPhoneNumber } from "../../lib/utils";
+import { fundingStageOptions } from "../../utils/fundingStage";
 import { industryOptions } from "../../utils/industryOptions";
-import Lottie from "lottie-react";
-import coinCirclingWallet from "../../assets/coin circling wallet.json";
 
 interface ProposalFormData {
   // Company Overview
@@ -62,17 +63,23 @@ export const ProposalManagement = (): JSX.Element => {
   const [isLoading, setIsLoading] = useState(isEditMode || isReviewMode);
   const [currentSection, setCurrentSection] = useState<SectionType>('company');
   const [errors, setErrors] = useState<Partial<Record<keyof ProposalFormData, string>>>({});
-  const [touchedFields, setTouchedFields] = useState<Set<keyof ProposalFormData>>(new Set());
   const [sectionComments, setSectionComments] = useState<{ [key in SectionType]?: Array<{message: string, user_type: string, user_name: string, created_at: string}> }>({});
   const [resolvedReviews, setResolvedReviews] = useState<{ [key in SectionType]?: boolean }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  // Draft comments (what user is currently typing)
   const [draftComments, setDraftComments] = useState<{ [key in SectionType]?: string }>({});
-  
-  // Get user info
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isStaff = user.role === 'staff';
+  
+  // Startup owner info (fallback source when extraction misses fields)
+  interface StartupInfo {
+    name: string;
+    company_name: string;
+    company_sector: string;
+    contact_no: string;
+    user: { email: string };
+  }
+  const [startupInfo, setStartupInfo] = useState<StartupInfo | null>(null);
 
   // Form data state
   const [formData, setFormData] = useState<ProposalFormData>({
@@ -132,9 +139,8 @@ export const ProposalManagement = (): JSX.Element => {
       const proposalId = editProposalId || reviewProposalId;
       fetchProposalData(proposalId!);
     }
+    fetchStartupProfile();
   }, [isEditMode, isReviewMode, editProposalId, reviewProposalId]);
-
-  // Close dropdown when clicking outside
 
   const fetchProposalData = async (proposalId: string) => {
     try {
@@ -226,11 +232,26 @@ export const ProposalManagement = (): JSX.Element => {
       }
     } catch (error: any) {
       console.error("Error fetching reviews:", error);
-      // Don't show error alert for reviews as they might not exist yet
+    }
+  };
+  
+  const fetchStartupProfile = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/startup/profile`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200 && response.data?.data) {
+        setStartupInfo(response.data.data);
+      }
+    } catch (error) {
+      console.warn('Unable to fetch startup profile for fallback');
     }
   };
 
-  // Validate individual field (same pattern as StartupRegisterPage.tsx)
+  // Validate individual field 
   const validateField = (name: keyof ProposalFormData, value: any): string | undefined => {
     if (typeof value === 'string') {
       if (!value.trim()) {
@@ -262,21 +283,14 @@ export const ProposalManagement = (): JSX.Element => {
     return undefined;
   };
 
-  // Handle input change with validation (same pattern as StartupRegisterPage.tsx)
+  // Handle input change with validation 
   const handleInputChange = (name: keyof ProposalFormData, value: any) => {
-    if (!isReadOnly) {
-      // Mark field as touched
-      setTouchedFields(prev => new Set(prev).add(name));
-      
-      // Update the field value
-      setFormData(prev => ({ ...prev, [name]: value }));
-      
-      // Validate the field and update errors
-      const error = validateField(name, value);
-      setErrors(prev => ({
-        ...prev,
-        [name]: error
-      }));
+    if (isReadOnly) return;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    const error = validateField(name, value);
+    setErrors(prev => ({ ...prev, [name]: error }));
+    if (!error) {
+      setErrors(prev => { const { [name]: _, ...rest } = prev as any; return rest; });
     }
   };
 
@@ -284,18 +298,6 @@ export const ProposalManagement = (): JSX.Element => {
   const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return email?.trim() !== '' && emailRegex.test(email);
-  };
-
-  // Use the utility function for phone validation
-
-  // Check if field should show error (same pattern as StartupRegisterPage.tsx)
-  const shouldShowError = (fieldName: keyof ProposalFormData): boolean => {
-    return !isReadOnly && touchedFields.has(fieldName) && errors[fieldName] !== undefined;
-  };
-
-  // Check if field should show success (same pattern as StartupRegisterPage.tsx)
-  const shouldShowSuccess = (fieldName: keyof ProposalFormData): boolean => {
-    return !isReadOnly && touchedFields.has(fieldName) && errors[fieldName] === undefined && formData[fieldName] !== "" && formData[fieldName] !== 0;
   };
 
   const handleDraftCommentChange = (section: SectionType, value: string) => {
@@ -364,8 +366,6 @@ export const ProposalManagement = (): JSX.Element => {
     return resolvedReviews[section] === true;
   };
 
-
-
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (isReadOnly) return; // Disable file selection in review mode
     
@@ -414,13 +414,37 @@ export const ProposalManagement = (): JSX.Element => {
         const extractedData = response.data.data;
         
         // Populate all form fields with extracted data
+        const rawCompanyName = String(extractedData.company_name || "");
+        const rawIndustry = String(extractedData.company_industry || "");
+        const rawContactPerson = String(extractedData.contact_person || "");
+        const rawContactEmail = String(extractedData.contact_email || "");
+        const rawContactPhone = String(extractedData.contact_phone || "");
+
+        const isMissing = (v: string | undefined) => !v || v === 'Null' || v.trim() === '';
+
+        const fallbackCompanyName = isMissing(rawCompanyName)
+          ? (startupInfo?.company_name || '')
+          : rawCompanyName;
+        const fallbackIndustry = isMissing(rawIndustry)
+          ? (startupInfo?.company_sector || '')
+          : rawIndustry;
+        const fallbackContactPerson = isMissing(rawContactPerson)
+          ? (startupInfo?.name || '')
+          : rawContactPerson;
+        const fallbackContactEmail = isMissing(rawContactEmail)
+          ? (startupInfo?.user?.email || '')
+          : rawContactEmail;
+        const fallbackContactPhone = isMissing(rawContactPhone)
+          ? (startupInfo?.contact_no || '')
+          : rawContactPhone;
+
         setFormData({
           title: String(extractedData.title || ""),
-          company_name: String(extractedData.company_name || ""),
-          company_industry: String(extractedData.company_industry || ""),
-          contact_person: String(extractedData.contact_person || ""),
-          contact_email: String(extractedData.contact_email || ""),
-          contact_phone: String(extractedData.contact_phone || ""),
+          company_name: fallbackCompanyName,
+          company_industry: fallbackIndustry,
+          contact_person: fallbackContactPerson,
+          contact_email: fallbackContactEmail,
+          contact_phone: fallbackContactPhone,
           business_model: String(extractedData.business_model || ""),
           target_market: String(extractedData.target_market || ""),
           unique_value_proposition: String(extractedData.unique_value_proposition || ""),
@@ -443,9 +467,8 @@ export const ProposalManagement = (): JSX.Element => {
           cash_flow_analysis: String(extractedData.cash_flow_analysis || ""),
         });
         
-        // Clear any existing errors and touched fields since we're populating with new data
+        // Clear any existing errors since we're populating with new data
         setErrors({});
-        setTouchedFields(new Set());
         
         setSelectedFile(null);
         setUploadError("");
@@ -526,6 +549,22 @@ export const ProposalManagement = (): JSX.Element => {
   };
 
   const handleUpdateProposal = async () => {
+    // Submit-time guard for critical fields
+    const submitErrors: Partial<Record<keyof ProposalFormData, string>> = {};
+    if (!formData.company_industry || String(formData.company_industry).trim() === "") {
+      submitErrors.company_industry = 'Company industry is required';
+    }
+    if (!formData.funding_stage || String(formData.funding_stage).trim() === "") {
+      submitErrors.funding_stage = 'Funding stage is required';
+    }
+    if (!formData.funding_amount || Number(formData.funding_amount) <= 0) {
+      submitErrors.funding_amount = 'Funding amount must be greater than 0';
+    }
+    if (Object.keys(submitErrors).length > 0) {
+      setErrors(prev => ({ ...prev, ...submitErrors }));
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -548,6 +587,22 @@ export const ProposalManagement = (): JSX.Element => {
   };
 
   const handleCreateNewProposal = async () => {
+    // Submit-time guard for critical fields
+    const submitErrors: Partial<Record<keyof ProposalFormData, string>> = {};
+    if (!formData.company_industry || String(formData.company_industry).trim() === "") {
+      submitErrors.company_industry = 'Company industry is required';
+    }
+    if (!formData.funding_stage || String(formData.funding_stage).trim() === "") {
+      submitErrors.funding_stage = 'Funding stage is required';
+    }
+    if (!formData.funding_amount || Number(formData.funding_amount) <= 0) {
+      submitErrors.funding_amount = 'Funding amount must be greater than 0';
+    }
+    if (Object.keys(submitErrors).length > 0) {
+      setErrors(prev => ({ ...prev, ...submitErrors }));
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -678,7 +733,6 @@ export const ProposalManagement = (): JSX.Element => {
     setUploadError("");
     setCurrentSection('company');
     setErrors({}); // Clear errors on reset
-    setTouchedFields(new Set()); // Clear touched fields on reset
   };
 
   const nextSection = () => {
@@ -754,10 +808,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('title')}
-                  success={shouldShowSuccess('title')}
+                  error={!!errors.title}
+                  success={!errors.title && (formData.title || "") !== ""}
                 />
-                {shouldShowError('title') && (
+                {!!errors.title && (
                   <span className="text-red-500 text-sm">{errors.title}</span>
                 )}
               </div>
@@ -769,10 +823,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('company_name')}
-                  success={shouldShowSuccess('company_name')}
+                  error={!!errors.company_name}
+                  success={!errors.company_name && (formData.company_name || "") !== ""}
                 />
-                {shouldShowError('company_name') && (
+                {!!errors.company_name && (
                   <span className="text-red-500 text-sm">{errors.company_name}</span>
                 )}
               </div>
@@ -786,8 +840,8 @@ export const ProposalManagement = (): JSX.Element => {
                   onChange={(value) => handleInputChange('company_industry', value || "")}
                   disabled={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('company_industry')}
-                  success={shouldShowSuccess('company_industry')}
+                  error={!!errors.company_industry}
+                  success={!errors.company_industry && (formData.company_industry || "") !== ""}
                 >
                   {industryOptions.map((option) => (
                     <Option key={option.value} value={option.value}>
@@ -795,7 +849,7 @@ export const ProposalManagement = (): JSX.Element => {
                     </Option>
                   ))}
                 </Select>
-                {shouldShowError('company_industry') && (
+                {!!errors.company_industry && (
                   <span className="text-red-500 text-sm">{errors.company_industry}</span>
                 )}
               </div>
@@ -807,10 +861,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('contact_person')}
-                  success={shouldShowSuccess('contact_person')}
+                  error={!!errors.contact_person}
+                  success={!errors.contact_person && (formData.contact_person || "") !== ""}
                 />
-                {shouldShowError('contact_person') && (
+                {!!errors.contact_person && (
                   <span className="text-red-500 text-sm">{errors.contact_person}</span>
                 )}
               </div>
@@ -826,14 +880,11 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('contact_email')}
-                  success={shouldShowSuccess('contact_email')}
+                  error={!!errors.contact_email}
+                  success={!errors.contact_email && (formData.contact_email || "") !== ""}
                 />
-                {shouldShowError('contact_email') && (
+                {!!errors.contact_email && (
                   <span className="text-red-500 text-sm">{errors.contact_email}</span>
-                )}
-                {shouldShowSuccess('contact_email') && (
-                  <span className="text-green-500 text-sm">✓ Valid email address</span>
                 )}
               </div>
               <div className="flex flex-col gap-2">
@@ -844,14 +895,11 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('contact_phone')}
-                  success={shouldShowSuccess('contact_phone')}
+                  error={!!errors.contact_phone}
+                  success={!errors.contact_phone && (formData.contact_phone || "") !== ""}
                 />
-                {shouldShowError('contact_phone') && (
+                {!!errors.contact_phone && (
                   <span className="text-red-500 text-sm">{errors.contact_phone}</span>
-                )}
-                {shouldShowSuccess('contact_phone') && (
-                  <span className="text-green-500 text-sm">✓ Valid phone number</span>
                 )}
               </div>
             </div>
@@ -865,10 +913,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('business_model')}
-                success={shouldShowSuccess('business_model')}
+                error={!!errors.business_model}
+                success={!errors.business_model && (formData.business_model || "") !== ""}
               />
-              {shouldShowError('business_model') && (
+              {!!errors.business_model && (
                 <span className="text-red-500 text-sm">{errors.business_model}</span>
               )}
             </div>
@@ -882,10 +930,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('target_market')}
-                success={shouldShowSuccess('target_market')}
+                error={!!errors.target_market}
+                success={!errors.target_market && (formData.target_market || "") !== ""}
               />
-              {shouldShowError('target_market') && (
+              {!!errors.target_market && (
                 <span className="text-red-500 text-sm">{errors.target_market}</span>
               )}
             </div>
@@ -899,10 +947,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('unique_value_proposition')}
-                success={shouldShowSuccess('unique_value_proposition')}
+                error={!!errors.unique_value_proposition}
+                success={!errors.unique_value_proposition && (formData.unique_value_proposition || "") !== ""}
               />
-              {shouldShowError('unique_value_proposition') && (
+              {!!errors.unique_value_proposition && (
                 <span className="text-red-500 text-sm">{errors.unique_value_proposition}</span>
               )}
             </div>
@@ -916,10 +964,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('competitive_advantage')}
-                success={shouldShowSuccess('competitive_advantage')}
+                error={!!errors.competitive_advantage}
+                success={!errors.competitive_advantage && (formData.competitive_advantage || "") !== ""}
               />
-              {shouldShowError('competitive_advantage') && (
+              {!!errors.competitive_advantage && (
                 <span className="text-red-500 text-sm">{errors.competitive_advantage}</span>
               )}
             </div>
@@ -933,10 +981,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('business_goals')}
-                success={shouldShowSuccess('business_goals')}
+                error={!!errors.business_goals}
+                success={!errors.business_goals && (formData.business_goals || "") !== ""}
               />
-              {shouldShowError('business_goals') && (
+              {!!errors.business_goals && (
                 <span className="text-red-500 text-sm">{errors.business_goals}</span>
               )}
             </div>
@@ -950,10 +998,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('market_size')}
-                  success={shouldShowSuccess('market_size')}
+                  error={!!errors.market_size}
+                  success={!errors.market_size && (formData.market_size || "") !== ""}
                 />
-                {shouldShowError('market_size') && (
+                {!!errors.market_size && (
                   <span className="text-red-500 text-sm">{errors.market_size}</span>
                 )}
               </div>
@@ -965,10 +1013,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('market_growth_rate')}
-                  success={shouldShowSuccess('market_growth_rate')}
+                  error={!!errors.market_growth_rate}
+                  success={!errors.market_growth_rate && (formData.market_growth_rate || "") !== ""}
                 />
-                {shouldShowError('market_growth_rate') && (
+                {!!errors.market_growth_rate && (
                   <span className="text-red-500 text-sm">{errors.market_growth_rate}</span>
                 )}
               </div>
@@ -983,10 +1031,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('market_trends')}
-                success={shouldShowSuccess('market_trends')}
+                error={!!errors.market_trends}
+                success={!errors.market_trends && (formData.market_trends || "") !== ""}
               />
-              {shouldShowError('market_trends') && (
+              {!!errors.market_trends && (
                 <span className="text-red-500 text-sm">{errors.market_trends}</span>
               )}
             </div>
@@ -1000,10 +1048,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('competition_analysis')}
-                success={shouldShowSuccess('competition_analysis')}
+                error={!!errors.competition_analysis}
+                success={!errors.competition_analysis && (formData.competition_analysis || "") !== ""}
               />
-              {shouldShowError('competition_analysis') && (
+              {!!errors.competition_analysis && (
                 <span className="text-red-500 text-sm">{errors.competition_analysis}</span>
               )}
             </div>
@@ -1017,10 +1065,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('customer_segments')}
-                success={shouldShowSuccess('customer_segments')}
+                error={!!errors.customer_segments}
+                success={!errors.customer_segments && (formData.customer_segments || "") !== ""}
               />
-              {shouldShowError('customer_segments') && (
+              {!!errors.customer_segments && (
                 <span className="text-red-500 text-sm">{errors.customer_segments}</span>
               )}
             </div>
@@ -1043,10 +1091,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('funding_amount')}
-                  success={shouldShowSuccess('funding_amount')}
+                  error={!!errors.funding_amount}
+                  success={!errors.funding_amount && (formData.funding_amount || 0) > 0}
                 />
-                {shouldShowError('funding_amount') && (
+                {!!errors.funding_amount && (
                   <span className="text-red-500 text-sm">{errors.funding_amount}</span>
                 )}
               </div>
@@ -1057,14 +1105,14 @@ export const ProposalManagement = (): JSX.Element => {
                   onChange={(value) => handleInputChange('funding_stage', value || "")}
                   disabled={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('funding_stage')}
-                  success={shouldShowSuccess('funding_stage')}
+                  error={!!errors.funding_stage}
+                  success={!errors.funding_stage && (formData.funding_stage || "") !== ""}
                 >
-                  <Option value="seed">Seed</Option>
-                  <Option value="series_a">Series A</Option>
-                  <Option value="series_b">Series B</Option>
+                  {fundingStageOptions.map(stage => (
+                    <Option key={stage.value} value={stage.value}>{stage.label}</Option>
+                  ))}
                 </Select>
-                {shouldShowError('funding_stage') && (
+                {!!errors.funding_stage && (
                   <span className="text-red-500 text-sm">{errors.funding_stage}</span>
                 )}
               </div>
@@ -1079,10 +1127,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('funding_purpose')}
-                success={shouldShowSuccess('funding_purpose')}
+                error={!!errors.funding_purpose}
+                success={!errors.funding_purpose && (formData.funding_purpose || "") !== ""}
               />
-              {shouldShowError('funding_purpose') && (
+              {!!errors.funding_purpose && (
                 <span className="text-red-500 text-sm">{errors.funding_purpose}</span>
               )}
             </div>
@@ -1105,10 +1153,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('current_revenue')}
-                  success={shouldShowSuccess('current_revenue')}
+                  error={!!errors.current_revenue}
+                  success={!errors.current_revenue}
                 />
-                {shouldShowError('current_revenue') && (
+                {!!errors.current_revenue && (
                   <span className="text-red-500 text-sm">{errors.current_revenue}</span>
                 )}
               </div>
@@ -1121,10 +1169,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('current_profit_margin')}
-                  success={shouldShowSuccess('current_profit_margin')}
+                  error={!!errors.current_profit_margin}
+                  success={!errors.current_profit_margin}
                 />
-                {shouldShowError('current_profit_margin') && (
+                {!!errors.current_profit_margin && (
                   <span className="text-red-500 text-sm">{errors.current_profit_margin}</span>
                 )}
               </div>
@@ -1140,10 +1188,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('projected_revenue_12m')}
-                  success={shouldShowSuccess('projected_revenue_12m')}
+                  error={!!errors.projected_revenue_12m}
+                  success={!errors.projected_revenue_12m}
                 />
-                {shouldShowError('projected_revenue_12m') && (
+                {!!errors.projected_revenue_12m && (
                   <span className="text-red-500 text-sm">{errors.projected_revenue_12m}</span>
                 )}
               </div>
@@ -1156,10 +1204,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('projected_revenue_24m')}
-                  success={shouldShowSuccess('projected_revenue_24m')}
+                  error={!!errors.projected_revenue_24m}
+                  success={!errors.projected_revenue_24m}
                 />
-                {shouldShowError('projected_revenue_24m') && (
+                {!!errors.projected_revenue_24m && (
                   <span className="text-red-500 text-sm">{errors.projected_revenue_24m}</span>
                 )}
               </div>
@@ -1175,10 +1223,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('projected_profit_margin')}
-                  success={shouldShowSuccess('projected_profit_margin')}
+                  error={!!errors.projected_profit_margin}
+                  success={!errors.projected_profit_margin}
                 />
-                {shouldShowError('projected_profit_margin') && (
+                {!!errors.projected_profit_margin && (
                   <span className="text-red-500 text-sm">{errors.projected_profit_margin}</span>
                 )}
               </div>
@@ -1190,10 +1238,10 @@ export const ProposalManagement = (): JSX.Element => {
                   required
                   readOnly={isReadOnly}
                   className={isReadOnly ? "bg-gray-50" : ""}
-                  error={shouldShowError('break_even_point')}
-                  success={shouldShowSuccess('break_even_point')}
+                  error={!!errors.break_even_point}
+                  success={!errors.break_even_point && (formData.break_even_point || "") !== ""}
                 />
-                {shouldShowError('break_even_point') && (
+                {!!errors.break_even_point && (
                   <span className="text-red-500 text-sm">{errors.break_even_point}</span>
                 )}
               </div>
@@ -1208,10 +1256,10 @@ export const ProposalManagement = (): JSX.Element => {
                 required
                 readOnly={isReadOnly}
                 className={isReadOnly ? "bg-gray-50" : ""}
-                error={shouldShowError('cash_flow_analysis')}
-                success={shouldShowSuccess('cash_flow_analysis')}
+                error={!!errors.cash_flow_analysis}
+                success={!errors.cash_flow_analysis && (formData.cash_flow_analysis || "") !== ""}
               />
-              {shouldShowError('cash_flow_analysis') && (
+              {!!errors.cash_flow_analysis && (
                 <span className="text-red-500 text-sm">{errors.cash_flow_analysis}</span>
               )}
             </div>
