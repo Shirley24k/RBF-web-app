@@ -1,17 +1,19 @@
 import { CheckCircleIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, CurrencyDollarIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-import { Button, Card, CardBody, Dialog, DialogBody, DialogFooter, DialogHeader, IconButton, Progress, Spinner, Typography } from "@material-tailwind/react";
+import { Card, CardBody, Dialog, DialogBody, DialogFooter, DialogHeader, IconButton, Progress, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Sidenav } from "../components/sidenav";
-import { StatusBadge } from "../components/StatusBadge";
+import AppButton from "../components/ui/AppButton";
+import { Sidenav } from "../components/ui/sidenav";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import Lottie from "lottie-react";
+import coinCirclingWallet from "../assets/coin circling wallet.json";
 
 export const TransactionDetails = (): JSX.Element => {
   const { id } = useParams();
   const [applicationData, setApplicationData] = useState<any>(null);
   const [transactionData, setTransactionData] = useState<any>(null);
-  const [startupData, setStartupData] = useState<any>(null);
   const [next_repayment_date, setNextRepaymentDate] = useState<any>(null);
   const [overdue_detail, setOverdueDetail] = useState<any>(null);
   const [showRepaymentModal, setShowRepaymentModal] = useState(false);
@@ -36,7 +38,6 @@ export const TransactionDetails = (): JSX.Element => {
       
       setApplicationData(response.data.application);
       setTransactionData(response.data.transactions);
-      setStartupData(response.data.startup);
       setNextRepaymentDate(response.data.next_repayment_date);
       setOverdueDetail(response.data.overdue_details);
       setRepaymentAmount(response.data.repayment_amount)
@@ -183,8 +184,14 @@ export const TransactionDetails = (): JSX.Element => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen w-full">
-        <Spinner />
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
       </div>
     );
   }
@@ -233,29 +240,34 @@ export const TransactionDetails = (): JSX.Element => {
                 <div className="flex flex-row gap-4 max-lg:gap-3 max-sm:gap-2">
                   {/* Repayment Button for Startups - Only show when payment is due and not completed */}
                   {isStartup && applicationData.status === 'Active' && !isApplicationCompleted() && isPaymentDue() && (
-                    <Button
-                      variant="outlined"
-                      className={`flex items-center gap-2 capitalize text-lg max-lg:text-base max-sm:text-xs py-4 max-lg:py-3 max-sm:py-2 px-8 max-lg:px-6 max-sm:px-3 rounded-xl ${isPaymentOverdue() ? "border-red-800 text-red-800 hover:bg-red-600 hover:text-white" : "border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white"}`}
+                    <AppButton
+                      variant="outline"
+                      size="lg"
+                      fullWidth
+                      className={`flex items-center gap-2 ${isPaymentOverdue() ? "border-red-800 text-red-800 hover:!bg-red-600 hover:!text-white" : ""}`}
                       onClick={() => setShowRepaymentModal(true)}
                     >
                       <CurrencyDollarIcon className="max-sm:hidden w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-4 max-sm:h-4" />
                       <span className="max-sm:hidden">{isPaymentOverdue() ? "Pay Overdue Amount" : "Pay Monthly Repayment"}</span>
                       <span className="sm:hidden">{isPaymentOverdue() ? "Pay Overdue" : "Pay Now"}</span>
-                    </Button>
+                    </AppButton>
                   )}
 
                   {/* Reminder Button for Investors - Only show when payment is overdue and not completed */}
                   {!isStartup && applicationData.status === 'Active' && !isApplicationCompleted() && isPaymentOverdue() && (
-                    <Button
-                      variant="outlined"
-                      className="flex items-center gap-2 border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white text-lg max-lg:text-base max-sm:text-xs py-4 max-lg:py-3 max-sm:py-2 px-8 max-lg:px-6 max-sm:px-3 rounded-xl"
+                    <AppButton
+                      variant="outline"
+                      size="lg"
+                      fullWidth
+                      className="flex items-center gap-2"
                       onClick={handleSendReminder}
                       disabled={sendingReminder || sendReminder}
+                      loading={sendingReminder || sendReminder}
                     >
                       <EnvelopeIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-4 max-sm:h-4" />
-                      <span className="max-sm:hidden">{sendingReminder ? (<Spinner className="h-8 w-8 max-lg:h-6 max-lg:w-6 max-sm:h-4 max-sm:w-4" />) : (sendReminder ? 'Sent' : 'Send Reminder')}</span>
-                      <span className="sm:hidden">{sendingReminder ? (<Spinner className="h-4 w-4" />) : (sendReminder ? 'Sent' : 'Remind')}</span>
-                    </Button>
+                      <span className="max-sm:hidden">{sendReminder ? 'Sent' : 'Send Reminder'}</span>
+                      <span className="sm:hidden">{sendReminder ? 'Sent' : 'Remind'}</span>
+                    </AppButton>
                   )}
                 </div>
               </div>
@@ -501,19 +513,22 @@ export const TransactionDetails = (): JSX.Element => {
           </DialogBody>
           <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
             <div className="flex flex-row gap-4 max-lg:gap-3 max-sm:gap-2 w-full justify-end">
-              <Button
-                variant="outlined"
-                className="capitalize bg-transparent text-dark-plum hover:bg-gray-50 border-dark-plum text-lg max-lg:text-base max-sm:text-sm py-3 px-6 rounded-xl"
+              <AppButton
+                variant="outline"
+                size="lg"
+                fullWidth
                 onClick={() => setShowRepaymentModal(false)}
               >
                 Cancel
-              </Button>
-              <Button
-                className="capitalize bg-dark-plum text-white hover:bg-light-purple text-lg max-lg:text-base max-sm:text-sm py-3 px-6 rounded-xl"
+              </AppButton>
+              <AppButton
+                variant="primary"
+                size="lg"
+                fullWidth
                 onClick={handleRepayment}
               >
                 {isPaymentOverdue() ? "Pay Overdue Amount" : "Confirm Payment"}
-              </Button>
+              </AppButton>
             </div>
           </DialogFooter>
         </Dialog>

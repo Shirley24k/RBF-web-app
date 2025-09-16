@@ -1,28 +1,28 @@
 import {
-    ArrowRightStartOnRectangleIcon,
-    Bars3Icon,
-    ChevronDownIcon,
-    ChevronRightIcon,
-    ClipboardDocumentListIcon,
-    CurrencyDollarIcon,
-    DocumentTextIcon,
-    HomeIcon,
-    UserCircleIcon,
-    UserIcon
+  ArrowRightStartOnRectangleIcon,
+  Bars3Icon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ClipboardDocumentListIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+  HomeIcon,
+  UserCircleIcon,
+  UserIcon
 } from "@heroicons/react/24/solid";
 import axios from "axios";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
-import { getEffectiveRole } from "../utils/permissionHandler";
+import { getEffectiveRole } from "../../utils/permissionHandler";
 
 import {
-    Card,
-    IconButton,
-    List,
-    ListItem,
-    ListItemPrefix,
-    Typography,
+  Card,
+  IconButton,
+  List,
+  ListItem,
+  ListItemPrefix,
+  Typography,
 } from "@material-tailwind/react";
 
 interface SidenavProps {

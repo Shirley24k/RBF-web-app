@@ -1,4 +1,3 @@
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import {
     BarElement,
     CategoryScale,
@@ -35,19 +34,11 @@ interface MonthlyData {
 interface MonthlyChartProps {
   data: MonthlyData[];
   currentMonthIndex: number;
-  onPreviousMonth: () => void;
-  onNextMonth: () => void;
-  canGoPrevious: boolean;
-  canGoNext: boolean;
 }
 
 export const MonthlyChart: React.FC<MonthlyChartProps> = ({
   data,
   currentMonthIndex,
-  onPreviousMonth,
-  onNextMonth,
-  canGoPrevious,
-  canGoNext,
 }) => {
   const currentData = data[currentMonthIndex];
   

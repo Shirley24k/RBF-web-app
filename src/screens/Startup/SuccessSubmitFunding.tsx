@@ -1,7 +1,8 @@
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import { Alert, Button, Typography } from "@material-tailwind/react";
+import { Alert, Typography } from "@material-tailwind/react";
 import { useState } from "react";
-import { Sidenav } from "../../components/sidenav";
+import AppButton from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
 
 export const SuccessSubmitFunding = (): JSX.Element => {
   const [open, setOpen] = useState(true);
@@ -36,9 +37,10 @@ export const SuccessSubmitFunding = (): JSX.Element => {
 
               {/* Track Application Button */}
               <div className="mb-8">
-                <Button
-                  variant="outlined"
-                  className="flex flex-row h-12 items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-solid border-dark-plum capitalize w-full sm:w-auto"
+                <AppButton
+                  variant="outline"
+                  size="lg"
+                  className="flex flex-row items-center justify-center gap-2 hover:!bg-transparent"
                   onClick={() => {
                     window.location.href = "/startup-funding";
                   }}
@@ -47,7 +49,7 @@ export const SuccessSubmitFunding = (): JSX.Element => {
                   <span className="font-bold text-dark-plum text-sm max-md:text-xs tracking-[0] leading-[21px] whitespace-nowrap">
                     Track Your Application Here
                   </span>
-                </Button>
+                </AppButton>
               </div>
             </div>
           </div>

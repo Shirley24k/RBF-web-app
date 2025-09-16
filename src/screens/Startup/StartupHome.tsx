@@ -7,13 +7,16 @@ import {
   DocumentTextIcon,
   XCircleIcon
 } from "@heroicons/react/24/outline";
-import { Button, Spinner, Typography } from "@material-tailwind/react";
+import { Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Sidenav } from "../../components/sidenav";
-import { StatCard } from "../../components/StatCard";
-import { StatusBadge } from "../../components/StatusBadge";
+import AppButton from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
+import { StatCard } from "../../components/ui/StatCard";
+import { StatusBadge } from "../../components/ui/StatusBadge";
 import { handleStaffPermissionError } from "../../utils/permissionHandler";
+import Lottie from "lottie-react";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
 
 export const StartupHome = (): JSX.Element => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -192,8 +195,14 @@ export const StartupHome = (): JSX.Element => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner className="h-8 w-8" />
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
       </div>
     );
   }
@@ -298,18 +307,23 @@ export const StartupHome = (): JSX.Element => {
                         <ChartBarIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-purple-500" />
                       </div>
                       <div className="space-y-6 max-lg:space-y-4 max-sm:space-y-3">
-                        <Button 
-                          className="w-full bg-dark-plum hover:bg-light-purple text-white font-bold py-4 max-lg:py-3 max-sm:py-2.5 px-8 max-lg:px-6 max-sm:px-4 rounded-xl text-lg max-lg:text-base max-sm:text-sm capitalize"
+                        <AppButton 
+                          variant="primary"
+                          size="lg"
+                          fullWidth
                           onClick={()=>{window.location.href="/submit-funding"}}
                         >
                           Submit New Application
-                        </Button>
-                        <Button 
-                          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 max-lg:py-3 max-sm:py-2.5 px-8 max-lg:px-6 max-sm:px-4 rounded-xl text-lg max-lg:text-base max-sm:text-sm capitalize"
+                        </AppButton>
+                        <AppButton 
+                          variant="primary"
+                          size="lg"
+                          fullWidth
+                          className="bg-gray-100 hover:!bg-gray-200 !text-gray-700"
                           onClick={()=>{window.location.href="/proposal-management"}}
                         >
                           Create Proposal
-                        </Button>
+                        </AppButton>
                       </div>
                     </div>
                   </div>
@@ -363,12 +377,15 @@ export const StartupHome = (): JSX.Element => {
                     services
                   </Typography>
 
-                  <Button
-                    className="mt-8 max-lg:mt-6 max-sm:mt-4 bg-dark-plum hover:bg-light-purple text-white font-bold py-4 max-lg:py-3 max-sm:py-2.5 px-10 max-lg:px-8 max-sm:px-6 rounded-xl text-lg max-lg:text-base max-sm:text-sm capitalize w-full sm:w-auto"
+                  <AppButton
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    className="mt-8 max-lg:mt-6 max-sm:mt-4"
                     onClick={handleStripeLinking}
                   >
                     Connect Stripe Account
-                  </Button>
+                  </AppButton>
                 </div>
               </div>
             </div>

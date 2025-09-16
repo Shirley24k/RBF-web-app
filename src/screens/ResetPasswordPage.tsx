@@ -1,8 +1,9 @@
-import { Button, Input, Spinner } from "@material-tailwind/react";
+import { Input } from "@material-tailwind/react";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import AppButton from "../components/ui/AppButton";
 
 export const ResetPassword = (): JSX.Element => {
   const navigate = useNavigate();
@@ -66,13 +67,13 @@ export const ResetPassword = (): JSX.Element => {
             <span className="text-[#073b1d]">F</span>
           </div>
 
-          <Button
-            variant="outlined"
-            className="h-10 sm:h-12 px-4 sm:px-6 py-[5px] rounded-lg border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-xs sm:text-sm hover:bg-light-purple hover:text-white capitalize"
+          <AppButton
+            variant="outline"
+            size="lg"
             onClick={() => navigate("/")}
           >
             Home
-          </Button>
+          </AppButton>
         </header>
 
         {/* Main Content */}
@@ -157,19 +158,16 @@ export const ResetPassword = (): JSX.Element => {
             </div>
 
             {/* Submit Button */}
-            <Button
-              className="w-full h-10 sm:h-12 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-xs sm:text-sm rounded-lg capitalize hover:bg-light-purple disabled:opacity-50 disabled:cursor-not-allowed"
+            <AppButton
+              variant="primary"
+              size="lg"
+              fullWidth
               onClick={handleSubmit}
               disabled={isLoading}
+              loading={isLoading}
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Spinner className="h-4 w-4 sm:h-5 sm:w-5" />
-                </div>
-              ) : (
-                "Reset Password"
-              )}
-            </Button>
+              Reset Password
+            </AppButton>
 
             {/* Back to Login */}
             <div className="text-center">

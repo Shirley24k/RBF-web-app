@@ -1,4 +1,4 @@
-import { Button } from "@material-tailwind/react";
+import AppButton from "../components/ui/AppButton";
 
 export const Register = (): JSX.Element => {
   return (
@@ -12,15 +12,15 @@ export const Register = (): JSX.Element => {
             <span className="text-[#073b1d]">F</span>
           </div>
 
-          <Button
-            variant="outlined"
-            className="h-10 sm:h-12 px-4 sm:px-6 py-[5px] rounded-lg border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-xs sm:text-sm hover:bg-light-purple hover:text-white capitalize"
+          <AppButton
+            variant="outline"
+            size="lg"
             onClick={() => {
               window.location.href = "/";
             }}
           >
             Home
-          </Button>
+          </AppButton>
         </header>
 
         {/* Main Content */}
@@ -35,25 +35,27 @@ export const Register = (): JSX.Element => {
             </p>
 
             <div className="flex flex-row items-center gap-6 sm:gap-[95px] w-full justify-center">
-              <Button
-                variant="filled"
-                className="h-10 sm:h-12 px-8 sm:px-20 py-[5px] rounded-lg bg-dark-plum text-white font-['Roboto'] font-bold text-xs sm:text-sm hover:bg-light-purple capitalize w-full sm:w-auto"
+              <AppButton
+                variant="primary"
+                size="lg"
+                fullWidth
                 onClick={() => {
                   window.location.href = "/startup-register";
                 }}
               >
                 Startup
-              </Button>
+              </AppButton>
 
-              <Button
-                variant="outlined"
-                className="h-10 sm:h-12 px-8 sm:px-20 py-[5px] rounded-lg border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-xs sm:text-sm hover:bg-light-purple hover:text-white capitalize w-full sm:w-auto"
+              <AppButton
+                variant="outline"
+                size="lg"
+                fullWidth
                 onClick={() => {
                   window.location.href = "/investor-register";
                 }}
               >
                 Investor
-              </Button>
+              </AppButton>
             </div>
           </div>
         </main>

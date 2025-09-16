@@ -5,7 +5,6 @@ import {
   PlusIcon
 } from "@heroicons/react/24/solid";
 import {
-  Button,
   Card,
   CardBody,
   Tooltip,
@@ -15,9 +14,12 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProposalModal } from "../../components/ProposalModal";
-import { Sidenav } from "../../components/sidenav";
+import { AppButton } from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
 import { getIndustryLabel } from "../../utils/industryOptions";
 import { handleStaffPermissionError } from "../../utils/permissionHandler";
+import Lottie from "lottie-react";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
 
 interface Proposal {
   id: string;
@@ -95,8 +97,14 @@ export const ProposalListings = (): JSX.Element => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen w-full">
-        <div className="w-8 h-8 border-4 border-dark-plum border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
       </div>
     );
   }
@@ -127,13 +135,15 @@ export const ProposalListings = (): JSX.Element => {
               </Typography>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 max-md:gap-2 max-sm:gap-2">
-              <Button
-                className="bg-dark-plum hover:bg-light-purple text-white flex items-center gap-2 capitalize text-sm font-semibold"
+              <AppButton
+                variant="primary"
+                size="lg"
+                className="flex items-center gap-2"
                 onClick={() => navigate("/proposal-management")}
               >
                 <PlusIcon className="h-5 w-5" />
                 Create Proposal
-              </Button>
+              </AppButton>
             </div>
           </div>
 
@@ -151,12 +161,13 @@ export const ProposalListings = (): JSX.Element => {
                 <Typography variant="paragraph" color="gray" className="mb-4">
                   Create your first business proposal to get started with RBF funding applications.
                 </Typography>
-                <Button
-                  className="bg-dark-plum hover:bg-light-purple text-white capitalize text-sm font-semibold"
+                <AppButton
+                  variant="primary"
+                  size="lg"
                   onClick={() => navigate("/proposal-management")}
                 >
                   Create First Proposal
-                </Button>
+                </AppButton>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-md:gap-4 max-sm:gap-3 relative z-10">
@@ -194,38 +205,38 @@ export const ProposalListings = (): JSX.Element => {
                       </div>
 
                       <div className="flex flex-wrap gap-2 relative z-20">
-                        <Button
+                        <AppButton
                           variant="text"
                           size="sm"
-                          className="flex items-center gap-1 text-dark-plum hover:text-light-purple p-2 capitalize cursor-pointer"
+                          className="flex items-center gap-2"
                           onClick={() => openViewModal(proposal)}
                         >
                           <EyeIcon className="h-4 w-4" />
                           View
-                        </Button>
+                        </AppButton>
                         {proposal.status !== 'REVIEWED' && (
                           <>
                           {/* Review button - only visible to startup owners */}
                           {isStartupOwner && (
-                            <Button
+                            <AppButton
                               variant="text"
                               size="sm"
-                              className="flex items-center gap-1 text-yellow-600 hover:text-yellow-500 p-2 capitalize cursor-pointer"
+                              className="flex items-center gap-1 text-yellow-600 hover:text-yellow-500"
                               onClick={() => navigate(`/proposal-management?review=${proposal.id}`)}
                             >
                               <EyeIcon className="h-4 w-4" />
                               Review
-                            </Button>
+                            </AppButton>
                           )}
-                          <Button
+                          <AppButton
                             variant="text"
                             size="sm"
-                            className="flex items-center gap-1 text-blue-400 hover:text-light-blue p-2 capitalize cursor-pointer"
+                            className="flex items-center gap-1 !text-blue-400 hover:text-light-blue"
                             onClick={() => navigate(`/proposal-management?edit=${proposal.id}`)}
                           >
                             <PencilSquareIcon className="h-4 w-4" />
                             Edit
-                          </Button>
+                          </AppButton>
                           </>
                         )}
                       </div>

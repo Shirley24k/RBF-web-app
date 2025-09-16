@@ -1,6 +1,7 @@
-import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Input, Spinner, Typography } from "@material-tailwind/react";
+import { Dialog, DialogBody, DialogFooter, DialogHeader, Input, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useState } from "react";
+import AppButton from "./ui/AppButton";
 
 interface ChangePasswordModalProps {
   open: boolean;
@@ -169,27 +170,23 @@ export const ChangePasswordModal = ({ open, onClose, title = 'Change Password', 
           </div>
         </div>
       </DialogBody>
-      <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
-        <Button 
+      <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl flex justify-end gap-4">
+        <AppButton 
           variant="text" 
+          size="lg"
           onClick={onClose}
-          className="mr-3 font-semibold capitalize"
         >
           Cancel
-        </Button>
-        <Button 
+        </AppButton>
+        <AppButton 
+          variant="primary"
+          size="lg"
           onClick={handleSubmit} 
           disabled={submitting}
-          className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+          loading={submitting}
         >
-          {submitting ? (
-            <div className="flex items-center justify-center gap-2">
-              <Spinner className="h-5 w-5" />
-            </div>
-          ) : (
-            'Update Password'
-          )}
-        </Button>
+          Update Password
+        </AppButton>
       </DialogFooter>
     </Dialog>
   );

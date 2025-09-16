@@ -12,7 +12,6 @@ import {
   UserPlusIcon
 } from "@heroicons/react/24/outline";
 import {
-  Button,
   Card,
   CardBody,
   CardHeader,
@@ -24,15 +23,18 @@ import {
   Input,
   Option,
   Select,
-  Spinner,
   Typography
 } from "@material-tailwind/react";
 import axios from "axios";
+import Lottie from "lottie-react";
 import { useEffect, useState } from "react";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
 import { ChangePasswordModal } from "../../components/ChangePasswordModal";
-import { Sidenav } from "../../components/sidenav";
+import AppButton from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
 import { isValidPhoneNumber } from "../../lib/utils";
 import { getIndustryLabel, industryOptions } from "../../utils/industryOptions";
+
 
 interface StaffMember {
   id: number;
@@ -94,16 +96,11 @@ export const StartupProfile = (): JSX.Element => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [formTouched, setFormTouched] = useState({
-    name: false,
-    email: false,
-    position: false,
-    password: false,
-  });
+  
 
   // Profile edit form states
   const [profileFormData, setProfileFormData] = useState({
-    name: '',
+    startup_name: '',
     contact_no: '',
     company_name: '',
     company_sector: '',
@@ -113,32 +110,10 @@ export const StartupProfile = (): JSX.Element => {
   });
   const [profileFormErrors, setProfileFormErrors] = useState<Record<string, string>>({});
   const [profileSubmitting, setProfileSubmitting] = useState(false);
-  const [profileFormTouched, setProfileFormTouched] = useState({
-    name: false,
-    contact_no: false,
-    company_name: false,
-    company_sector: false,
-    company_address: false,
-    password: false,
-    confirm_password: false,
-  });
 
-  // Staff change password form state
-  const [changePasswordData, setChangePasswordData] = useState({
-    current_password: '',
-    new_password: '',
-    confirm_password: ''
-  });
-  const [changePasswordTouched, setChangePasswordTouched] = useState({
-    current_password: false,
-    new_password: false,
-    confirm_password: false
-  });
-  const [changePasswordErrors, setChangePasswordErrors] = useState<Record<string, string>>({});
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-  const [changePasswordSubmitting, setChangePasswordSubmitting] = useState(false);
 
-  const validateInviteField = (name: keyof typeof formTouched, value: string): string | undefined => {
+  const validateInviteField = (name: 'name' | 'email' | 'position' | 'password', value: string): string | undefined => {
     switch (name) {
       case 'name':
         return !value.trim() ? 'Full name is required' : undefined;
@@ -160,19 +135,9 @@ export const StartupProfile = (): JSX.Element => {
   const handleInviteChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (field === 'permissions') return;
-    const key = field as keyof typeof formTouched;
-    const err = validateInviteField(key, value);
+    const err = validateInviteField(field as any, value);
     setFormErrors(prev => ({ ...prev, [field]: err || '' }));
-    if (!err) {
-      setFormErrors(prev => { const { [field]: _, ...rest } = prev; return rest; });
-    }
-  };
-
-  const handleInviteBlur = (field: keyof typeof formTouched) => {
-    setFormTouched(prev => ({ ...prev, [field]: true }));
-    const value = String((formData as any)[field] ?? '');
-    const err = validateInviteField(field, value);
-    setFormErrors(prev => ({ ...prev, [field]: err || '' }));
+    if (!err) setFormErrors(prev => { const { [field]: _, ...rest } = prev; return rest; });
   };
 
   useEffect(() => {
@@ -280,14 +245,16 @@ export const StartupProfile = (): JSX.Element => {
   const handleInviteStaff = async () => {
     // client-side validate first
     const errors: Record<string, string> = {};
-    (['name','email','position','password'] as Array<keyof typeof formTouched>).forEach(k => {
+    (['name','email','position','password'] as const).forEach((k) => {
       const v = String((formData as any)[k] ?? '');
       const e = validateInviteField(k, v);
       if (e) errors[k] = e;
     });
+    if ((formData.permissions || []).length === 0) {
+      errors.permissions = 'Please select at least one permission';
+    }
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      setFormTouched({ name: true, email: true, position: true, password: true });
       return;
     }
 
@@ -311,7 +278,6 @@ export const StartupProfile = (): JSX.Element => {
     } catch (error: any) {
       if (error.response?.data?.errors) {
         setFormErrors(error.response.data.errors);
-        setFormTouched({ name: true, email: true, position: true, password: true });
       } else {
         alert('Error inviting staff member: ' + (error.response?.data?.error || error.message));
       }
@@ -321,13 +287,26 @@ export const StartupProfile = (): JSX.Element => {
   };
 
   const handleUpdateStaff = async () => {
+    const errors: Record<string, string> = {};
+    (['name','position'] as const).forEach((k) => {
+      const v = String((formData as any)[k] ?? '');
+      const e = validateInviteField(k, v);
+      if (e) errors[k] = e;
+    });
+    if ((formData.permissions || []).length === 0) {
+      errors.permissions = 'Please select at least one permission';
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    
     if (!selectedStaff) return;
 
     setSubmitting(true);
     setFormErrors({});
 
     try {
-      console.log(formData.permissions)
       // Filter out any invalid permissions before sending to backend
       const validPermissions = formData.permissions.filter(permission => {
         return availablePermissions.some(available => available.key === permission);
@@ -401,7 +380,6 @@ export const StartupProfile = (): JSX.Element => {
       permissions: staffMember.permissions
     });
     setFormErrors({});
-    setFormTouched({ name: false, email: false, position: false, password: false });
     setShowEditModal(true);
   };
 
@@ -428,23 +406,24 @@ export const StartupProfile = (): JSX.Element => {
   };
 
   const handlePermissionChange = (permission: string, checked: boolean) => {
-    if (checked) {
-      setFormData(prev => ({
-        ...prev,
-        permissions: [...prev.permissions, permission]
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        permissions: prev.permissions.filter(p => p !== permission)
-      }));
-    }
+    setFormData(prev => {
+      const nextPermissions = checked
+        ? [...prev.permissions, permission]
+        : prev.permissions.filter(p => p !== permission);
+      // Real-time validation for permissions: require at least one
+      if (nextPermissions.length === 0) {
+        setFormErrors(prevErrs => ({ ...prevErrs, permissions: 'Please select at least one permission' }));
+      } else {
+        setFormErrors(prevErrs => { const { permissions, ...rest } = prevErrs; return rest; });
+      }
+      return { ...prev, permissions: nextPermissions };
+    });
   };
 
   // Profile edit validation and handlers
-  const validateProfileField = (name: keyof typeof profileFormTouched, value: string): string | undefined => {
+  const validateProfileField = (name: 'startup_name' | 'contact_no' | 'company_name' | 'company_sector' | 'company_address' | 'password' | 'confirm_password', value: string): string | undefined => {
     switch (name) {
-      case 'name':
+      case 'startup_name':
         return !value.trim() ? 'Full name is required' : undefined;
       case 'contact_no':
         if (!value.trim()) return 'Contact number is required';
@@ -472,25 +451,17 @@ export const StartupProfile = (): JSX.Element => {
 
   const handleProfileChange = (field: keyof typeof profileFormData, value: string) => {
     setProfileFormData(prev => ({ ...prev, [field]: value }));
-    const key = field as keyof typeof profileFormTouched;
-    const err = validateProfileField(key, value);
+    const err = validateProfileField(field as any, value);
     setProfileFormErrors(prev => ({ ...prev, [field]: err || '' }));
     if (!err) {
       setProfileFormErrors(prev => { const { [field]: _, ...rest } = prev; return rest; });
     }
   };
 
-  const handleProfileBlur = (field: keyof typeof profileFormTouched) => {
-    setProfileFormTouched(prev => ({ ...prev, [field]: true }));
-    const value = String((profileFormData as any)[field] ?? '');
-    const err = validateProfileField(field, value);
-    setProfileFormErrors(prev => ({ ...prev, [field]: err || '' }));
-  };
-
   const openEditProfileModal = () => {
     if (startupInfo) {
       setProfileFormData({
-        name: startupInfo.name,
+        startup_name: startupInfo.name,
         contact_no: startupInfo.contact_no,
         company_name: startupInfo.company_name,
         company_sector: startupInfo.company_sector,
@@ -499,15 +470,6 @@ export const StartupProfile = (): JSX.Element => {
         confirm_password: ''
       });
       setProfileFormErrors({});
-      setProfileFormTouched({
-        name: false,
-        contact_no: false,
-        company_name: false,
-        company_sector: false,
-        company_address: false,
-        password: false,
-        confirm_password: false,
-      });
     }
     setShowEditProfileModal(true);
   };
@@ -515,15 +477,14 @@ export const StartupProfile = (): JSX.Element => {
   const handleUpdateProfile = async () => {
     // Client-side validation
     const errors: Record<string, string> = {};
-    (['name', 'contact_no', 'company_name', 'company_sector', 'company_address', 'password', 'confirm_password'] as Array<keyof typeof profileFormTouched>).forEach(k => {
+    (['startup_name', 'contact_no', 'company_name', 'company_sector', 'company_address', 'password', 'confirm_password'] as const).forEach((k) => {
       const v = String((profileFormData as any)[k] ?? '');
       const e = validateProfileField(k, v);
       if (e) errors[k] = e;
     });
-    if (Object.keys(errors).length > 0) {
-      setProfileFormErrors(errors);
-      setProfileFormTouched({ name: true, contact_no: true, company_name: true, company_sector: true, company_address: true, password: true, confirm_password: true });
-      return;
+    if (Object.keys(errors).length > 0) { 
+      setProfileFormErrors(errors); 
+      return; 
     }
 
     setProfileSubmitting(true);
@@ -532,7 +493,7 @@ export const StartupProfile = (): JSX.Element => {
     try {
       // Only include password if it's provided
       const updateData = {
-        name: profileFormData.name,
+        name: profileFormData.startup_name,
         contact_no: profileFormData.contact_no,
         company_name: profileFormData.company_name,
         company_sector: profileFormData.company_sector,
@@ -558,7 +519,6 @@ export const StartupProfile = (): JSX.Element => {
     } catch (error: any) {
       if (error.response?.data?.errors) {
         setProfileFormErrors(error.response.data.errors);
-        setProfileFormTouched({ name: true, contact_no: true, company_name: true, company_sector: true, company_address: true, password: true, confirm_password: true });
       } else {
         alert('Error updating profile: ' + (error.response?.data?.error || error.message));
       }
@@ -567,90 +527,17 @@ export const StartupProfile = (): JSX.Element => {
     }
   };
 
-  // Staff change password validation and handlers
-  const validateChangePasswordField = (name: keyof typeof changePasswordTouched, value: string): string | undefined => {
-    switch (name) {
-      case 'current_password':
-        return !value.trim() ? 'Current password is required' : undefined;
-      case 'new_password':
-        if (!value.trim()) return 'New password is required';
-        if (value.length < 6) return 'Password must be at least 6 characters';
-        return undefined;
-      case 'confirm_password':
-        if (!value.trim()) return 'Confirm password is required';
-        if (value !== changePasswordData.new_password) return 'Passwords do not match';
-        return undefined;
-      default:
-        return undefined;
-    }
-  };
-
-  const handleChangePasswordChange = (field: keyof typeof changePasswordData, value: string) => {
-    setChangePasswordData(prev => ({ ...prev, [field]: value }));
-    const err = validateChangePasswordField(field as keyof typeof changePasswordTouched, value);
-    setChangePasswordErrors(prev => ({ ...prev, [field]: err || '' }));
-    if (!err) {
-      setChangePasswordErrors(prev => { const { [field]: _, ...rest } = prev; return rest; });
-    }
-  };
-
-  const handleChangePasswordBlur = (field: keyof typeof changePasswordTouched) => {
-    setChangePasswordTouched(prev => ({ ...prev, [field]: true }));
-    const value = String((changePasswordData as any)[field] ?? '');
-    const err = validateChangePasswordField(field, value);
-    setChangePasswordErrors(prev => ({ ...prev, [field]: err || '' }));
-  };
-
-  const submitChangePassword = async () => {
-    const errors: Record<string, string> = {};
-    (['current_password', 'new_password', 'confirm_password'] as Array<keyof typeof changePasswordTouched>).forEach((k) => {
-      const v = String((changePasswordData as any)[k] ?? '');
-      const e = validateChangePasswordField(k, v);
-      if (e) errors[k] = e;
-    });
-
-    if (Object.keys(errors).length > 0) {
-      setChangePasswordErrors(errors);
-      setChangePasswordTouched({ current_password: true, new_password: true, confirm_password: true });
-      return;
-    }
-
-    try {
-      const response = await axios.post(`${API_BASE_URL}/change-password`, changePasswordData, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-          'X-Skip-403-Redirect': 'true',
-        },
-      });
-      if (response.data?.success) {
-        alert('Password changed successfully');
-        setChangePasswordData({ current_password: '', new_password: '', confirm_password: '' });
-        setChangePasswordErrors({});
-        setChangePasswordTouched({ current_password: false, new_password: false, confirm_password: false });
-        setShowChangePasswordModal(false);
-      }
-    } catch (error: any) {
-      const apiErrors = error.response?.data?.errors;
-      if (apiErrors) {
-        // Map backend field errors into local state
-        const mapped: Record<string, string> = {};
-        Object.keys(apiErrors).forEach((k) => {
-          mapped[k] = Array.isArray(apiErrors[k]) ? apiErrors[k][0] : String(apiErrors[k]);
-        });
-        setChangePasswordErrors(mapped);
-        setChangePasswordTouched({ current_password: true, new_password: true, confirm_password: true });
-      } else {
-        alert('Failed to change password: ' + (error.response?.data?.error || error.message));
-      }
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner className="h-8 w-8" />
-      </div>
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
+      </div>  
     );
   }
 
@@ -684,14 +571,16 @@ export const StartupProfile = (): JSX.Element => {
                   </div>
                   {userRole === 'startup' && (
                     <div className="flex-shrink-0">
-                      <Button
-                        className="flex items-center gap-3 bg-dark-plum hover:bg-light-purple text-white px-6 py-3 max-md:px-5 max-md:py-2.5 max-sm:px-3 max-sm:py-2 rounded-lg font-semibold text-base max-md:text-sm max-sm:text-xs capitalize w-full lg:w-auto"
+                      <AppButton
+                        variant="primary"
+                        size="lg"
+                        className="flex items-center gap-3"
                         onClick={openInviteModal}
                       >
                         <UserPlusIcon className="hidden sm:block h-5 w-5" />
                         <span className="max-sm:hidden">Invite Staff Member</span>
                         <span className="sm:hidden">Invite Staff</span>
-                      </Button>
+                      </AppButton>
                     </div>
                   )}
                 </div>
@@ -712,20 +601,20 @@ export const StartupProfile = (): JSX.Element => {
                     Company Information
                   </Typography>
                   <div className="flex items-center gap-3 max-sm:gap-2">
-                    <Button
+                    <AppButton
                         variant="text"
-                        className="text-white hover:bg-white/20 p-2 max-sm:p-1"
+                        className="text-white hover:bg-transparent p-2 max-sm:p-1"
                         onClick={() => setShowChangePasswordModal(true)}
                       >
                         <ShieldCheckIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />
-                      </Button>
-                      <Button
+                      </AppButton>
+                      <AppButton
                         variant="text"
-                        className="text-white hover:bg-white/20 p-2 max-sm:p-1"
+                        className="text-white hover:bg-transparent p-2 max-sm:p-1"
                         onClick={openEditProfileModal}
                       >
                         <PencilIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />
-                      </Button>
+                      </AppButton>
                   </div>
                 </div>
               </CardHeader>
@@ -813,13 +702,13 @@ export const StartupProfile = (): JSX.Element => {
                     Staff Information
                   </Typography>
                   <div className="flex items-center gap-3 max-sm:gap-2">
-                    <Button
+                    <AppButton
                       variant="text"
-                      className="text-white hover:bg-white/20 p-2 max-sm:p-1"
+                      className="text-white hover:bg-transparent p-2 max-sm:p-1"
                       onClick={() => setShowChangePasswordModal(true)}
                     >
                       <ShieldCheckIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />
-                    </Button>
+                    </AppButton>
                   </div>
                 </div>
               </CardHeader>
@@ -907,14 +796,16 @@ export const StartupProfile = (): JSX.Element => {
                   <Typography variant="paragraph" color="gray" className="mb-6 max-md:mb-4 max-sm:mb-3 text-lg max-md:text-base max-sm:text-sm px-4">
                     Start building your team by inviting staff members to collaborate
                   </Typography>
-                  <Button 
-                    className="bg-dark-plum hover:bg-light-purple text-white px-8 py-3 max-md:px-6 max-md:py-2.5 max-sm:px-4 max-sm:py-2 rounded-lg font-semibold text-base max-md:text-sm max-sm:text-xs capitalize flex items-center gap-2 max-sm:gap-1"
+                  <AppButton 
+                    variant="primary"
+                    size="lg"
+                    className="flex items-center gap-2 max-sm:gap-1"
                     onClick={openInviteModal}
                   >
                     <UserPlusIcon className="h-5 w-5 max-sm:h-4 max-sm:w-4" />
                     <span className="max-sm:hidden">Invite Team Member</span>
                     <span className="sm:hidden">Invite Member</span>
-                  </Button>
+                  </AppButton>
                 </div>
               ) : (
                 <div className="w-full">
@@ -969,33 +860,32 @@ export const StartupProfile = (): JSX.Element => {
                             </td>
                             <td className="py-4 px-6 flex items-center justify-start">
                               <div className="flex items-center gap-2 max-sm:gap-1 justify-end">
-                                <Button
+                                <AppButton
                                   size="sm"
                                   variant="text"
-                                  className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1"
+                                  className="p-2 max-sm:p-1"
                                   onClick={() => openViewModal(member)}
                                   title="View"
                                 >
                                   <EyeIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                </Button>
-                                <Button
+                                </AppButton>
+                                <AppButton
                                   size="sm"
                                   variant="text"
-                                  className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1"
+                                  className="p-2 max-sm:p-1"
                                   onClick={() => openEditModal(member)}
                                 >
                                   <PencilIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                </Button>
-                                <Button
+                                </AppButton>
+                                <AppButton
                                   size="sm"
                                   variant="text"
-                                  color="red"
                                   className="p-2 max-sm:p-1"
                                   onClick={() => openDeleteModal(member)}
                                   disabled={member.status === 'INACTIVE'}
                                 >
                                   <TrashIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                </Button>
+                                </AppButton>
                               </div>
                             </td>
                           </tr>
@@ -1031,13 +921,12 @@ export const StartupProfile = (): JSX.Element => {
             <Input
               label="Full Name"
               value={formData.name}
-                onChange={(e) => handleInviteChange('name', e.target.value)}
-                onBlur={() => handleInviteBlur('name')}
-                error={!!formTouched.name && !!formErrors.name}
-                className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
+              onChange={(e) => handleInviteChange('name', e.target.value)}
+              error={!!formErrors.name}
+              className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
               size="lg"
             />
-              {formTouched.name && formErrors.name && (
+              {formErrors.name && (
                 <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                 {formErrors.name}
               </Typography>
@@ -1049,12 +938,11 @@ export const StartupProfile = (): JSX.Element => {
                 label="Position"
                 value={formData.position}
                 onChange={(e) => handleInviteChange('position', e.target.value)}
-                onBlur={() => handleInviteBlur('position')}
-                error={!!formTouched.position && !!formErrors.position}
+                error={!!formErrors.position}
                 className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
               size="lg"
             />
-              {formTouched.position && formErrors.position && (
+              {formErrors.position && (
                 <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                   {formErrors.position}
               </Typography>
@@ -1067,12 +955,11 @@ export const StartupProfile = (): JSX.Element => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInviteChange('email', e.target.value)}
-                onBlur={() => handleInviteBlur('email')}
-                error={!!formTouched.email && !!formErrors.email}
+                error={!!formErrors.email}
                 className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
               size="lg"
             />
-              {formTouched.email && formErrors.email && (
+              {formErrors.email && (
                 <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                   {formErrors.email}
               </Typography>
@@ -1085,12 +972,11 @@ export const StartupProfile = (): JSX.Element => {
               type="password"
               value={formData.password}
                 onChange={(e) => handleInviteChange('password', e.target.value)}
-                onBlur={() => handleInviteBlur('password')}
-                error={!!formTouched.password && !!formErrors.password}
+                error={!!formErrors.password}
                 className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
               size="lg"
             />
-              {formTouched.password && formErrors.password && (
+              {formErrors.password && (
                 <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                 {formErrors.password}
               </Typography>
@@ -1124,21 +1010,23 @@ export const StartupProfile = (): JSX.Element => {
             </div>
           </div>
         </DialogBody>
-        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
-          <Button 
+        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl flex justify-end gap-4">
+          <AppButton 
             variant="text" 
+            size="lg"
             onClick={() => setShowInviteModal(false)}
-            className="mr-3 font-semibold capitalize"
           >
             Cancel
-          </Button>
-          <Button 
+          </AppButton>
+          <AppButton 
+            variant="primary"
+            size="lg"
             onClick={handleInviteStaff} 
             disabled={submitting}
-            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6"
+            loading={submitting}
           >
-            {submitting ? <Spinner className="h-5 w-5" /> : 'Send Invitation'}
-          </Button>
+            Send Invitation
+          </AppButton>
         </DialogFooter>
       </Dialog>
 
@@ -1218,12 +1106,13 @@ export const StartupProfile = (): JSX.Element => {
           )}
         </DialogBody>
         <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
-          <Button 
+          <AppButton 
+            variant="primary"
+            size="lg"
             onClick={() => setShowViewModal(false)}
-            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6"
           >
             Close
-          </Button>
+          </AppButton>
         </DialogFooter>
       </Dialog>
 
@@ -1240,9 +1129,9 @@ export const StartupProfile = (): JSX.Element => {
             <Input
               label="Full Name"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => handleInviteChange('name', e.target.value)}
               error={!!formErrors.name}
-                className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
+              className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
               size="lg"
             />
             {formErrors.name && (
@@ -1256,9 +1145,9 @@ export const StartupProfile = (): JSX.Element => {
             <Input
               label="Position"
               value={formData.position}
-              onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
+              onChange={(e) => handleInviteChange('position', e.target.value)}
               error={!!formErrors.position}
-                className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
+              className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
               size="lg"
             />
             {formErrors.position && (
@@ -1295,21 +1184,23 @@ export const StartupProfile = (): JSX.Element => {
             </div>
           </div>
         </DialogBody>
-        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
-          <Button 
+        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl flex justify-end gap-4">
+          <AppButton 
             variant="text" 
+            size="lg"
             onClick={() => setShowEditModal(false)}
-            className="mr-3 font-semibold capitalize"
           >
             Cancel
-          </Button>
-          <Button 
+          </AppButton>
+          <AppButton 
+            variant="primary"
+            size="lg" 
             onClick={handleUpdateStaff} 
             disabled={submitting}
-            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6"
+            loading={submitting}
           >
-            {submitting ? <Spinner className="h-5 w-5" /> : 'Update Member'}
-          </Button>
+            Update Member
+          </AppButton>
         </DialogFooter>
       </Dialog>
 
@@ -1333,30 +1224,31 @@ export const StartupProfile = (): JSX.Element => {
             </Typography>
           </div>
         </DialogBody>
-        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
-          <Button 
+        <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl flex justify-end gap-4">
+          <AppButton 
             variant="text" 
-            color="gray" 
+            size="lg"
             onClick={() => setShowDeleteModal(false)}
-            className="mr-3 font-semibold capitalize"
           >
             Cancel
-          </Button>
-          <Button 
-            variant="outlined"
+          </AppButton>
+          <AppButton 
+            variant="danger"
+            size="lg"
             onClick={handleDeleteStaff} 
             disabled={submitting}
-            className="font-semibold capitalize px-6 border-red-700 text-red-700 hover:bg-red-700 hover:text-white"
+            loading={submitting}
           >
-            {submitting ? <Spinner className="h-5 w-5" /> : 'Deactivate'}
-          </Button>
+            Deactivate
+          </AppButton>
         </DialogFooter>
       </Dialog>
 
+      {/* Edit Profile Modal */}
       <Dialog open={showEditProfileModal} handler={() => setShowEditProfileModal(false)} size="lg" className="rounded-2xl" placeholder={undefined}>
         <DialogHeader className="bg-gradient-to-r from-dark-plum to-light-purple text-white rounded-t-2xl">
           <Typography variant="h4" color="white" className="font-bold">
-            {userRole === 'staff' ? 'Change Password' : 'Edit Company Profile'}
+            Edit Company Profile
           </Typography>
         </DialogHeader>
         <DialogBody className="p-8 bg-beige">
@@ -1364,16 +1256,15 @@ export const StartupProfile = (): JSX.Element => {
               <div className="flex flex-col">
                 <Input
                   label="Full Name"
-                  value={profileFormData.name}
-                  onChange={(e) => handleProfileChange('name', e.target.value)}
-                  onBlur={() => handleProfileBlur('name')}
-                  error={!!profileFormTouched.name && !!profileFormErrors.name}
+                  value={profileFormData.startup_name}
+                  onChange={(e) => handleProfileChange('startup_name', e.target.value)}
+                  error={!!profileFormErrors.startup_name}
                   className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                   size="lg"
                 />
-                {profileFormTouched.name && profileFormErrors.name && (
+                {profileFormErrors.startup_name && (
                   <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                    {profileFormErrors.name}
+                    {profileFormErrors.startup_name}
                   </Typography>
                 )}
               </div>
@@ -1383,12 +1274,11 @@ export const StartupProfile = (): JSX.Element => {
                   label="Contact Number"
                   value={profileFormData.contact_no}
                   onChange={(e) => handleProfileChange('contact_no', e.target.value)}
-                  onBlur={() => handleProfileBlur('contact_no')}
-                  error={!!profileFormTouched.contact_no && !!profileFormErrors.contact_no}
+                  error={!!profileFormErrors.contact_no}
                   className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                   size="lg"
                 />
-                {profileFormTouched.contact_no && profileFormErrors.contact_no && (
+                {profileFormErrors.contact_no && (
                   <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                     {profileFormErrors.contact_no}
                   </Typography>
@@ -1400,12 +1290,11 @@ export const StartupProfile = (): JSX.Element => {
                   label="Company Name"
                   value={profileFormData.company_name}
                   onChange={(e) => handleProfileChange('company_name', e.target.value)}
-                  onBlur={() => handleProfileBlur('company_name')}
-                  error={!!profileFormTouched.company_name && !!profileFormErrors.company_name}
+                  error={!!profileFormErrors.company_name}
                   className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                   size="lg"
                 />
-                {profileFormTouched.company_name && profileFormErrors.company_name && (
+                {profileFormErrors.company_name && (
                   <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                     {profileFormErrors.company_name}
                   </Typography>
@@ -1418,9 +1307,8 @@ export const StartupProfile = (): JSX.Element => {
                   value={profileFormData.company_sector}
                   onChange={(value) => {
                     handleProfileChange('company_sector', value || '');
-                    setProfileFormTouched(prev => ({ ...prev, company_sector: true }));
                   }}
-                  error={!!profileFormTouched.company_sector && !!profileFormErrors.company_sector}
+                  error={!!profileFormErrors.company_sector}
                   className="bg-white text-blue-gray300"
                   size="lg"
                   menuProps={{
@@ -1434,7 +1322,7 @@ export const StartupProfile = (): JSX.Element => {
                     </Option>
                   ))}
                 </Select>
-                {profileFormTouched.company_sector && profileFormErrors.company_sector && (
+                {profileFormErrors.company_sector && (
                   <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                     {profileFormErrors.company_sector}
                   </Typography>
@@ -1446,12 +1334,11 @@ export const StartupProfile = (): JSX.Element => {
                   label="Company Address"
                   value={profileFormData.company_address}
                   onChange={(e) => handleProfileChange('company_address', e.target.value)}
-                  onBlur={() => handleProfileBlur('company_address')}
-                  error={!!profileFormTouched.company_address && !!profileFormErrors.company_address}
+                  error={!!profileFormErrors.company_address}
                   className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                   size="lg"
                 />
-                {profileFormTouched.company_address && profileFormErrors.company_address && (
+                {profileFormErrors.company_address && (
                   <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                     {profileFormErrors.company_address}
                   </Typography>
@@ -1460,20 +1347,22 @@ export const StartupProfile = (): JSX.Element => {
             </div>
         </DialogBody>
         <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
-          <Button 
+          <AppButton 
             variant="text" 
+            size="lg"
             onClick={() => setShowEditProfileModal(false)}
-            className="mr-3 font-semibold capitalize"
           >
             Cancel
-          </Button>
-          <Button 
-            onClick={userRole === 'staff' ? submitChangePassword : handleUpdateProfile} 
+          </AppButton>
+          <AppButton 
+            variant="primary"
+            size="lg"
+            onClick={handleUpdateProfile} 
             disabled={profileSubmitting}
-            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6"
+            loading={profileSubmitting}
           >
-            {profileSubmitting ? <Spinner className="h-5 w-5" /> : 'Update Profile'}
-          </Button>
+            Update Profile
+          </AppButton>
         </DialogFooter>
       </Dialog>
 

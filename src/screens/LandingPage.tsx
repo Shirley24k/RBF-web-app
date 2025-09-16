@@ -1,8 +1,10 @@
 import { EnvelopeIcon } from "@heroicons/react/24/outline";
 import { MapPinIcon, PhoneIcon } from "@heroicons/react/24/solid";
-import { Button } from "@material-tailwind/react";
+import AppButton from "../components/ui/AppButton";
+import { useNavigate } from "react-router-dom";
 
 export const LandingPage = (): JSX.Element => {
+  const navigate = useNavigate();
   const rbfBenefits = [
     "No equity dilution - you keep full control of your company.",
     "No personal guarantees or collateral - No personal assets are required.",
@@ -134,19 +136,24 @@ export const LandingPage = (): JSX.Element => {
               </div>
 
               <div className="flex items-center gap-4 max-md:gap-2">
-                <Button
+                <AppButton
                   variant="text"
-                  className="h-12 max-md:h-10 max-sm:h-8 px-6 max-md:px-4 max-sm:px-3 py-[5px] [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm max-md:text-xs bg-transparent hover:bg-light-purple hover:text-white capitalize"
+                  size="lg"
+                  fullWidth
+                  className="hover:!bg-light-purple hover:!text-white"
+                  onClick={() => navigate("/register")}
                 >
-                  <a href="/register">Register</a>
-                </Button>
+                  Register
+                </AppButton>
 
-                <Button
-                  variant="outlined"
-                  className="h-12 max-md:h-10 max-sm:h-8 px-6 max-md:px-4 max-sm:px-3 py-[5px] rounded-lg border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm max-md:text-xs hover:bg-light-purple hover:text-white capitalize"
+                <AppButton
+                  variant="outline"
+                  size="lg"
+                  fullWidth
+                  onClick={() => navigate("/login")}
                 >
-                  <a href="/login">Login</a>
-                </Button>
+                  Login
+                </AppButton>
               </div>
             </header>
 
@@ -172,14 +179,13 @@ export const LandingPage = (): JSX.Element => {
                   no equity, no dilution
                 </p>
 
-                <Button
-                  className="px-6 max-md:px-4 max-sm:px-3 py-4 max-md:py-3 max-sm:py-2 bg-dark-plum rounded-lg text-white [font-family:'Roboto',Helvetica] font-medium text-xl max-md:text-lg max-sm:text-base capitalize hover:bg-light-purple"
-                  onClick={() => {
-                    window.location.href = "/login";
-                  }}
+                <AppButton
+                  variant="primary"
+                  size="lg"
+                  onClick={() => navigate("/login")}
                 >
                   Get Funded
-                </Button>
+                </AppButton>
               </div>
             </div>
           </div>

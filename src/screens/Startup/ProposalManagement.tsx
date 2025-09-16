@@ -1,11 +1,14 @@
 import { ArrowUpTrayIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
-import { Button, Card, CardBody, IconButton, Input, Option, Select, Spinner, Textarea, Typography } from "@material-tailwind/react";
+import { Card, CardBody, IconButton, Input, Option, Select, Textarea, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Sidenav } from "../../components/sidenav";
+import { AppButton } from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
 import { isValidPhoneNumber } from "../../lib/utils";
 import { industryOptions } from "../../utils/industryOptions";
+import Lottie from "lottie-react";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
 
 interface ProposalFormData {
   // Company Overview
@@ -64,10 +67,6 @@ export const ProposalManagement = (): JSX.Element => {
   const [resolvedReviews, setResolvedReviews] = useState<{ [key in SectionType]?: boolean }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  
-  // Staff review state
-  const [isSubmittingStaffResponse, setIsSubmittingStaffResponse] = useState(false);
-  
   // Draft comments (what user is currently typing)
   const [draftComments, setDraftComments] = useState<{ [key in SectionType]?: string }>({});
   
@@ -582,7 +581,6 @@ export const ProposalManagement = (): JSX.Element => {
       return;
     }
     
-    setIsSubmittingStaffResponse(true);
     try {
       // Extract only staff responses for submission
       const staffResponses = Object.keys(sectionComments).reduce((acc, section) => {
@@ -603,9 +601,7 @@ export const ProposalManagement = (): JSX.Element => {
     } catch (error: any) {
       console.error("Error submitting staff responses:", error);
       alert("Failed to submit staff responses. Please try again.");
-    } finally {
-      setIsSubmittingStaffResponse(false);
-    }
+    } 
   };
 
   const handleCreateProposal = async () => {
@@ -1312,19 +1308,19 @@ export const ProposalManagement = (): JSX.Element => {
         {/* Mark Resolved Button - Only show if there are comments and user is in review mode */}
         {isReviewMode && !isStaff && hasComments && (
           <div className="flex justify-end mt-3">
-            <Button
+            <AppButton
               size="sm"
-              variant={isResolved ? "filled" : "outlined"}
-              className={`text-xs px-3 py-2 ${
+              variant={isResolved ? "primary" : "outline"}
+              className={`${
                 isResolved 
-                  ? 'bg-green-900 text-white border-green-900 capitalize' 
-                  : 'text-green-600 border-green-600 hover:bg-green-50 capitalize'
+                  ? 'bg-green-900 text-white border-green-900 hover:bg-green-900 hover:text-white' 
+                  : 'text-green-600 border-green-600 hover:bg-green-50 hover:text-green-600'
               }`}
               onClick={() => handleMarkResolved(section)}
               disabled={isResolved}
             >
               {isResolved ? 'Marked Resolved' : 'Mark Resolved'}
-            </Button>
+            </AppButton>
           </div>
         )}
       </div>
@@ -1333,9 +1329,15 @@ export const ProposalManagement = (): JSX.Element => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen w-full">
-        <div className="w-8 h-8 border-4 border-dark-plum border-t-transparent rounded-full animate-spin"></div>
-      </div>
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
+      </div>  
     );
   }
 
@@ -1393,8 +1395,10 @@ export const ProposalManagement = (): JSX.Element => {
                     className="hidden"
                   />
                   
-                  <Button 
-                    className="border border-solid border-[#574964c7] rounded-[5px] bg-transparent shadow-none w-auto capitalize text-sm font-semibold"
+                  <AppButton 
+                    variant="outline"
+                    className="!bg-transparent"
+                    size="lg"
                     onClick={handleUploadClick}
                     disabled={isProcessing}
                   >
@@ -1404,7 +1408,7 @@ export const ProposalManagement = (): JSX.Element => {
                         {selectedFile ? selectedFile.name : "Upload Proposal"}
                       </span>
                     </div>
-                  </Button>
+                  </AppButton>
                 </div>
 
                 <Typography variant="small" className="text-gray-500 mt-2">
@@ -1423,20 +1427,15 @@ export const ProposalManagement = (): JSX.Element => {
                       ✓ File selected: {selectedFile.name}
                       </Typography>
 
-                      <Button
-                      className="bg-dark-plum hover:bg-light-purple text-white capitalize text-sm font-semibold"
+                      <AppButton
+                      variant="primary"
+                      size="lg"
                       onClick={handleAutoExtract}
                       disabled={isProcessing}
+                      loading={isProcessing}
                       >
-                        {isProcessing ? (
-                          <span className="flex items-center gap-2">
-                            <Spinner className="h-4 w-4" />
-                            Extracting...
-                          </span>
-                        ) : (
-                          'Extract Details'
-                        )}
-                      </Button>
+                        Extract Details
+                      </AppButton>
                   </div>
                 )}
               </CardBody>
@@ -1493,22 +1492,22 @@ export const ProposalManagement = (): JSX.Element => {
                       {/* Reset button - Hidden in review mode */}
                       {!isReviewMode && (
                       <div className="flex justify-end w-full">
-                        <Button
-                          variant="outlined"
-                          className="border-gray-300 text-gray-600 hover:border-gray-400 px-4 py-2 capitalize text-sm font-semibold"
+                        <AppButton
+                          variant="outline"
+                          size="md"
                           onClick={resetForm}
                           disabled={isSubmitting}
                         >
                           Reset Form
-                        </Button>
+                        </AppButton>
                       </div>
                       )}
                     
 
                     <div className="flex justify-between w-full">
-                      <Button
-                        variant="outlined"
-                        className="border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
+                      <AppButton
+                        variant="outline"
+                        size="md"
                         onClick={prevSection}
                         disabled={isFirstSection}
                       >
@@ -1516,32 +1515,29 @@ export const ProposalManagement = (): JSX.Element => {
                           <ChevronLeftIcon className="h-4 w-4" />
                           Previous
                         </span>
-                      </Button>
+                      </AppButton>
                       
                       {isLastSection ? (
-                        <Button
-                          className="bg-dark-plum hover:bg-light-purple text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
+                        <AppButton
+                          variant="primary"
+                          size="md"
                           onClick={handleCreateProposal}
                           disabled={isSubmitting || (!isReviewMode && !canProceedToNext())}
-                          size="lg"
+                          loading={isSubmitting}
                         >
-                          {isSubmitting ? (
-                            <span className="flex items-center gap-2">
-                              <Spinner className="h-4 w-4" />
-                              Submitting...
-                            </span>
-                           ) : (
+                          {
                           isEditMode ? 'Update Proposal' :
                           isReviewMode ? 
                             (Object.keys(sectionComments).every(section => 
                               !hasReview(section as SectionType) || isReviewResolved(section as SectionType)
                             ) ? 'Complete Review' : 'Request Staff Review') : 
                             'Create Proposal'
-                        )}
-                        </Button>
+                        }
+                        </AppButton>
                       ) : (
-                        <Button
-                          className="bg-dark-plum hover:bg-light-purple text-white px-6 max-sm:px-2 py-2 capitalize text-sm font-semibold"
+                        <AppButton
+                          variant="primary"
+                          size="md"
                           onClick={nextSection}
                           disabled={!canProceedToNext()}
                         >
@@ -1549,7 +1545,7 @@ export const ProposalManagement = (): JSX.Element => {
                             Next
                             <ChevronRightIcon className="h-4 w-4" />
                           </span>
-                        </Button>
+                        </AppButton>
                       )}
                     </div>
                   </div>

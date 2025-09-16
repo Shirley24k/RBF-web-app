@@ -1,5 +1,4 @@
 import {
-  Button,
   Dialog,
   DialogBody,
   DialogFooter,
@@ -8,6 +7,7 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { getIndustryLabel } from "../utils/industryOptions";
+import AppButton from "./ui/AppButton";
 
 interface Proposal {
   id: string;
@@ -248,18 +248,19 @@ export const ProposalModal = ({
           </>
         ) : (
           <div className="flex justify-center items-center py-8">
-            <Spinner />
+            <Spinner className="h-4 w-4" />
           </div>
         )}
       </DialogBody>
       <DialogFooter>
-        <Button
-          variant="outlined"
+        <AppButton
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={onClose}
-          className="bg-dark-plum hover:bg-light-purple text-white capitalize text-sm font-semibold"
         >
           Close
-        </Button>
+        </AppButton>
       </DialogFooter>
     </Dialog>
   );

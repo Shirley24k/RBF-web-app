@@ -1,5 +1,5 @@
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import { Button, Card, CardBody, Typography } from "@material-tailwind/react";
+import { Card, CardBody, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import Lottie from "lottie-react";
 import { useEffect, useState } from "react";
@@ -7,7 +7,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import LoadingFiles from "../../assets/Loading Files.json";
 import hourglass from "../../assets/hourglass.json";
 import walkingMan from "../../assets/walking.json";
-import { Sidenav } from "../../components/sidenav";
+import AppButton from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
 
 interface ProcessingStep {
   id: string;
@@ -188,15 +189,17 @@ export const ProcessingFundingPage = (): JSX.Element => {
                     </div>
                     
                     <div className="flex flex-col sm:flex-row gap-4 max-md:gap-3 max-sm:gap-2 justify-center">
-                      <Button
-                        className="flex items-center justify-center gap-2 bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-3 max-md:py-2.5 max-sm:py-2 px-6 max-md:px-4 max-sm:px-3 w-full sm:w-auto"
+                      <AppButton
+                        variant="primary"
+                        size="md"
+                        fullWidth
                         onClick={() => navigate('/startup-home')}
                       >
                         <svg className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
                         Return to Home
-                      </Button>
+                      </AppButton>
                     </div>
                   </CardBody>
                 </Card>

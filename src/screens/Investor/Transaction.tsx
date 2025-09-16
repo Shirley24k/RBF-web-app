@@ -1,9 +1,13 @@
-import { Alert, Button, Dialog, DialogBody, DialogFooter, DialogHeader, Spinner, Typography } from "@material-tailwind/react";
+import { Alert, Dialog, DialogBody, DialogFooter, DialogHeader, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Sidenav } from "../../components/sidenav";
-import { StatusBadge } from "../../components/StatusBadge";
+import ApplicationsTable, { ApplicationsTableColumn } from "../../components/ApplicationsTable";
+import AppButton from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
+import { StatusBadge } from "../../components/ui/StatusBadge";
+import Lottie from "lottie-react";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
 
 export const InvestorTransaction = (): JSX.Element => {
   const [searchParams] = useSearchParams();
@@ -13,7 +17,7 @@ export const InvestorTransaction = (): JSX.Element => {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState("");
   const [balance, setBalance] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [applications, setApplications] = useState<any>(null);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -73,18 +77,23 @@ export const InvestorTransaction = (): JSX.Element => {
 
   useEffect(()=>{
     const fetchData = async () => {
-      setIsLoading(true);
       await getBalance();
       await fetchApplications();
-      setIsLoading(false);
+      setLoading(false);
     }
     fetchData();
   }, [])
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen w-full">
-        <Spinner />
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
       </div>
     );
   }
@@ -120,227 +129,110 @@ export const InvestorTransaction = (): JSX.Element => {
                   <Typography variant="h5" className="text-lg max-sm:text-sm font-semibold text-gray-900">
                     Balance: RM {balance.toFixed(2)}
                   </Typography>
-                  <Button
-                    className="bg-dark-plum hover:bg-light-purple text-white px-4 py-2 max-md:px-3 max-sm:p-2 rounded-md font-bold text-sm max-sm:text-xs capitalize"
+                  <AppButton
+                    variant="primary"
+                    size="md"
                     onClick={() => setShowTopUpModal(true)}
                   >
                     Top Up
-                  </Button>
+                  </AppButton>
                 </div>
               </div>
             </div>
 
-            {/* Transactions Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-              {/* No Transactions State */}
-              {applications && applications.length === 0 ? (
+            <ApplicationsTable
+              rows={applications || []}
+              keyFor={(app: any) => app.id}
+              columns={[
+                { id: 'id', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">Transaction ID</Typography>) },
+                { id: 'startup', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">Startup</Typography>) },
+                { id: 'date', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">Date</Typography>) },
+                { id: 'status', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">Status</Typography>), align: 'center' },
+                { id: 'actions', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">Actions</Typography>), align: 'center' },
+              ] as ApplicationsTableColumn[]}
+              renderCell={(app: any, columnId: string) => {
+                switch (columnId) {
+                  case 'id':
+                    return (<Typography variant="small" className="font-semibold text-gray-900">#{app.id}</Typography>);
+                  case 'startup':
+                    return (<Typography variant="small" className="text-gray-900">{app.startup_name}</Typography>);
+                  case 'date':
+                    return (<Typography variant="small" className="text-gray-500">{app.date}</Typography>);
+                  case 'status':
+                    return (<StatusBadge status={app.status} />);
+                  case 'actions':
+                    return (
+                      <AppButton variant="outline" size="sm" onClick={() => navigate(`/application-transaction-details/${app.id}`)}>
+                        View Transaction
+                      </AppButton>
+                    );
+                  default:
+                    return null;
+                }
+              }}
+              tabletColumns={[
+                { id: 'details', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">Transaction Details</Typography>) },
+                { id: 'status', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">Status</Typography>), align: 'center' },
+                { id: 'actions', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">Actions</Typography>), align: 'center' },
+              ] as ApplicationsTableColumn[]}
+              renderTabletCell={(app: any, columnId: string) => {
+                switch (columnId) {
+                  case 'details':
+                    return (
+                      <div className="space-y-2">
+                        <Typography variant="small" className="font-bold text-gray-900 text-sm">#{app.id}</Typography>
+                        <Typography variant="small" className="text-gray-900 text-sm">Startup: {app.startup_name}</Typography>
+                        <Typography variant="small" className="text-gray-500 text-sm">Date: {app.date}</Typography>
+                      </div>
+                    );
+                  case 'status':
+                    return (<StatusBadge status={app.status} />);
+                  case 'actions':
+                    return (
+                      <AppButton variant="outline" size="sm" onClick={() => navigate(`/application-transaction-details/${app.id}`)}>
+                        View Transaction
+                      </AppButton>
+                    );
+                  default:
+                    return null;
+                }
+              }}
+              mobileColumns={[
+                { id: 'details', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">Transaction Details</Typography>) },
+                { id: 'actions', header: (<Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">Actions</Typography>), align: 'center' },
+              ] as ApplicationsTableColumn[]}
+              renderMobileCell={(app: any, columnId: string) => {
+                switch (columnId) {
+                  case 'details':
+                    return (
+                      <div className="space-y-2">
+                        <Typography variant="small" className="font-bold text-gray-900 text-sm">#{app.id}</Typography>
+                        <Typography variant="small" className="text-gray-900 text-xs">Startup: {app.startup_name}</Typography>
+                        <Typography variant="small" className="text-gray-500 text-xs">Date: {app.date}</Typography>
+                        <div className="pt-1">
+                          <StatusBadge status={app.status} />
+                        </div>
+                      </div>
+                    );
+                  case 'actions':
+                    return (
+                      <AppButton variant="outline" size="sm" onClick={() => navigate(`/application-transaction-details/${app.id}`)}>
+                        View Transaction
+                      </AppButton>
+                    );
+                  default:
+                    return null;
+                }
+              }}
+              emptyState={(
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
-                    <Typography variant="paragraph" className="text-lg text-gray-500 mb-2">
-                      No transactions found
-                    </Typography>
-                    <Typography variant="small" className="text-gray-400">
-                      No transaction history available
-                    </Typography>
+                    <Typography variant="paragraph" className="text-lg text-gray-500 mb-2">No transactions found</Typography>
+                    <Typography variant="small" className="text-gray-400">No transaction history available</Typography>
                   </div>
                 </div>
-              ) : (
-                <>
-                  {/* Desktop View */}
-                  <div className="hidden lg:block overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                          <th className="px-6 py-4 text-left">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">
-                              Transaction ID
-                            </Typography>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">
-                              Startup
-                            </Typography>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">
-                              Date
-                            </Typography>
-                          </th>
-                          <th className="px-6 py-4 text-center">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">
-                              Status
-                            </Typography>
-                          </th>
-                          <th className="px-6 py-4 text-center">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider">
-                              Actions
-                            </Typography>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {(applications || []).map((application: any, index: number) => (
-                          <tr 
-                            key={application.id} 
-                            className={`hover:bg-gray-50 transition-colors duration-150 ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                            }`}
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Typography variant="small" className="font-semibold text-gray-900">
-                                #{application.id}
-                              </Typography>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Typography variant="small" className="text-gray-900">
-                                {application.startup_name}
-                              </Typography>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Typography variant="small" className="text-gray-500">
-                                {application.date}
-                              </Typography>
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <StatusBadge status={application.status} />
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <Button
-                                variant="outlined"
-                                size="sm"
-                                className="border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white transition-all duration-200 font-medium capitalize"
-                                onClick={() => navigate(`/application-transaction-details/${application.id}`)}
-                              >
-                                View Transaction
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Tablet View (md to lg) */}
-                  <div className="hidden md:block lg:hidden">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                          <th className="px-4 py-3 text-left">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">
-                              Transaction Details
-                            </Typography>
-                          </th>
-                          <th className="px-4 py-3 text-center">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">
-                              Status
-                            </Typography>
-                          </th>
-                          <th className="px-4 py-3 text-center">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">
-                              Actions
-                            </Typography>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {(applications || []).map((application: any, index: number) => (
-                          <tr 
-                            key={application.id} 
-                            className={`hover:bg-gray-50 transition-colors duration-150 ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                            }`}
-                          >
-                            <td className="px-4 py-4">
-                              <div className="space-y-2">
-                                <Typography variant="small" className="font-bold text-gray-900 text-sm">
-                                  #{application.id}
-                                </Typography>
-                                <Typography variant="small" className="text-gray-900 text-sm">
-                                  Startup: {application.startup_name}
-                                </Typography>
-                                <Typography variant="small" className="text-gray-500 text-sm">
-                                  Date: {application.date}
-                                </Typography>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 text-center">
-                              <StatusBadge status={application.status} />
-                            </td>
-                            <td className="px-4 py-4 text-center">
-                              <Button
-                                variant="outlined"
-                                size="sm"
-                                className="border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white transition-all duration-200 font-medium text-xs px-3 py-1 capitalize"
-                                onClick={() => navigate(`/application-transaction-details/${application.id}`)}
-                              >
-                                View Transaction
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile View (below md) */}
-                  <div className="md:hidden">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                          <th className="px-4 py-3 text-left">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">
-                              Transaction Details
-                            </Typography>
-                          </th>
-                          <th className="px-4 py-3 text-center">
-                            <Typography variant="small" className="font-semibold text-gray-700 uppercase tracking-wider text-xs">
-                              Actions
-                            </Typography>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {(applications || []).map((application: any, index: number) => (
-                          <tr 
-                            key={application.id} 
-                            className={`hover:bg-gray-50 transition-colors duration-150 ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                            }`}
-                          >
-                            <td className="px-4 py-4">
-                              <div className="space-y-2">
-                                <Typography variant="small" className="font-bold text-gray-900 text-sm">
-                                  #{application.id}
-                                </Typography>
-                                <Typography variant="small" className="text-gray-900 text-xs">
-                                  Startup: {application.startup_name}
-                                </Typography>
-                                <Typography variant="small" className="text-gray-500 text-xs">
-                                  Date: {application.date}
-                                </Typography>
-                                <div className="pt-1">
-                                  <StatusBadge status={application.status} />
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 text-center">
-                              <Button
-                                variant="outlined"
-                                size="sm"
-                                className="border-dark-plum text-dark-plum hover:bg-dark-plum hover:text-white transition-all duration-200 font-medium text-xs px-3 py-1 capitalize"
-                                onClick={() => navigate(`/application-transaction-details/${application.id}`)}
-                              >
-                                View Transaction
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
               )}
-            </div>
+            />
           </div>
         </div>
       </main>
@@ -405,20 +297,21 @@ export const InvestorTransaction = (): JSX.Element => {
           </DialogBody>
           <DialogFooter className="p-6 bg-gray-50 rounded-b-2xl">
             <div className="flex flex-row gap-4 max-lg:gap-3 max-sm:gap-2 w-full justify-end">
-              <Button
-                variant="outlined"
-                className="capitalize bg-transparent text-dark-plum hover:bg-gray-50 border-dark-plum text-sm max-md:text-base max-sm:text-sm py-2 px-4 rounded-xl"
+              <AppButton
+                variant="outline"
+                size="md"
                 onClick={() => setShowTopUpModal(false)}
               >
                 Cancel
-              </Button>
-              <Button
-                className="capitalize bg-dark-plum text-white hover:bg-light-purple text-sm max-md:text-base max-sm:text-sm py-2 px-4 rounded-xl"
+              </AppButton>
+              <AppButton
+                variant="primary"
+                size="md"
                 onClick={handleTopUp}
                 disabled={!topUpAmount || Number(topUpAmount) <= 0}
               >
                 Top Up
-              </Button>
+              </AppButton>
             </div>
           </DialogFooter>
         </Dialog>

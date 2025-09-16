@@ -1,4 +1,4 @@
-import { Button, Input, Option, Radio, Select, Spinner } from "@material-tailwind/react";
+import { Input, Option, Radio, Select } from "@material-tailwind/react";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
 import { CountryCode, getCountries } from 'libphonenumber-js';
@@ -6,8 +6,11 @@ import { useState } from "react";
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useNavigate } from "react-router-dom";
+import AppButton from "../../components/ui/AppButton";
 import { isValidPhoneNumber } from "../../lib/utils";
+import { fundingStageOptions, getFundingStageLabel } from "../../utils/fundingStage";
 import { industryOptions } from "../../utils/industryOptions";
+import { investmentAmountOptions } from "../../utils/investmentAmountRange";
 
 interface FormErrors {
   fullName?: string;
@@ -46,15 +49,7 @@ export const InvestorRegister = (): JSX.Element => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>("MY");
 
-  const investmentAmountOptions = [
-    "Less than RM 100,000",
-    "RM 100,000 - RM 500,000",
-    "RM 500,000 - RM 1,000,000",
-    "RM 1,000,000 - RM 2,000,000",
-    "RM 2,000,000 - RM 5,000,000",
-    "More than RM 5,000,000"
-  ];
-
+  
   // Get list of countries from libphonenumber-js
   const countries = getCountries();
 
@@ -124,40 +119,6 @@ export const InvestorRegister = (): JSX.Element => {
         return undefined;
       default:
         return undefined;
-    }
-  };
-
-  const handleInputChange = (name: keyof FormErrors, value: string | string[]) => {
-    // Update the field value
-    switch (name) {
-      case 'fullName': setFullName(value.toString()); break;
-      case 'companyName': setCompanyName(value.toString()); break;
-      case 'companyAddress': setCompanyAddress(value.toString()); break;
-      case 'password': setPassword(value.toString()); break;
-      case 'email': setEmail(value.toString()); break;
-      case 'confirmPassword': setConfirmPassword(value.toString()); break;
-      case 'mobileNumber': setMobileNumber(value.toString()); break;
-      case 'country': handleCountryChange(value as string); break;
-      case 'preferredIndustries': setSelectedIndustries(value as string[]); break;
-      case 'fundingStages': setSelectedFundingStages(value as string[]); break;
-      case 'investmentRange': setInvestmentRange(value.toString()); break;
-      case 'revenueShare': setRevenueShare(value.toString()); break;
-    }
-
-    // Validate the field
-    const error = validateField(name, value);
-    setErrors(prev => ({
-      ...prev,
-      [name]: error
-    }));
-
-    // If this is password change, also validate confirm password
-    if (name === 'password' && confirmPassword) {
-      const confirmError = validateField('confirmPassword', confirmPassword);
-      setErrors(prev => ({
-        ...prev,
-        confirmPassword: confirmError
-      }));
     }
   };
 
@@ -302,18 +263,6 @@ export const InvestorRegister = (): JSX.Element => {
     }
   };
 
-  const toggleMultiSelect = (
-    value: string,
-    selected: string[],
-    setSelected: (val: string[]) => void
-  ) => {
-    if (selected.includes(value)) {
-      setSelected(selected.filter((item) => item !== value));
-    } else {
-      setSelected([...selected, value]);
-    }
-  };
-
   return (
     <div className="bg-beige flex flex-col items-center w-full min-h-screen pb-20">
       <div className="w-full max-w-[1512px] flex flex-col">
@@ -325,13 +274,13 @@ export const InvestorRegister = (): JSX.Element => {
             <span className="text-[#073b1d]">F</span>
           </div>
 
-          <Button
-            variant="outlined"
-            className="h-12 px-6 py-[5px] rounded-lg border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm hover:bg-light-purple hover:text-white capitalize"
+          <AppButton
+            variant="outline"
+            size="lg"
             onClick={() => navigate("/")}
           >
             Home
-          </Button>
+          </AppButton>
         </header>
 
         <div className="flex flex-col items-center w-full max-w-[603px] gap-5 mx-auto">
@@ -707,7 +656,7 @@ export const InvestorRegister = (): JSX.Element => {
                           key={item}
                           className="inline-block bg-blue-gray-100 text-blue-gray-800 text-xs px-2 py-1 rounded-full mr-1"
                         >
-                          {item.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                          {getFundingStageLabel(item)}
                         </span>
                       ))
                     : "Select preferred funding stages"
@@ -716,13 +665,13 @@ export const InvestorRegister = (): JSX.Element => {
                 className="bg-white"
                 error={!!errors.fundingStages}
               >
-                {["seed", "series_a", "series_b"].map((stage) => (
+                {fundingStageOptions.map((stage) => (
                   <Option
-                    key={stage}
+                    key={stage.value}
                     onClick={() => {
-                      const newStages = selectedFundingStages.includes(stage)
-                        ? selectedFundingStages.filter((item) => item !== stage)
-                        : [...selectedFundingStages, stage];
+                      const newStages = selectedFundingStages.includes(stage.value)
+                        ? selectedFundingStages.filter((item) => item !== stage.value)
+                        : [...selectedFundingStages, stage.value];
                       setSelectedFundingStages(newStages);
                       const error = validateField("fundingStages", newStages);
                       setErrors(prev => ({ ...prev, fundingStages: error }));
@@ -731,10 +680,10 @@ export const InvestorRegister = (): JSX.Element => {
                     <div className="flex items-center gap-2 capitalize">
                       <input
                         type="checkbox"
-                        checked={selectedFundingStages.includes(stage)}
+                        checked={selectedFundingStages.includes(stage.value)}
                         readOnly
                       />
-                      {stage.replace(/_/g, ' ')}
+                      {stage.label}
                     </div>
                   </Option>
                 ))}
@@ -774,19 +723,16 @@ export const InvestorRegister = (): JSX.Element => {
         </section>
 
         <div className="flex flex-col w-full max-w-[382px] items-center gap-2 mx-auto">
-          <Button
-            className="w-full h-12 bg-dark-plum hover:bg-light-purple text-white font-bold text-sm rounded-lg capitalize disabled:opacity-50 disabled:cursor-not-allowed"
+          <AppButton
+            variant="primary"
+            size="lg"
+            fullWidth
             onClick={handleSubmit}
             disabled={isSubmitting}
+            loading={isSubmitting}
           >
-            {isSubmitting ? (
-              <div className="flex items-center justify-center gap-2">
-                <Spinner className="h-5 w-5" />
-              </div>
-            ) : (
-              "Sign Up"
-            )}
-          </Button>
+              Sign Up
+          </AppButton>
 
           <p className="text-sm text-center font-roboto">
             <span className="text-[#757575]">Already have an account?</span>

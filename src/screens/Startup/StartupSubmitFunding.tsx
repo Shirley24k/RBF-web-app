@@ -4,11 +4,14 @@ import {
   LightBulbIcon,
   PlusIcon
 } from "@heroicons/react/24/solid";
-import { Button, Card, CardBody, Chip, Option, Select, Spinner, Typography } from "@material-tailwind/react";
+import { Card, CardBody, Chip, Option, Select, Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sidenav } from "../../components/sidenav";
+import AppButton from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
+import Lottie from "lottie-react";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
 
 export const StartupSubmitFunding = (): JSX.Element => {
   const [selectedProposal, setSelectedProposal] = useState<string>("");
@@ -63,8 +66,14 @@ export const StartupSubmitFunding = (): JSX.Element => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen w-full">
-        <Spinner />
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
       </div>
     );
   }
@@ -113,14 +122,15 @@ export const StartupSubmitFunding = (): JSX.Element => {
                     <Typography variant="paragraph" color="gray" className="mb-4 text-lg max-sm:text-sm">
                       You need to create a business proposal first before submitting for funding.
                     </Typography>
-                    <Button
-                      className="bg-dark-plum hover:bg-light-purple text-white capitalize text-sm font-semibold"
+                    <AppButton
+                      variant="primary"
+                      size="lg"
                       onClick={() => navigate("/proposal-management")}
                     >
                       <span className="flex items-center gap-2 max-sm:text-sm"><PlusIcon className="w-5 h-5 max-sm:w-4 max-sm:h-4" />
                       Create Proposal
                       </span>
-                    </Button>
+                    </AppButton>
                   </div>
                 ) : (
                   <>
@@ -190,20 +200,15 @@ export const StartupSubmitFunding = (): JSX.Element => {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">               
                 {proposals.length > 0 && (
-                  <Button
-                    className="bg-gradient-to-r from-dark-plum to-light-purple hover:from-light-purple hover:to-dark-plum text-white px-8 py-3 text-base max-sm:text-sm font-semibold shadow-lg capitalize"
+                  <AppButton
+                    variant="primary"
+                    size="lg"
                     onClick={handleSubmit}
                     disabled={!selectedProposal || loading}
-                    size="lg"
+                    loading={loading}
                   >
-                    {loading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <Spinner className="h-5 w-5" />
-                      </div>
-                    ) : (
-                      "Submit Application"
-                    )}
-                  </Button>
+                    Submit Application
+                  </AppButton>
                 )}
               </div>
             </CardBody>

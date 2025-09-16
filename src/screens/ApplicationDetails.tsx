@@ -1,10 +1,8 @@
 import { ArrowUpTrayIcon, BellAlertIcon, ChevronLeftIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import {
-  Button,
   Card,
   CardBody,
   IconButton,
-  Spinner,
   Textarea,
   Tooltip,
   Typography,
@@ -13,7 +11,10 @@ import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ProposalModal } from "../components/ProposalModal";
-import { Sidenav } from "../components/sidenav";
+import { AppButton } from "../components/ui/AppButton";
+import { Sidenav } from "../components/ui/sidenav";
+import Lottie from "lottie-react";
+import coinCirclingWallet from "../assets/coin circling wallet.json";
 
 interface ApplicationDetailsProps {
   userRole: 'startup' | 'investor' | 'admin';
@@ -312,8 +313,14 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
 
   if (loading || !application) {
     return (
-      <div className="flex justify-center items-center h-screen w-full">
-        <Spinner />
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
       </div>
     );
   }
@@ -402,698 +409,686 @@ export const ApplicationDetails = ({ userRole }: ApplicationDetailsProps) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 w-full mr-10">
-        <div className="ml-32 max-md:ml-24 max-sm:ml-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 max-sm:gap-2 transition-all duration-300">
-          <div className="py-8 max-md:py-6 max-sm:py-4 flex items-center">
-              <IconButton
-              variant="text"
-              className="mr-4 max-md:mr-3 max-sm:mr-0 max-sm:px-0 flex items-center justify-center"
-              onClick={() => window.history.back()}
-              >
-                <ChevronLeftIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
-              </IconButton>
-              <Typography variant="h4" color="blue-gray" className="text-2xl max-md:text-xl max-sm:text-lg">
-                Application Details
-              </Typography>
-          </div>
-          <div className="flex justify-end items-center">
-          {canViewTransaction() && (
-              <Button
-                className="bg-dark-plum hover:bg-light-purple text-white font-bold text-sm max-md:text-xs py-3 max-md:py-2 px-6 max-md:px-4 rounded-lg capitalize"
-                onClick={() => {
-                window.location.href = `/application-transaction-details/${id}`;
-                }}
-              >
-                View Transaction
-              </Button>
-          )}
-          </div>
-        </div>
-        <div className="ml-32 max-md:ml-24 max-sm:ml-20 max-w-7xl px-4 max-md:px-6 max-sm:px-4 transition-all duration-300">
-          {/* Application Information Card (always shown) */}
-          <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
-            <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
-              <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                Application Information
-              </Typography>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-md:gap-3 max-sm:gap-2">
-                {/* Desktop/Tablet: Two-column layout */}
-                <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Proposal Details</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Application Status</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Application Datetime</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Amount</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Stage</Typography>
-                  <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Purpose</Typography>
-                  {(activeApplication() || completedApplication()) && (
-                    <>
-                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Revenue Share Percentage</Typography>
-                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Repayment Cap</Typography>
-                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Cap Multiple</Typography>
-                    </>
-                  )}
-                </div>
-                <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                  <button 
-                    className="underline font-[400] cursor-pointer text-gray-500 text-sm max-md:text-xs h-6 flex items-center hover:text-gray-800" 
-                    onClick={openProposalModal}
+      <main className="ml-16 transition-all duration-300 w-full">
+        <div className="px-6 py-8 lg:px-8 xl:px-12">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-row justify-between items-center mb-0 gap-4 max-sm:gap-2 transition-all duration-300">
+              <div className="py-8 max-md:py-6 max-sm:py-4 flex items-center">
+                  <IconButton
+                  variant="text"
+                  className="mr-4 max-md:mr-3 max-sm:mr-0 max-sm:px-0 flex items-center justify-center"
+                  onClick={() => window.history.back()}
                   >
-                    View Business Proposal
-                  </button>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                    {application.status}
+                    <ChevronLeftIcon className="h-6 w-6 max-md:h-5 max-md:w-5 max-sm:h-4 max-sm:w-4" />
+                  </IconButton>
+                  <Typography variant="h4" color="blue-gray" className="text-2xl max-md:text-xl max-sm:text-lg">
+                    Application Details
                   </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                    {application.updated_at ? new Date(application.updated_at).toISOString().slice(0, 10) : ""}
+              </div>
+              <div className="flex justify-end items-center">
+              {canViewTransaction() && (
+                  <AppButton
+                    variant="primary"
+                    size="lg"
+                    className="max-md:text-xs max-md:py-2 max-md:px-4"
+                    onClick={() => {
+                      window.location.href = `/application-transaction-details/${id}`;
+                    }}
+                  >
+                    View Transaction
+                  </AppButton>
+              )}
+              </div>
+            </div>
+            <div className="transition-all duration-300">
+              {/* Application Information Card (always shown) */}
+              <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
+                <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
+                  <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                    Application Information
                   </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                    RM{application.funding_amount}
-                  </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center capitalize">
-                    {application.funding_stage.replace(/_/g, ' ')}
-                  </Typography>
-                  <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                    {application.funding_purpose}
-                  </Typography>
-                  {(activeApplication() || completedApplication()) && (
-                    <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-md:gap-3 max-sm:gap-2">
+                    {/* Desktop/Tablet: Two-column layout */}
+                    <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Proposal Details</Typography>
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Application Status</Typography>
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Application Datetime</Typography>
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Amount</Typography>
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Stage</Typography>
+                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Funding Purpose</Typography>
+                      {(activeApplication() || completedApplication()) && (
+                        <>
+                          <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Revenue Share Percentage</Typography>
+                          <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Repayment Cap</Typography>
+                          <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Cap Multiple</Typography>
+                        </>
+                      )}
+                    </div>
+                    <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
+                      <button 
+                        className="underline font-[400] cursor-pointer text-gray-500 text-sm max-md:text-xs h-6 flex items-center hover:text-gray-800" 
+                        onClick={openProposalModal}
+                      >
+                        View Business Proposal
+                      </button>
                       <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                    {application.revenue_share_percentage}%
-                  </Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                    RM{application.repayment_cap}
-                  </Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                    {application.cap_multiple}x
+                        {application.status}
                       </Typography>
-                    </>
-                  )}
-                </div>
+                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
+                        {application.updated_at ? new Date(application.updated_at).toISOString().slice(0, 10) : ""}
+                      </Typography>
+                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
+                        RM{application.funding_amount}
+                      </Typography>
+                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center capitalize">
+                        {application.funding_stage.replace(/_/g, ' ')}
+                      </Typography>
+                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
+                        {application.funding_purpose}
+                      </Typography>
+                      {(activeApplication() || completedApplication()) && (
+                        <>
+                          <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
+                        {application.revenue_share_percentage}%
+                      </Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
+                        RM{application.repayment_cap}
+                      </Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
+                        {application.cap_multiple}x
+                          </Typography>
+                        </>
+                      )}
+                    </div>
 
-                {/* Mobile: Label-value pairs */}
-                <div className="md:hidden flex flex-col gap-y-4 max-sm:gap-y-3">
-                  <div className="flex flex-col gap-y-1">
-                    <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Proposal Details</Typography>
-                    <button 
-                      className="underline font-[400] text-sm max-sm:text-xs flex flex-start" 
-                      onClick={openProposalModal}
-                    >
-                      View Business Proposal
-                    </button>
-                  </div>
-                  
-                  <div className="flex flex-col gap-y-1">
-                    <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Application Status</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                      {application.status}
-                    </Typography>
-                  </div>
-                  
-                  <div className="flex flex-col gap-y-1">
-                    <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Application Datetime</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                      {application.updated_at ? new Date(application.updated_at).toISOString().slice(0, 10) : ""}
-                    </Typography>
-                  </div>
-                  
-                  <div className="flex flex-col gap-y-1">
-                    <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Funding Amount</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                      RM{application.funding_amount}
-                    </Typography>
-                  </div>
-                  
-                  <div className="flex flex-col gap-y-1">
-                    <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Funding Stage</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-sm:text-xs capitalize">
-                      {application.funding_stage.replace(/_/g, ' ')}
-                    </Typography>
-                  </div>
-                  
-                  <div className="flex flex-col gap-y-1">
-                    <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Funding Purpose</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                      {application.funding_purpose}
-                    </Typography>
-                  </div>
-                  
-                  {(activeApplication() || completedApplication()) && (
-                    <>
+                    {/* Mobile: Label-value pairs */}
+                    <div className="md:hidden flex flex-col gap-y-4 max-sm:gap-y-3">
                       <div className="flex flex-col gap-y-1">
-                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Revenue Share Percentage</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Proposal Details</Typography>
+                        <button 
+                          className="underline font-[400] text-sm max-sm:text-xs flex flex-start" 
+                          onClick={openProposalModal}
+                        >
+                          View Business Proposal
+                        </button>
+                      </div>
+                      
+                      <div className="flex flex-col gap-y-1">
+                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Application Status</Typography>
                         <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                          {application.revenue_share_percentage}%
+                          {application.status}
                         </Typography>
                       </div>
                       
                       <div className="flex flex-col gap-y-1">
-                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Repayment Cap</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Application Datetime</Typography>
                         <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                          RM{application.repayment_cap}
+                          {application.updated_at ? new Date(application.updated_at).toISOString().slice(0, 10) : ""}
                         </Typography>
                       </div>
                       
                       <div className="flex flex-col gap-y-1">
-                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Cap Multiple</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Funding Amount</Typography>
                         <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                          {application.cap_multiple}x
+                          RM{application.funding_amount}
                         </Typography>
                       </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Investor Information Card (admin & startup) */}
-          {((userRole === 'admin' || userRole === 'startup') && !failedApplication()) && (
-            <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
-              <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
-                <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                  Investor Information
-                </Typography>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 max-md:gap-x-3 max-sm:gap-x-2">
-                  {/* Desktop/Tablet: Two-column layout */}
-                  <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Name</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Phone Number</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Email Address</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">
-                      {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual" ? "Country" : "Company Name"}
-                    </Typography>
-                    {(userRole === 'admin') && (
-                      <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">
-                        Balance
-                      </Typography>
-                    )}
-                  </div>
-                  <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.name : otherParty?.name}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.contact_no : otherParty?.contact_no}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.email : otherParty?.email}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                      {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual"
-                        ? (userRole === 'admin' ? otherParty.investor?.country : otherParty?.country)
-                        : (userRole === 'admin' ? otherParty.investor?.company_address : otherParty?.company_address)}
-                    </Typography>
-                    {(userRole === 'admin') && (
-                      <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
-                        RM {otherParty.investor?.balance}
-                      </Typography>
-                    )}
-                  </div>
-
-                  {/* Mobile: Label-value pairs */}
-                  <div className="md:hidden flex flex-col gap-y-4 max-sm:gap-y-3">
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Name</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.investor?.name : otherParty?.name}</Typography>
-                    </div>
-                    
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Phone Number</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.investor?.contact_no : otherParty?.contact_no}</Typography>
-                    </div>
-                    
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Email Address</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.investor?.email : otherParty?.email}</Typography>
-                    </div>
-                    
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">
-                        {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual" ? "Country" : "Company Name"}
-                      </Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                        {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual"
-                          ? (userRole === 'admin' ? otherParty.investor?.country : otherParty?.country)
-                          : (userRole === 'admin' ? otherParty.investor?.company_address : otherParty?.company_address)}
-                      </Typography>
-                    </div>
-                    
-                    {(userRole === 'admin') && (
+                      
                       <div className="flex flex-col gap-y-1">
-                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Balance</Typography>
-                        <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
-                          RM {otherParty.investor?.balance}
+                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Funding Stage</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-sm:text-xs capitalize">
+                          {application.funding_stage.replace(/_/g, ' ')}
                         </Typography>
                       </div>
-                    )}
+                      
+                      <div className="flex flex-col gap-y-1">
+                        <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Funding Purpose</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
+                          {application.funding_purpose}
+                        </Typography>
+                      </div>
+                      
+                      {(activeApplication() || completedApplication()) && (
+                        <>
+                          <div className="flex flex-col gap-y-1">
+                            <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Revenue Share Percentage</Typography>
+                            <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
+                              {application.revenue_share_percentage}%
+                            </Typography>
+                          </div>
+                          
+                          <div className="flex flex-col gap-y-1">
+                            <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Repayment Cap</Typography>
+                            <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
+                              RM{application.repayment_cap}
+                            </Typography>
+                          </div>
+                          
+                          <div className="flex flex-col gap-y-1">
+                            <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Cap Multiple</Typography>
+                            <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
+                              {application.cap_multiple}x
+                            </Typography>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
+                </CardBody>
+              </Card>
+
+              {/* Investor Information Card (admin & startup) */}
+              {((userRole === 'admin' || userRole === 'startup') && !failedApplication()) && (
+                <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
+                  <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
+                    <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                      Investor Information
+                    </Typography>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 max-md:gap-x-3 max-sm:gap-x-2">
+                      {/* Desktop/Tablet: Two-column layout */}
+                      <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Name</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Phone Number</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Email Address</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">
+                          {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual" ? "Country" : "Company Name"}
+                        </Typography>
+                        {(userRole === 'admin') && (
+                          <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">
+                            Balance
+                          </Typography>
+                        )}
+                      </div>
+                      <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.name : otherParty?.name}</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.contact_no : otherParty?.contact_no}</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.investor?.email : otherParty?.email}</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
+                          {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual"
+                            ? (userRole === 'admin' ? otherParty.investor?.country : otherParty?.country)
+                            : (userRole === 'admin' ? otherParty.investor?.company_address : otherParty?.company_address)}
+                        </Typography>
+                        {(userRole === 'admin') && (
+                          <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">
+                            RM {otherParty.investor?.balance}
+                          </Typography>
+                        )}
+                      </div>
+
+                      {/* Mobile: Label-value pairs */}
+                      <div className="md:hidden flex flex-col gap-y-4 max-sm:gap-y-3">
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Name</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.investor?.name : otherParty?.name}</Typography>
+                        </div>
+                        
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Phone Number</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.investor?.contact_no : otherParty?.contact_no}</Typography>
+                        </div>
+                        
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Email Address</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.investor?.email : otherParty?.email}</Typography>
+                        </div>
+                        
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">
+                            {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual" ? "Country" : "Company Name"}
+                          </Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
+                            {(userRole === 'admin' ? otherParty.investor?.type : otherParty?.type) === "individual"
+                              ? (userRole === 'admin' ? otherParty.investor?.country : otherParty?.country)
+                              : (userRole === 'admin' ? otherParty.investor?.company_address : otherParty?.company_address)}
+                          </Typography>
+                        </div>
+                        
+                        {(userRole === 'admin') && (
+                          <div className="flex flex-col gap-y-1">
+                            <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Balance</Typography>
+                            <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">
+                              RM {otherParty.investor?.balance}
+                            </Typography>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
+              )}
+
+              {/* Startup Information Card (admin & investor) */}
+              {(userRole === 'admin' || userRole === 'investor') && (
+                <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
+                  <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
+                    <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                      Startup Information
+                    </Typography>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 max-md:gap-x-3 max-sm:gap-x-2">
+                      {/* Desktop/Tablet: Two-column layout */}
+                      <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Applicant Name</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Phone Number</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Name</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Business Email Address</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Sector</Typography>
+                        <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Address</Typography>
+                      </div>
+                      <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.name : otherParty?.name}</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.contact_no : otherParty?.contact_no}</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_name : otherParty?.company_name}</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.email : otherParty?.email}</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_sector : otherParty?.company_sector}</Typography>
+                        <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_address : otherParty?.company_address}</Typography>
+                      </div>
+
+                      {/* Mobile: Label-value pairs */}
+                      <div className="md:hidden flex flex-col gap-y-4 max-sm:gap-y-3">
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Applicant Name</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.name : otherParty?.name}</Typography>
+                        </div>
+                        
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Phone Number</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.contact_no : otherParty?.contact_no}</Typography>
+                        </div>
+                        
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Company Name</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.company_name : otherParty?.company_name}</Typography>
+                        </div>
+                        
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Business Email Address</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.email : otherParty?.email}</Typography>
+                        </div>
+                        
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Company Sector</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.company_sector : otherParty?.company_sector}</Typography>
+                        </div>
+                        
+                        <div className="flex flex-col gap-y-1">
+                          <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Company Address</Typography>
+                          <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.company_address : otherParty?.company_address}</Typography>
+                        </div>
+                      </div>
+                    </div>
+                  </CardBody>
+                </Card>
+              )}
+
+              {failedApplication() && (
+                <div className="mb-8 max-md:mb-6 max-sm:mb-4 bg-gray-100 p-4 rounded-lg">
+                  <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                    Admin Message
+                  </Typography>
+                  <Typography className="mb-2 font-[400] h-fit text-sm max-md:text-xs" color="gray">
+                    {application.message}
+                  </Typography>
                 </div>
-              </CardBody>
-            </Card>
-          )}
+              )}
 
-          {/* Startup Information Card (admin & investor) */}
-          {(userRole === 'admin' || userRole === 'investor') && (
-            <Card className="mb-8 max-md:mb-6 max-sm:mb-4">
-              <CardBody className="flex flex-col gap-y-1 p-6 max-md:p-4 max-sm:p-3">
-                <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                  Startup Information
-                </Typography>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 max-md:gap-x-3 max-sm:gap-x-2">
-                  {/* Desktop/Tablet: Two-column layout */}
-                  <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Applicant Name</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Phone Number</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Name</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Business Email Address</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Sector</Typography>
-                    <Typography variant="h6" color="blue-gray" className="text-lg max-md:text-base max-sm:text-sm h-6">Company Address</Typography>
-                  </div>
-                  <div className="hidden md:flex flex-col gap-y-6 max-md:gap-y-4 max-sm:gap-y-3">
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.name : otherParty?.name}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.contact_no : otherParty?.contact_no}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_name : otherParty?.company_name}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.email : otherParty?.email}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_sector : otherParty?.company_sector}</Typography>
-                    <Typography color="gray" className="font-[400] text-sm max-md:text-xs h-6 flex items-center">{userRole === 'admin' ? otherParty.startup?.company_address : otherParty?.company_address}</Typography>
-                  </div>
-
-                  {/* Mobile: Label-value pairs */}
-                  <div className="md:hidden flex flex-col gap-y-4 max-sm:gap-y-3">
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Applicant Name</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.name : otherParty?.name}</Typography>
-                    </div>
-                    
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Phone Number</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.contact_no : otherParty?.contact_no}</Typography>
-                    </div>
-                    
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Company Name</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.company_name : otherParty?.company_name}</Typography>
-                    </div>
-                    
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Business Email Address</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.email : otherParty?.email}</Typography>
-                    </div>
-                    
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Company Sector</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.company_sector : otherParty?.company_sector}</Typography>
-                    </div>
-                    
-                    <div className="flex flex-col gap-y-1">
-                      <Typography variant="h6" color="blue-gray" className="text-base max-sm:text-sm">Company Address</Typography>
-                      <Typography color="gray" className="font-[400] text-sm max-sm:text-xs">{userRole === 'admin' ? otherParty.startup?.company_address : otherParty?.company_address}</Typography>
-                    </div>
-                  </div>
+              {/* Investor message section (only for in progress and rejected application) */}
+              {(rejectedApplication() || canUploadAgreement()) && (
+                <div className="mb-8 max-md:mb-6 max-sm:mb-4 bg-gray-100 p-4 rounded-lg h-fit">
+                  <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                    Investor Message
+                  </Typography>
+                  <Typography className="mb-2 font-[400] h-[100px] max-md:h-[80px] max-sm:h-[60px] text-sm max-md:text-xs" color="gray">
+                    {application.message}
+                  </Typography>
                 </div>
-              </CardBody>
-            </Card>
-          )}
+              )}
 
-          {failedApplication() && (
-            <div className="mb-8 max-md:mb-6 max-sm:mb-4 bg-gray-100 p-4 rounded-lg">
-              <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                Admin Message
-              </Typography>
-              <Typography className="mb-2 font-[400] h-fit text-sm max-md:text-xs" color="gray">
-                {application.message}
-              </Typography>
-            </div>
-          )}
-
-          {/* Investor message section (only for in progress and rejected application) */}
-          {(rejectedApplication() || canUploadAgreement()) && (
-            <div className="mb-8 max-md:mb-6 max-sm:mb-4 bg-gray-100 p-4 rounded-lg h-fit">
-              <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                Investor Message
-              </Typography>
-              <Typography className="mb-2 font-[400] h-[100px] max-md:h-[80px] max-sm:h-[60px] text-sm max-md:text-xs" color="gray">
-                {application.message}
-              </Typography>
-            </div>
-          )}
-
-        {/* Insufficient Balance Notification (Admin Only) */}
-        {insufficientBalance() && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6 p-4 max-md:p-3 max-sm:p-2 bg-red-50 border border-red-200 rounded-lg justify-between gap-4 max-sm:gap-2">
-              <div className="flex items-center gap-4 max-md:gap-3 max-sm:gap-2">
-                <ExclamationTriangleIcon className="w-8 h-8 max-md:w-6 max-md:h-6 max-sm:w-5 max-sm:h-5 text-red-500" />
-                <div className="flex flex-col">
-                  <span className="text-red-700 font-semibold text-lg max-md:text-base max-sm:text-sm flex items-center gap-2">
-                    Insufficient Investor Balance
-                  </span>
-                  <span className="text-gray-700 text-sm max-md:text-xs mt-1">
-                    Investor Balance: <span className="font-bold">RM {otherParty.investor?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00'}</span> <br/>
-                    Required Funding Amount: <span className="font-bold">RM {application.funding_amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </span>
-                  <span className="text-red-600 text-sm max-md:text-xs mt-1">
-                    The investor's balance is insufficient to fund this application. Please notify the investor to top up their balance.
-                  </span>
+            {/* Insufficient Balance Notification (Admin Only) */}
+            {insufficientBalance() && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center mb-6 p-4 max-md:p-3 max-sm:p-2 bg-red-50 border border-red-200 rounded-lg justify-between gap-4 max-sm:gap-2">
+                  <div className="flex items-center gap-4 max-md:gap-3 max-sm:gap-2">
+                    <ExclamationTriangleIcon className="w-8 h-8 max-md:w-6 max-md:h-6 max-sm:w-5 max-sm:h-5 text-red-500" />
+                    <div className="flex flex-col">
+                      <span className="text-red-700 font-semibold text-lg max-md:text-base max-sm:text-sm flex items-center gap-2">
+                        Insufficient Investor Balance
+                      </span>
+                      <span className="text-gray-700 text-sm max-md:text-xs mt-1">
+                        Investor Balance: <span className="font-bold">RM {otherParty.investor?.balance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00'}</span> <br/>
+                        Required Funding Amount: <span className="font-bold">RM {application.funding_amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </span>
+                      <span className="text-red-600 text-sm max-md:text-xs mt-1">
+                        The investor's balance is insufficient to fund this application. Please notify the investor to top up their balance.
+                      </span>
+                    </div>
+                  </div>
+                  <AppButton
+                    variant="primary"
+                    size="md"
+                    onClick={handleNotifyInvestor}
+                    disabled={sendingNotifyInvestor || notifyInvestor}
+                    loading={sendingNotifyInvestor}
+                    className="flex items-center gap-2"
+                  >
+                    <BellAlertIcon className="w-6 h-6 max-md:w-5 max-md:h-5 max-sm:w-4 max-sm:h-4" />
+                    {notifyInvestor ? 'Notification Sent' : 'Notify Investor'}
+                  </AppButton>
                 </div>
-              </div>
-              <Button
-                className="flex items-center gap-2 bg-dark-plum hover:bg-light-purple text-white font-bold capitalize px-5 max-md:px-4 max-sm:px-3 py-2 max-md:py-1.5 max-sm:py-1 rounded-lg shadow-md ml-0 sm:ml-6 text-sm max-md:text-xs"
-                onClick={handleNotifyInvestor}
-                disabled={sendingNotifyInvestor || notifyInvestor}
-                title="Notify Investor to Top Up Balance"
-              >
-                <BellAlertIcon className="w-6 h-6 max-md:w-5 max-md:h-5 max-sm:w-4 max-sm:h-4" />
-                {sendingNotifyInvestor ? (<Spinner className="h-4 w-4" />) : (notifyInvestor ? 'Notification Sent' : 'Notify Investor')}
-              </Button>
-            </div>
-          )}
+              )}
 
-        {/* Upload Agreement Section (only for in progress, active and completed) */}
-          {(!awaitReviewApplication() && !rejectedApplication() && !failedApplication() && !canReviewAgreements()) && (
-            <div>
-                <span className="flex items-center gap-2">
-                <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                    Agreement
-                </Typography>
-                {/* add a tooltip to show admin message */}
-                    {rejectedAgreement() && (
-                    <Tooltip content={application.admin_message}>
-                    <ExclamationTriangleIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-red-500 mb-3" />
-                    </Tooltip>
-                    )}
-                    {(activeApplication() || completedApplication()) && (
-                    <Tooltip content={application.admin_message}>
-                    <ExclamationCircleIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-green-500 mb-3" />
-                    </Tooltip>
-                    )}
-                </span>
-            </div>
-        )}
-
-        {/* If user has uploaded agreement */}
-        {(userAgreementPath && canUploadAgreement() && !userNeedReupload) && (
-            <div>
-              <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
-                You have uploaded your
-                <a
-                href={userAgreementPath}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-deep-purple-600 underline ml-1"
-                >
-                agreement.
-                </a>
-            </Typography>
-            {(!otherAgreementPath || otherNeedReupload) && (
-                <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
-                Waiting for {otherPartyRole} to upload agreement.
-                </Typography>
-            )}
-            </div>
-        )}
-
-        {((canUploadAgreement() && !userAgreementPath) || rejectedAgreement()) && (
-            // Show upload UI to upload agreement
-            <div>
-            {rejectedAgreement() && (
-                <Typography className="mb-4 font-[400] text-sm max-md:text-xs" color="red">
-                    !! Your application has been rejected. Please hover over the tooltip icon to view the admin message.
-                </Typography>
-            )}
-              <Typography className="mb-4 font-[400] text-sm max-md:text-xs" color="gray">
-                Kindly {rejectedAgreement() ? "re-upload" : "upload"} a copy of signed agreement between you and the {otherPartyRole}. 
-                Please convert into <span className="font-bold">.pdf</span> format for submission.
-                </Typography>
-
-                <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept=".pdf,application/pdf"
-                className="hidden"
-                />
-
-                <Button 
-                className="border border-solid border-[#574964c7] rounded-[5px] bg-transparent shadow-none w-auto mb-2"
-                onClick={handleUploadClick}
-                disabled={isUploading}
-                >
-                <div className="flex items-center justify-center gap-[19px] max-md:gap-3 max-sm:gap-2">
-                  <ArrowUpTrayIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-gray-500" />
-                  <span className="text-sm max-md:text-xs text-gray-500 font-medium capitalize">
-                    {selectedFile ? selectedFile.name : "Upload agreement"}
+            {/* Upload Agreement Section (only for in progress, active and completed) */}
+              {(!awaitReviewApplication() && !rejectedApplication() && !failedApplication() && !canReviewAgreements()) && (
+                <div>
+                    <span className="flex items-center gap-2">
+                    <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                        Agreement
+                    </Typography>
+                    {/* add a tooltip to show admin message */}
+                        {rejectedAgreement() && (
+                        <Tooltip content={application.admin_message}>
+                        <ExclamationTriangleIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-red-500 mb-3" />
+                        </Tooltip>
+                        )}
+                        {(activeApplication() || completedApplication()) && (
+                        <Tooltip content={application.admin_message}>
+                        <ExclamationCircleIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-green-500 mb-3" />
+                        </Tooltip>
+                        )}
                     </span>
                 </div>
-                </Button>
-
-              <Typography variant="small" className="text-gray-500 font-[380] mt-2 mb-2 text-xs max-md:text-xs">
-                Accepted file type: PDF (Max size: 10MB)
-                </Typography>
-
-                {uploadError && (
-                <Typography variant="small" className="text-red-500 font-[380] mb-4 text-xs max-md:text-xs">
-                    {uploadError}
-                </Typography>
-                )}
-
-                {selectedFile && !uploadError && (
-                <Typography variant="small" className="text-green-500 font-[380] mb-4 text-xs max-md:text-xs">
-                    ✓ File selected: {selectedFile.name}
-                </Typography>
-                )}
-
-              <div className="flex flex-col sm:flex-row gap-4 max-md:gap-3 max-sm:gap-2">
-                <Button
-                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={handleSubmit}
-                    disabled={!selectedFile || isUploading}
-                >
-                    {isUploading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <Spinner className="h-4 w-4" />
-                      </div>
-                    ) : (
-                      "Submit"
-                    )}
-                </Button>
-                <Button
-                  className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 max-md:py-1.5 max-sm:py-1 px-4 max-md:px-3 max-sm:px-2"
-                    variant="outlined"
-                    onClick={() => window.history.back()}
-                    disabled={isUploading}
-                >
-                    Back
-                </Button>
-                </div>
-            </div>
             )}
 
-          {/* Await Review Section (Startup View) */}
-          {(awaitReviewApplication() && userRole !== 'investor') && (
-              <div>
-              <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
-                  Waiting for investor to review.
-              </Typography>
-              </div>
-          )}
+            {/* If user has uploaded agreement */}
+            {(userAgreementPath && canUploadAgreement() && !userNeedReupload) && (
+                <div>
+                  <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
+                    You have uploaded your
+                    <a
+                    href={userAgreementPath}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-deep-purple-600 underline ml-1"
+                    >
+                    agreement.
+                    </a>
+                </Typography>
+                {(!otherAgreementPath || otherNeedReupload) && (
+                    <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
+                    Waiting for {otherPartyRole} to upload agreement.
+                    </Typography>
+                )}
+                </div>
+            )}
 
-          {/* In Progress Section (Admin View) */}
-          {inProgressApplication() && (
-            <div>
-              <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
-                Waiting for startup and investor to upload agreement.
-            </Typography>
-            </div>
-          )}
+            {((canUploadAgreement() && !userAgreementPath) || rejectedAgreement()) && (
+                // Show upload UI to upload agreement
+                <div>
+                {rejectedAgreement() && (
+                    <Typography className="mb-4 font-[400] text-sm max-md:text-xs" color="red">
+                        !! Your application has been rejected. Please hover over the tooltip icon to view the admin message.
+                    </Typography>
+                )}
+                  <Typography className="mb-4 font-[400] text-sm max-md:text-xs" color="gray">
+                    Kindly {rejectedAgreement() ? "re-upload" : "upload"} a copy of signed agreement between you and the {otherPartyRole}. 
+                    Please convert into <span className="font-bold">.pdf</span> format for submission.
+                    </Typography>
 
-          {/* In Progress Section (Admin View) */}
-          {inProgressReuploadAgreement() && (
-            <div>
-              <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
-                Waiting for startup and investor to reupload agreement.
-            </Typography>
-            </div>
-          )}
+                    <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept=".pdf,application/pdf"
+                    className="hidden"
+                    />
 
-          {/* Investor Review Section */}
-          {canReviewApplication() && (
-            <div className="mb-8 max-md:mb-6 max-sm:mb-4">
-              <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                Application Decision
-              </Typography>
-              <Typography color="gray" className="mb-4 font-[400] text-sm max-md:text-xs">
-                Dear investor, kindly indicate whether you accept or decline this application. 
-                A message to the startup is required, regardless of your decision. 
-                If you choose to accept, please include details on how to proceed with the remaining funding process. 
-                If you decide to decline, please provide a polite and constructive reason for your decision.
-              </Typography>
-              <Textarea
-                variant="outlined"
-                label="Message"
-                className="mb-6 max-md:mb-4 max-sm:mb-3 bg-white border border-gray-500 text-sm max-md:text-xs"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-              <div className="flex flex-row justify-end gap-4 max-md:gap-3 max-sm:gap-2">
-                <Button
-                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleAccept}
-                  disabled={isAccepting}
-                >
-                  {isAccepting ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <Spinner className="h-4 w-4" />
+                    <AppButton
+                      variant="outline"
+                      size="md"
+                      className="!bg-transparent w-auto mb-2"
+                      onClick={handleUploadClick}
+                      disabled={isUploading}
+                    >
+                      <div className="flex items-center justify-center gap-[19px] max-md:gap-3 max-sm:gap-2">
+                        <ArrowUpTrayIcon className="w-5 h-5 max-md:w-4 max-md:h-4 max-sm:w-3 max-sm:h-3 text-gray-500" />
+                        <span className="text-sm max-md:text-xs text-gray-500 font-medium capitalize">
+                          {selectedFile ? selectedFile.name : "Upload agreement"}
+                        </span>
+                      </div>
+                    </AppButton>
+
+                  <Typography variant="small" className="text-gray-500 font-[380] mt-2 mb-2 text-xs max-md:text-xs">
+                    Accepted file type: PDF (Max size: 10MB)
+                    </Typography>
+
+                    {uploadError && (
+                    <Typography variant="small" className="text-red-500 font-[380] mb-4 text-xs max-md:text-xs">
+                        {uploadError}
+                    </Typography>
+                    )}
+
+                    {selectedFile && !uploadError && (
+                    <Typography variant="small" className="text-green-500 font-[380] mb-4 text-xs max-md:text-xs">
+                        ✓ File selected: {selectedFile.name}
+                    </Typography>
+                    )}
+
+                  <div className="flex flex-col sm:flex-row gap-4 max-md:gap-3 max-sm:gap-2">
+                    <AppButton
+                      variant="primary"
+                      size="md"
+                      onClick={handleSubmit}
+                      disabled={!selectedFile || isUploading}
+                      loading={isUploading}
+                    >
+                      Submit
+                    </AppButton>
+                    <AppButton
+                      variant="text"
+                      size="md"
+                      onClick={() => window.history.back()}
+                      disabled={isUploading}
+                    >
+                      Back
+                    </AppButton>
                     </div>
-                  ) : (
-                    "Accept"
-                  )}
-                </Button>
-                <Button
-                  className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                  variant="outlined"
-                  onClick={handleDecline}
-                  disabled={isDeclining}
-                >
-                  {isDeclining ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <Spinner className="h-4 w-4" />
-                    </div>
-                  ) : (
-                    "Decline"
-                  )}
-                </Button>
+                </div>
+                )}
+
+              {/* Await Review Section (Startup View) */}
+              {(awaitReviewApplication() && userRole !== 'investor') && (
+                  <div>
+                  <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
+                      Waiting for investor to review.
+                  </Typography>
+                  </div>
+              )}
+
+              {/* In Progress Section (Admin View) */}
+              {inProgressApplication() && (
+                <div>
+                  <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
+                    Waiting for startup and investor to upload agreement.
+                </Typography>
+                </div>
+              )}
+
+              {/* In Progress Section (Admin View) */}
+              {inProgressReuploadAgreement() && (
+                <div>
+                  <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
+                    Waiting for startup and investor to reupload agreement.
+                </Typography>
+                </div>
+              )}
+
+              {/* Investor Review Section */}
+              {canReviewApplication() && (
+                <div className="mb-8 max-md:mb-6 max-sm:mb-4">
+                  <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                    Application Decision
+                  </Typography>
+                  <Typography color="gray" className="mb-4 font-[400] text-sm max-md:text-xs">
+                    Dear investor, kindly indicate whether you accept or decline this application. 
+                    A message to the startup is required, regardless of your decision. 
+                    If you choose to accept, please include details on how to proceed with the remaining funding process. 
+                    If you decide to decline, please provide a polite and constructive reason for your decision.
+                  </Typography>
+                  <Textarea
+                    variant="outlined"
+                    label="Message"
+                    className="mb-6 max-md:mb-4 max-sm:mb-3 bg-white border border-gray-500 text-sm max-md:text-xs"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                  <div className="flex flex-row justify-end gap-4 max-md:gap-3 max-sm:gap-2">
+                    <AppButton
+                      variant="primary"
+                      size="md"
+                      onClick={handleAccept}
+                      disabled={isAccepting}
+                      loading={isAccepting}
+                    >
+                      Accept
+                    </AppButton>
+                    <AppButton
+                      variant="text"
+                      size="md"
+                      onClick={handleDecline}
+                      disabled={isDeclining}
+                      loading={isDeclining}
+                    >
+                      Decline
+                    </AppButton>
+                  </div>
+                </div>
+              )}
+
+              {/* Admin Review Section */}
+              {canReviewAgreements() && (
+                <div className="mb-8 max-md:mb-6 max-sm:mb-4">
+                  <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
+                    Agreement Review
+                  </Typography>
+                  <Typography color="gray" className="mb-4 font-[400] text-sm max-md:text-xs">
+                    Approve the application if the agreements uploaded by both startup and investor match. 
+                    If decline, please provide a remark to startup and investor.
+                  </Typography>
+
+                  <Typography variant="small" className="text-gray-500 mb-2 text-xs max-md:text-xs">
+                    Click to view:
+                  </Typography>
+
+                  <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
+                    <a
+                    href={application.startup_agreement_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                      className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
+                    >
+                      Startup agreement
+                    </a>
+                    <a
+                    href={application.investor_agreement_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                      className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
+                    >
+                      Investor agreement
+                    </a>
+                  </div>
+
+                  <Textarea
+                    variant="outlined"
+                    label="Message"
+                    className="mb-6 max-md:mb-4 max-sm:mb-3 bg-white border border-gray-500 text-gray-700 text-sm max-md:text-xs"
+                    value={adminMessage}
+                    onChange={(e) => setAdminMessage(e.target.value)}
+                  />
+
+                  <div className="flex flex-row justify-end gap-4 max-md:gap-3 max-sm:gap-2">
+                    <AppButton
+                      variant="primary"
+                      size="md"
+                      onClick={handleAdminApprove}
+                      disabled={insufficientBalance() || isAdminApproving}
+                      loading={isAdminApproving}
+                    >
+                      Approve
+                    </AppButton>
+                    <AppButton
+                      variant="text"
+                      size="md"
+                      onClick={handleAdminDecline}
+                      disabled={isAdminDeclining}
+                      loading={isAdminDeclining}
+                    >
+                      Decline
+                    </AppButton>
+                  </div>
+                </div>
+              )}
+
+              {/* Pending Application Section (Startup and Investor Views) */}
+              {pendingAgreement() && (
+                <div>
+                  <Typography variant="h6" className="text-gray-500 mb-2 text-sm max-md:text-xs">
+                    Click to view:
+                  </Typography>
+
+                  <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
+                  <a
+                    href={application.startup_agreement_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                      className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
+                    >
+                      Startup agreement
+                    </a>
+                    <a
+                    href={application.investor_agreement_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                      className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
+                    >
+                      Investor agreement
+                    </a>
+                  </div>
+                  <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
+                    Waiting for admin to review.
+                </Typography>
               </div>
+              )}
+
+              {/* Completed Application Section */}
+              {(completedApplication() || activeApplication()) && (
+                <div>
+                  <Typography variant="h6" className="text-gray-500 mb-2 text-sm max-md:text-xs">
+                    Click to view:
+                  </Typography>
+
+                  <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
+                    <a
+                    href={application.startup_agreement_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                      className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
+                    >
+                      Startup agreement
+                    </a>
+                    <a
+                    href={application.investor_agreement_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                      className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
+                    >
+                      Investor agreement
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Admin Review Section */}
-          {canReviewAgreements() && (
-            <div className="mb-8 max-md:mb-6 max-sm:mb-4">
-              <Typography variant="h5" color="blue-gray" className="mb-4 max-md:mb-3 max-sm:mb-2 text-xl max-md:text-lg max-sm:text-base">
-                Agreement Review
-              </Typography>
-              <Typography color="gray" className="mb-4 font-[400] text-sm max-md:text-xs">
-                Approve the application if the agreements uploaded by both startup and investor match. 
-                If decline, please provide a remark to startup and investor.
-              </Typography>
-
-              <Typography variant="small" className="text-gray-500 mb-2 text-xs max-md:text-xs">
-                Click to view:
-              </Typography>
-
-              <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
-                <a
-                href={application.startup_agreement_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                  className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
-                >
-                  Startup agreement
-                </a>
-                <a
-                href={application.investor_agreement_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                  className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
-                >
-                  Investor agreement
-                </a>
-              </div>
-
-              <Textarea
-                variant="outlined"
-                label="Message"
-                className="mb-6 max-md:mb-4 max-sm:mb-3 bg-white border border-gray-500 text-gray-700 text-sm max-md:text-xs"
-                value={adminMessage}
-                onChange={(e) => setAdminMessage(e.target.value)}
-              />
-
-              <div className="flex flex-row justify-end gap-4 max-md:gap-3 max-sm:gap-2">
-                <Button
-                  className="bg-dark-plum text-white hover:bg-light-purple capitalize text-sm max-md:text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleAdminApprove}
-                  disabled={insufficientBalance() || isAdminApproving}
-                >
-                  {isAdminApproving ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <Spinner className="h-4 w-4" />
-                    </div>
-                  ) : (
-                    "Approve"
-                  )}
-                </Button>
-                <Button
-                  className="text-dark-plum hover:bg-light-purple hover:text-white border-none capitalize text-sm max-md:text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                  variant="outlined"
-                  onClick={handleAdminDecline}
-                  disabled={isAdminDeclining}
-                >
-                  {isAdminDeclining ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <Spinner className="h-4 w-4" />
-                    </div>
-                  ) : (
-                    "Decline"
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Pending Application Section (Startup and Investor Views) */}
-          {pendingAgreement() && (
-            <div>
-              <Typography variant="h6" className="text-gray-500 mb-2 text-sm max-md:text-xs">
-                Click to view:
-              </Typography>
-
-              <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
-              <a
-                href={application.startup_agreement_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                  className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
-                >
-                  Startup agreement
-                </a>
-                <a
-                href={application.investor_agreement_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                  className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
-                >
-                  Investor agreement
-                </a>
-              </div>
-              <Typography className="mb-2 font-[400] text-sm max-md:text-xs" color="gray">
-                Waiting for admin to review.
-            </Typography>
           </div>
-          )}
-
-          {/* Completed Application Section */}
-          {(completedApplication() || activeApplication()) && (
-            <div>
-              <Typography variant="h6" className="text-gray-500 mb-2 text-sm max-md:text-xs">
-                Click to view:
-              </Typography>
-
-              <div className="flex flex-col gap-2 mb-6 max-md:mb-4 max-sm:mb-3">
-                <a
-                href={application.startup_agreement_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                  className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
-                >
-                  Startup agreement
-                </a>
-                <a
-                href={application.investor_agreement_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                  className="text-deep-purple-600 font-semibold underline text-sm max-md:text-xs cursor-pointer"
-                >
-                  Investor agreement
-                </a>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      </main>
 
       {/* Proposal Modal */}
       <ProposalModal

@@ -9,7 +9,6 @@ import {
   XCircleIcon
 } from "@heroicons/react/24/outline";
 import {
-  Button,
   Card,
   CardBody,
   CardHeader,
@@ -21,17 +20,20 @@ import {
   Input,
   Option,
   Select,
-  Spinner,
   Textarea,
   Typography
 } from "@material-tailwind/react";
 import axios from "axios";
-import clsx from "clsx";
 import { CountryCode, getCountries } from 'libphonenumber-js';
+import Lottie from "lottie-react";
 import { useEffect, useState } from "react";
-import { Sidenav } from "../../components/sidenav";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
+import AppButton from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
 import { isValidPhoneNumber } from "../../lib/utils";
+import { fundingStageOptions, getFundingStageLabel } from "../../utils/fundingStage";
 import { getIndustryLabel, industryOptions } from "../../utils/industryOptions";
+import { investmentAmountOptions } from "../../utils/investmentAmountRange";
 
 interface User {
   id: number;
@@ -71,11 +73,6 @@ interface InvestmentPreferences {
 export const AdminUserManagement = (): JSX.Element => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   
-  //replace underscore with space 
-  const getFundingStageLabel = (value: string): string => {
-    return value.replace(/_/g, ' ')
-  };
-
   // Get list of countries from libphonenumber-js
   const countries = getCountries();
 
@@ -83,11 +80,6 @@ export const AdminUserManagement = (): JSX.Element => {
   const getCountryName = (countryCode: CountryCode): string => {
     const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
     return regionNames.of(countryCode) || countryCode;
-  };
-
-  // Function to get country code from country name
-  const getCountryCode = (countryName: string): CountryCode | undefined => {
-    return countries.find(code => getCountryName(code) === countryName);
   };
   
   const [users, setUsers] = useState<User[]>([]);
@@ -110,29 +102,7 @@ export const AdminUserManagement = (): JSX.Element => {
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  // touched states for field-level validation UX parity with public pages
-  const [startupTouched, setStartupTouched] = useState({
-    name: false,
-    email: false,
-    password: false,
-    contact_no: false,
-    company_name: false,
-    company_sector: false,
-    company_address: false,
-  });
-  const [investorTouched, setInvestorTouched] = useState({
-    name: false,
-    email: false,
-    password: false,
-    contact_no: false,
-    country: false,
-    company_address: false,
-    preferred_industry: false,
-    preferred_funding_stage: false,
-    investment_amount_range: false,
-    revenue_share_percentage: false,
-  });
+  const [errorMessage, setErrorMessage] = useState('');  
   
   // Startup form data
   const [startupForm, setStartupForm] = useState({
@@ -161,15 +131,6 @@ export const AdminUserManagement = (): JSX.Element => {
       revenue_share_percentage: 0
     } as InvestmentPreferences
   });
-
-  const investmentAmountOptions = [
-    "Less than RM 100,000",
-    "RM 100,000 - RM 500,000",
-    "RM 500,000 - RM 1,000,000",
-    "RM 1,000,000 - RM 2,000,000",
-    "RM 2,000,000 - RM 5,000,000",
-    "More than RM 5,000,000"
-  ];
 
   useEffect(() => {
     fetchUsers();
@@ -361,23 +322,7 @@ export const AdminUserManagement = (): JSX.Element => {
     resetForms();
   };
 
-  const validateStartupForm = (): boolean => {
-    const errors: FormErrors = {};
-    
-    if (!startupForm.name.trim()) errors.name = 'Full name is required';
-    if (!startupForm.email.trim()) errors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(startupForm.email)) errors.email = 'Email is invalid';
-    if (!startupForm.password) errors.password = 'Password is required';
-    else if (startupForm.password.length < 8) errors.password = 'Password must be at least 8 characters';
-    if (!startupForm.contact_no.trim()) errors.contact_no = 'Contact number is required';
-    if (!startupForm.company_name.trim()) errors.company_name = 'Company name is required';
-    if (!startupForm.company_sector) errors.company_sector = 'Company sector is required';
-    if (!startupForm.company_address.trim()) errors.company_address = 'Company address is required';
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
+  // STARTUP VALIDATION
   const validateStartupField = (name: keyof typeof startupForm, value: string): string | undefined => {
     switch (name) {
       case 'name':
@@ -408,38 +353,30 @@ export const AdminUserManagement = (): JSX.Element => {
   const handleStartupChange = (name: keyof typeof startupForm, value: string) => {
     setStartupForm(prev => ({ ...prev, [name]: value }));
     const err = validateStartupField(name, value || '');
-    setFormErrors(prev => ({ ...prev, [name]: err || '' }));
-    // clear error when fixed
-    if (!err) setFormErrors(prev => { const { [name]: _, ...rest } = prev; return rest; });
+    setFormErrors(prev => {
+      const next = { ...prev } as Record<string, string>;
+      const key = `startup_${name}`;
+      if (err) next[key] = err; else delete next[key];
+      return next;
+    });
   };
 
-  const handleStartupBlur = (name: keyof typeof startupForm) => {
-    setStartupTouched(prev => ({ ...prev, [name]: true }));
-    const value = String(startupForm[name] ?? '');
-    const err = validateStartupField(name, value);
-    setFormErrors(prev => ({ ...prev, [name]: err || '' }));
-  };
-
-  const validateInvestorForm = (): boolean => {
+  const validateStartupForm = (): boolean => {
     const errors: FormErrors = {};
-    
-    if (!investorForm.name.trim()) errors.name = 'Name is required';
-    if (!investorForm.email.trim()) errors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(investorForm.email)) errors.email = 'Email is invalid';
-    if (!investorForm.password) errors.password = 'Password is required';
-    else if (investorForm.password.length < 8) errors.password = 'Password must be at least 8 characters';
-    if (!investorForm.contact_no.trim()) errors.contact_no = 'Contact number is required';
-    if (investorForm.type === 'individual' && !investorForm.country.trim()) errors.country = 'Country is required';
-    if (investorForm.type === 'firm' && !investorForm.company_address.trim()) errors.company_address = 'Company address is required';
-    if (investorForm.investment_preferences.preferred_industry.length === 0) errors.preferred_industry = 'At least one preferred industry is required';
-    if (investorForm.investment_preferences.preferred_funding_stage.length === 0) errors.preferred_funding_stage = 'At least one preferred funding stage is required';
-    if (!investorForm.investment_preferences.investment_amount_range) errors.investment_amount_range = 'Investment amount range is required';
-    if (investorForm.investment_preferences.revenue_share_percentage <= 0) errors.revenue_share_percentage = 'Revenue share percentage must be greater than 0';
-    
-    setFormErrors(errors);
+    if (!startupForm.name.trim()) errors.startup_name = 'Full name is required';
+    if (!startupForm.email.trim()) errors.startup_email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(startupForm.email)) errors.startup_email = 'Email is invalid';
+    if (!startupForm.password) errors.startup_password = 'Password is required';
+    else if (startupForm.password.length < 8) errors.startup_password = 'Password must be at least 8 characters';
+    if (!startupForm.contact_no.trim()) errors.startup_contact_no = 'Contact number is required';
+    if (!startupForm.company_name.trim()) errors.startup_company_name = 'Company name is required';
+    if (!startupForm.company_sector) errors.startup_company_sector = 'Company sector is required';
+    if (!startupForm.company_address.trim()) errors.startup_company_address = 'Company address is required';
+    setFormErrors(prev => ({ ...prev, ...errors }));
     return Object.keys(errors).length === 0;
   };
 
+  // INVESTOR VALIDATION
   const validateInvestorField = (name: keyof typeof investorForm | keyof InvestmentPreferences | 'preferred_industry' | 'preferred_funding_stage' | 'investment_amount_range' | 'revenue_share_percentage', value: any): string | undefined => {
     switch (name) {
       case 'name':
@@ -475,9 +412,13 @@ export const AdminUserManagement = (): JSX.Element => {
 
   const handleInvestorChange = (name: keyof typeof investorForm, value: any) => {
     setInvestorForm(prev => ({ ...prev, [name]: value }));
-    const err = validateInvestorField(name, value);
-    setFormErrors(prev => ({ ...prev, [name]: err || '' }));
-    if (!err) setFormErrors(prev => { const { [name]: _, ...rest } = prev as any; return rest; });
+    const err = validateInvestorField(name as any, value);
+    setFormErrors(prev => {
+      const next = { ...prev } as Record<string, string>;
+      const key = `investor_${name}`;
+      if (err) next[key] = err; else delete next[key];
+      return next;
+    });
   };
 
   const handleInvestorPrefChange = (name: 'investment_amount_range' | 'revenue_share_percentage' | 'preferred_industry' | 'preferred_funding_stage', value: any) => {
@@ -488,41 +429,31 @@ export const AdminUserManagement = (): JSX.Element => {
     const err = validateInvestorField(name, value);
     setFormErrors(prev => ({ ...prev, [name]: err || '' }));
     if (!err) setFormErrors(prev => { const { [name]: _, ...rest } = prev; return rest; });
-    setInvestorTouched(prev => ({ ...prev, [name]: true }));
+  };
+
+  const validateInvestorForm = (): boolean => {
+    const errors: FormErrors = {};
+    if (!investorForm.name.trim()) errors.investor_name = 'Name is required';
+    if (!investorForm.email.trim()) errors.investor_email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(investorForm.email)) errors.investor_email = 'Email is invalid';
+    if (!investorForm.password) errors.investor_password = 'Password is required';
+    else if (investorForm.password.length < 8) errors.investor_password = 'Password must be at least 8 characters';
+    if (!investorForm.contact_no.trim()) errors.investor_contact_no = 'Contact number is required';
+    if (investorForm.type === 'individual' && !investorForm.country.trim()) errors.investor_country = 'Country is required';
+    if (investorForm.type === 'firm' && !investorForm.company_address.trim()) errors.investor_company_address = 'Company address is required';
+    if (investorForm.investment_preferences.preferred_industry.length === 0) errors.preferred_industry = 'At least one preferred industry is required';
+    if (investorForm.investment_preferences.preferred_funding_stage.length === 0) errors.preferred_funding_stage = 'At least one preferred funding stage is required';
+    if (!investorForm.investment_preferences.investment_amount_range) errors.investment_amount_range = 'Investment amount range is required';
+    if (investorForm.investment_preferences.revenue_share_percentage <= 0) errors.revenue_share_percentage = 'Revenue share percentage must be greater than 0';
+    setFormErrors(prev => ({ ...prev, ...errors }));
+    return Object.keys(errors).length === 0;
   };
 
   const handleCreateAccount = async () => {
     if (submitting) return;
 
     const isValid = accountType === 'startup' ? validateStartupForm() : validateInvestorForm();
-    if (!isValid) {
-      // Mark all fields as touched so errors display like public pages
-      if (accountType === 'startup') {
-        setStartupTouched({
-          name: true,
-          email: true,
-          password: true,
-          contact_no: true,
-          company_name: true,
-          company_sector: true,
-          company_address: true,
-        });
-      } else {
-        setInvestorTouched({
-          name: true,
-          email: true,
-          password: true,
-          contact_no: true,
-          country: true,
-          company_address: true,
-          preferred_industry: true,
-          preferred_funding_stage: true,
-          investment_amount_range: true,
-          revenue_share_percentage: true,
-        });
-      }
-      return;
-    }
+    if (!isValid) return;
 
     setSubmitting(true);
     setErrorMessage('');
@@ -542,7 +473,7 @@ export const AdminUserManagement = (): JSX.Element => {
       });
 
       if (response.data.success) {
-        setSuccessMessage(`${accountType.charAt(0).toUpperCase() + accountType.slice(1)} account created successfully!`);
+        setSuccessMessage(`${accountType == "startup" ? "Startup" : "Investor"} account created successfully!`);
         setTimeout(() => {
           closeCreateModal();
           fetchUsers();
@@ -559,7 +490,12 @@ export const AdminUserManagement = (): JSX.Element => {
             if (accountType === 'investor') {
               // Map nested investor preference keys like in InvestorRegisterPage
               const frontendKey =
-                key === 'contact_no' ? 'contact_no' :
+                key === 'contact_no' ? 'investor_contact_no' :
+                key === 'email' ? 'investor_email' :
+                key === 'name' ? 'investor_name' :
+                key === 'password' ? 'investor_password' :
+                key === 'country' ? 'investor_country' :
+                key === 'company_address' ? 'investor_company_address' :
                 key === 'investment_preferences.preferred_industry' ? 'preferred_industry' :
                 key === 'investment_preferences.preferred_funding_stage' ? 'preferred_funding_stage' :
                 key === 'investment_preferences.investment_amount_range' ? 'investment_amount_range' :
@@ -567,10 +503,20 @@ export const AdminUserManagement = (): JSX.Element => {
                 key;
               mapped[frontendKey] = firstMsg;
             } else {
-              mapped[key] = firstMsg;
+              // startup
+              const frontendKey =
+                key === 'contact_no' ? 'startup_contact_no' :
+                key === 'email' ? 'startup_email' :
+                key === 'name' ? 'startup_name' :
+                key === 'password' ? 'startup_password' :
+                key === 'company_name' ? 'startup_company_name' :
+                key === 'company_sector' ? 'startup_company_sector' :
+                key === 'company_address' ? 'startup_company_address' :
+                key;
+              mapped[frontendKey] = firstMsg;
             }
           });
-          setFormErrors(mapped);
+          setFormErrors(prev => ({ ...prev, ...mapped }));
         } else if (error.response?.data?.message) {
           setErrorMessage(error.response.data.message);
         } else {
@@ -603,8 +549,6 @@ export const AdminUserManagement = (): JSX.Element => {
       : currentIndustries.filter(i => i !== industry);
     
     handleInvestmentPreferenceChange('preferred_industry', updatedIndustries);
-    // field-level validation & touched
-    setInvestorTouched(prev => ({ ...prev, preferred_industry: true }));
     const err = validateInvestorField('preferred_industry', updatedIndustries);
     setFormErrors(prev => ({ ...prev, preferred_industry: err || '' }));
     if (!err) setFormErrors(prev => { const { preferred_industry, ...rest } = prev; return rest; });
@@ -617,8 +561,6 @@ export const AdminUserManagement = (): JSX.Element => {
       : currentStages.filter(s => s !== stage);
     
     handleInvestmentPreferenceChange('preferred_funding_stage', updatedStages);
-    // field-level validation & touched
-    setInvestorTouched(prev => ({ ...prev, preferred_funding_stage: true }));
     const err = validateInvestorField('preferred_funding_stage', updatedStages);
     setFormErrors(prev => ({ ...prev, preferred_funding_stage: err || '' }));
     if (!err) setFormErrors(prev => { const { preferred_funding_stage, ...rest } = prev; return rest; });
@@ -626,13 +568,14 @@ export const AdminUserManagement = (): JSX.Element => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <Spinner className="h-12 w-12 text-dark-plum mx-auto mb-4" />
-          <Typography variant="h6" color="gray" className="font-medium">
-            Loading User Management...
-          </Typography>
-        </div>
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
       </div>
     );
   }
@@ -665,14 +608,16 @@ export const AdminUserManagement = (): JSX.Element => {
                     </Typography>
                   </div>
                   <div className="flex-shrink-0">
-                    <Button
-                      className="flex items-center gap-3 bg-dark-plum hover:bg-light-purple text-white px-6 py-3 max-md:px-5 max-md:py-2.5 max-sm:px-3 max-sm:py-2 rounded-lg font-semibold text-base max-md:text-sm max-sm:text-xs capitalize w-full lg:w-auto"
+                    <AppButton
+                      variant="primary"
+                      size="lg"
+                      className="flex items-center gap-3"
                       onClick={openCreateModal}
                     >
                       <PlusIcon className="hidden sm:block h-5 w-5" />
                       <span className="max-sm:hidden">Create New Account</span>
                       <span className="sm:hidden">Create Account</span>
-                    </Button>
+                    </AppButton>
                   </div>
                 </div>
               </div>
@@ -755,12 +700,12 @@ export const AdminUserManagement = (): JSX.Element => {
                                   </td>
                                   <td className="p-4 max-sm:p-3 flex justify-start">
                                     <div className="flex items-center gap-2 max-sm:gap-1 justify-end max-sm:flex-col">
-                                      <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1" onClick={() => openUserModal(startupUser)} title="View Details">
+                                      <AppButton size="sm" variant="text" aria-label="View Details" className="text-dark-plum hover:bg-purple-50 p-2 max-sm:p-1" onClick={() => openUserModal(startupUser)}>
                                         <EyeIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                      </Button>
-                                      <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(startupUser)} title="Change Password">
+                                      </AppButton>
+                                      <AppButton size="sm" variant="text" aria-label="Change Password" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(startupUser)}>
                                         <ShieldCheckIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                      </Button>
+                                      </AppButton>
                                     </div>
                                   </td>
                                 </tr>
@@ -785,19 +730,19 @@ export const AdminUserManagement = (): JSX.Element => {
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="hidden sm:table-cell p-3 max-sm:p-2 border-b border-blue-gray-50">
+                                    <td className="hidden sm:table-cell p-4 max-sm:p-3">
                                       <div className="flex items-center">
                                         <span className="text-sm max-md:text-xs max-sm:text-[10px] font-medium">STAFF</span>
                                       </div>
                                     </td>
-                                    <td className="p-3 max-sm:p-2 border-blue-gray-50 flex justify-start">
+                                    <td className="p-4 max-sm:p-3 flex justify-start">
                                       <div className="flex items-center gap-2 max-sm:gap-1 justify-end max-sm:flex-col">
-                                        <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1" onClick={() => openUserModal(staffUser)} title="View Details">
+                                        <AppButton size="sm" variant="text" aria-label="View Details" className="text-dark-plum hover:bg-purple-50 p-2 max-sm:p-1" onClick={() => openUserModal(startupUser)}>
                                           <EyeIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                        </Button>
-                                        <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(staffUser)} title="Change Password">
+                                        </AppButton>
+                                        <AppButton size="sm" variant="text" aria-label="Change Password" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(startupUser)}>
                                           <ShieldCheckIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                        </Button>
+                                        </AppButton>
                                       </div>
                                     </td>
                                   </tr>
@@ -854,8 +799,9 @@ export const AdminUserManagement = (): JSX.Element => {
                         </tr>
                       </thead>
                       <tbody>
-                        {users.filter(u => u.role === 'investor').map((investor, idx) => {
+                        {users.filter(u => u.role === 'investor').map((investor) => {
                           return (
+                            
                             <tr key={investor.id} className="hover:bg-gray-50 transition-colors border-b border-blue-gray-50">
                               <td className="p-4 max-sm:p-3">
                                 <div className="flex items-center gap-3 max-sm:gap-2">
@@ -879,12 +825,12 @@ export const AdminUserManagement = (): JSX.Element => {
                               </td>
                               <td className="p-4 max-sm:p-3 flex justify-start">
                                 <div className="flex items-center gap-2 max-sm:gap-1 justify-end max-sm:flex-col">
-                                  <Button size="sm" variant="text" className="text-dark-plum hover:bg-light-purple/10 p-2 max-sm:p-1" onClick={() => openUserModal(investor)} title="View Details">
+                                  <AppButton size="sm" variant="text" aria-label="View Details" className="text-dark-plum hover:bg-purple-50 p-2 max-sm:p-1" onClick={() => openUserModal(investor)} title="View Details">
                                     <EyeIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                  </Button>
-                                  <Button size="sm" variant="text" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(investor)} title="Change Password">
+                                  </AppButton>
+                                  <AppButton size="sm" variant="text" aria-label="Change Password" className="text-green-600 hover:bg-green-50 p-2 max-sm:p-1" onClick={() => openChangePasswordModal(investor)} title="Change Password">
                                     <ShieldCheckIcon className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
-                                  </Button>
+                                  </AppButton>
                                 </div>
                               </td>
                             </tr>
@@ -1096,12 +1042,13 @@ export const AdminUserManagement = (): JSX.Element => {
           )}
         </DialogBody>
         <DialogFooter className="p-6 max-md:p-4 max-sm:p-3 bg-gray-50 rounded-b-2xl">
-          <Button 
+          <AppButton 
+            variant="primary"
+            size="lg"
             onClick={closeUserModal}
-            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6 max-md:px-4 max-sm:px-3"
           >
             Close
-          </Button>
+          </AppButton>
         </DialogFooter>
       </Dialog>
 
@@ -1127,30 +1074,22 @@ export const AdminUserManagement = (): JSX.Element => {
               Account Type
             </Typography>
             <div className="flex gap-4">
-              <Button
-                variant={accountType === 'startup' ? 'filled' : 'outlined'}
-                className={clsx(
-                  "flex items-center gap-2 capitalize",
-                  accountType === 'startup' && "bg-dark-plum text-white hover:bg-dark-plum/80",
-                  accountType === 'investor' && "bg-transparent border border-dark-plum text-dark-plum hover:bg-light-purple hover:text-white"
-                )}
+              <AppButton
+                variant={accountType === 'startup' ? 'primary' : 'outline'}
+                size="md"
                 onClick={() => setAccountType('startup')}
               >
                 <BuildingOfficeIcon className="h-4 w-4" />
                 Startup
-              </Button>
-              <Button
-                variant={accountType === 'investor' ? 'filled' : 'outlined'}
-                className={clsx(
-                  "flex items-center gap-2 capitalize",
-                  accountType === 'investor' && "bg-dark-plum text-white hover:bg-dark-plum/80",
-                  accountType === 'startup' && "bg-transparent border border-dark-plum text-dark-plum hover:bg-light-purple hover:text-white"
-                )}
+              </AppButton>
+              <AppButton
+                variant={accountType === 'investor' ? 'primary' : 'outline'}
+                size="md"
                 onClick={() => setAccountType('investor')}
               >
                 <UserGroupIcon className="h-4 w-4" />
                 Investor
-              </Button>
+              </AppButton>
             </div>
           </div>
 
@@ -1187,13 +1126,12 @@ export const AdminUserManagement = (): JSX.Element => {
                         label="Full Name"
                         value={startupForm.name}
                         onChange={(e) => handleStartupChange('name', e.target.value)}
-                        onBlur={() => handleStartupBlur('name')}
-                        error={!!startupTouched.name && !!formErrors.name}
+                        error={!!formErrors.startup_name}
                         className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                     />
-                    {startupTouched.name && formErrors.name && (
+                    {formErrors.startup_name && (
                         <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.name}
+                        {formErrors.startup_name}
                         </Typography>
                     )}
                 </div>
@@ -1205,13 +1143,12 @@ export const AdminUserManagement = (): JSX.Element => {
                         label="Email Address"
                         value={startupForm.email}
                         onChange={(e) => handleStartupChange('email', e.target.value)}
-                        onBlur={() => handleStartupBlur('email')}
-                        error={!!startupTouched.email && !!formErrors.email}
+                        error={!!formErrors.startup_email}
                         className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                     />
-                    {startupTouched.email && formErrors.email && (
+                    {formErrors.startup_email && (
                         <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.email}
+                        {formErrors.startup_email}
                         </Typography>
                     )}
                 </div>
@@ -1223,13 +1160,12 @@ export const AdminUserManagement = (): JSX.Element => {
                         label="Password"
                         value={startupForm.password}
                         onChange={(e) => handleStartupChange('password', e.target.value)}
-                        onBlur={() => handleStartupBlur('password')}
-                        error={!!startupTouched.password && !!formErrors.password}
+                        error={!!formErrors.startup_password}
                         className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                     />
-                    {startupTouched.password && formErrors.password && (
+                    {formErrors.startup_password && (
                         <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.password}
+                        {formErrors.startup_password}
                         </Typography>
                     )}
                 </div>
@@ -1241,13 +1177,12 @@ export const AdminUserManagement = (): JSX.Element => {
                         label="Contact Number"
                         value={startupForm.contact_no}
                         onChange={(e) => handleStartupChange('contact_no', e.target.value)}
-                        onBlur={() => handleStartupBlur('contact_no')}
-                        error={!!startupTouched.contact_no && !!formErrors.contact_no}
+                        error={!!formErrors.startup_contact_no}
                         className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                     />
-                    {startupTouched.contact_no && formErrors.contact_no && (
+                    {formErrors.startup_contact_no && (
                         <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.contact_no}
+                        {formErrors.startup_contact_no}
                         </Typography>
                     )} 
                 </div>
@@ -1259,13 +1194,12 @@ export const AdminUserManagement = (): JSX.Element => {
                         label="Company Name"
                         value={startupForm.company_name}
                         onChange={(e) => handleStartupChange('company_name', e.target.value)}
-                        onBlur={() => handleStartupBlur('company_name')}
-                        error={!!startupTouched.company_name && !!formErrors.company_name}
+                        error={!!formErrors.startup_company_name}
                         className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal md:col-span-2"
                     />
-                    {startupTouched.company_name && formErrors.company_name && (
+                    {formErrors.startup_company_name && (
                         <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.company_name}
+                        {formErrors.startup_company_name}
                         </Typography>
                     )}
                 </div>
@@ -1277,9 +1211,8 @@ export const AdminUserManagement = (): JSX.Element => {
                         value={startupForm.company_sector}
                         onChange={(value) => {
                         handleStartupChange('company_sector', value || '');
-                        setStartupTouched(prev => ({ ...prev, company_sector: true }));
                         }}
-                        error={!!startupTouched.company_sector && !!formErrors.company_sector}
+                        error={!!formErrors.startup_company_sector}
                         className="bg-white text-blue-gray300"
                         containerProps={{ className: "relative z-[1000] overflow-visible" }}
                         menuProps={{ className: "z-[9999] !top-auto !inset-auto" }}
@@ -1291,9 +1224,9 @@ export const AdminUserManagement = (): JSX.Element => {
                         </Option>
                         ))}
                     </Select>
-                    {startupTouched.company_sector && formErrors.company_sector && (
+                    {formErrors.startup_company_sector && (
                         <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.company_sector}
+                        {formErrors.startup_company_sector}
                         </Typography>
                     )}
                 </div>
@@ -1303,14 +1236,13 @@ export const AdminUserManagement = (): JSX.Element => {
                         label="Company Address"
                         value={startupForm.company_address}
                         onChange={(e) => handleStartupChange('company_address', e.target.value)}
-                        onBlur={() => handleStartupBlur('company_address')}
-                        error={!!startupTouched.company_address && !!formErrors.company_address}
+                        error={!!formErrors.startup_company_address}
                         className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal md:col-span-2"
                         size="lg"
                     />
-                    {startupTouched.company_address && formErrors.company_address && (
+                    {formErrors.startup_company_address && (
                         <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.company_address}
+                        {formErrors.startup_company_address}
                         </Typography>
                     )}                    
                 </div>
@@ -1326,30 +1258,20 @@ export const AdminUserManagement = (): JSX.Element => {
                     Investor Type
                   </Typography>
                   <div className="flex gap-4">
-                    <Button
-                      variant={investorForm.type === 'individual' ? 'filled' : 'outlined'}
-                      className={clsx(
-                        "flex items-center gap-2 capitalize",
-                        investorForm.type === 'individual' && "bg-avocado-green text-gray-900 hover:bg-avocado-green/80",
-                        investorForm.type === 'firm' && "bg-transparent border border-gray-900 text-gray-900 hover:bg-avocado-green"
-                      )}
+                    <AppButton
+                      variant={investorForm.type === 'individual' ? 'primary' : 'outline'}
                       size="sm"
                       onClick={() => setInvestorForm(prev => ({ ...prev, type: 'individual' }))}
                     >
                       Individual
-                    </Button>
-                    <Button
-                      variant={investorForm.type === 'firm' ? 'filled' : 'outlined'}
-                      className={clsx(
-                        "flex items-center gap-2 capitalize",
-                        investorForm.type === 'firm' && "bg-avocado-green text-gray-900 hover:bg-avocado-green/80",
-                        investorForm.type === 'individual' && "bg-transparent border border-gray-900 text-gray-900 hover:bg-avocado-green"
-                      )}
+                    </AppButton>
+                    <AppButton
+                      variant={investorForm.type === 'firm' ? 'primary' : 'outline'}
                       size="sm"
                       onClick={() => setInvestorForm(prev => ({ ...prev, type: 'firm' }))}
                     >
                       Firm
-                    </Button>
+                    </AppButton>
                   </div>
                 </div>
 
@@ -1360,13 +1282,12 @@ export const AdminUserManagement = (): JSX.Element => {
                     label="Name"
                     value={investorForm.name}
                     onChange={(e) => handleInvestorChange('name', e.target.value)}
-                    onBlur={() => setInvestorTouched(prev => ({ ...prev, name: true }))}
-                    error={!!investorTouched.name && !!formErrors.name}
+                    error={!!formErrors.investor_name}
                     className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                   />
-                  {investorTouched.name && formErrors.name && (
+                  {formErrors.investor_name && (
                     <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                      {formErrors.name}
+                      {formErrors.investor_name}
                     </Typography>
                   )}
                 </div>
@@ -1378,13 +1299,12 @@ export const AdminUserManagement = (): JSX.Element => {
                     label="Contact Number"
                     value={investorForm.contact_no}
                     onChange={(e) => handleInvestorChange('contact_no', e.target.value)}
-                    onBlur={() => setInvestorTouched(prev => ({ ...prev, contact_no: true }))}
-                    error={!!investorTouched.contact_no && !!formErrors.contact_no}
+                    error={!!formErrors.investor_contact_no}
                     className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                   />
-                  {investorTouched.contact_no && formErrors.contact_no && (
+                  {formErrors.investor_contact_no && (
                     <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                      {formErrors.contact_no}
+                      {formErrors.investor_contact_no}
                     </Typography>
                   )}
                 </div>
@@ -1396,13 +1316,12 @@ export const AdminUserManagement = (): JSX.Element => {
                     label="Email Address"
                     value={investorForm.email}
                     onChange={(e) => handleInvestorChange('email', e.target.value)}
-                    onBlur={() => setInvestorTouched(prev => ({ ...prev, email: true }))}
-                    error={!!investorTouched.email && !!formErrors.email}
+                    error={!!formErrors.investor_email}
                     className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                   />
-                  {investorTouched.email && formErrors.email && (
+                  {formErrors.investor_email && (
                     <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                      {formErrors.email}
+                      {formErrors.investor_email}
                     </Typography>
                   )}
                 </div>
@@ -1414,13 +1333,12 @@ export const AdminUserManagement = (): JSX.Element => {
                     label="Password"
                     value={investorForm.password}
                     onChange={(e) => handleInvestorChange('password', e.target.value)}
-                    onBlur={() => setInvestorTouched(prev => ({ ...prev, password: true }))}
-                    error={!!investorTouched.password && !!formErrors.password}
+                    error={!!formErrors.investor_password}
                     className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                   />
-                  {investorTouched.password && formErrors.password && (
+                  {formErrors.investor_password && (
                     <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                      {formErrors.password}
+                      {formErrors.investor_password}
                     </Typography>
                   )}
                 </div>
@@ -1434,9 +1352,8 @@ export const AdminUserManagement = (): JSX.Element => {
                       value={investorForm.country}
                       onChange={(value) => {
                         handleInvestorChange('country', value || '');
-                        setInvestorTouched(prev => ({ ...prev, country: true }));
                       }}
-                      error={!!investorTouched.country && !!formErrors.country}
+                      error={!!formErrors.investor_country}
                       size="lg"
                     >
                       {countries.map((countryCode) => (
@@ -1449,9 +1366,9 @@ export const AdminUserManagement = (): JSX.Element => {
                         </Option>
                       ))}
                     </Select>
-                    {investorTouched.country && formErrors.country && (
+                    {formErrors.investor_country && (
                       <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.country}
+                        {formErrors.investor_country}
                       </Typography>
                     )}
                   </div>
@@ -1461,14 +1378,13 @@ export const AdminUserManagement = (): JSX.Element => {
                       label="Company Address"
                       value={investorForm.company_address}
                       onChange={(e) => handleInvestorChange('company_address', e.target.value)}
-                      onBlur={() => setInvestorTouched(prev => ({ ...prev, company_address: true }))}
-                      error={!!investorTouched.company_address && !!formErrors.company_address}
+                      error={!!formErrors.investor_company_address}
                       className="h-10 px-3 py-3 bg-white border-blue-gray100 text-blue-gray300 font-leading-tight-text-sm-font-normal"
                       size="lg"
                     />
-                    {investorTouched.company_address && formErrors.company_address && (
+                    {formErrors.investor_company_address && (
                       <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
-                        {formErrors.company_address}
+                        {formErrors.investor_company_address}
                       </Typography>
                     )}
                   </div>
@@ -1501,7 +1417,7 @@ export const AdminUserManagement = (): JSX.Element => {
                         </label>
                       ))}
                     </div>
-                    {investorTouched.preferred_industry && formErrors.preferred_industry && (
+                    {formErrors.preferred_industry && (
                       <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                         {formErrors.preferred_industry}
                       </Typography>
@@ -1513,21 +1429,21 @@ export const AdminUserManagement = (): JSX.Element => {
                       Preferred Funding Stages
                     </Typography>
                     <div className="space-y-2 max-h-32 overflow-y-auto p-3 bg-gray-50 rounded-lg">
-                      {['Seed', 'Series A', 'Series B'].map((stage) => (
-                        <label key={stage} className="flex items-center gap-2 cursor-pointer">
+                      {fundingStageOptions.map((stage) => (
+                        <label key={stage.value} className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={investorForm.investment_preferences.preferred_funding_stage.includes(stage)}
-                            onChange={(e) => handleFundingStageChange(stage, e.target.checked)}
+                            checked={investorForm.investment_preferences.preferred_funding_stage.includes(stage.value)}
+                            onChange={(e) => handleFundingStageChange(stage.value, e.target.checked)}
                             className="rounded border-gray-300 text-dark-plum focus:ring-light-purple h-5 w-5"
                           />
                           <Typography variant="small" className="text-sm">
-                            {stage}
+                            {stage.label}
                           </Typography>
                         </label>
                       ))}
                     </div>
-                    {investorTouched.preferred_funding_stage && formErrors.preferred_funding_stage && (
+                    {formErrors.preferred_funding_stage && (
                       <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                         {formErrors.preferred_funding_stage}
                       </Typography>
@@ -1539,7 +1455,7 @@ export const AdminUserManagement = (): JSX.Element => {
                     label="Investment Amount Range"
                     value={investorForm.investment_preferences.investment_amount_range}
                     onChange={(value) => handleInvestorPrefChange('investment_amount_range', value || '')}
-                    error={!!investorTouched.investment_amount_range && !!formErrors.investment_amount_range}
+                    error={!!formErrors.investment_amount_range}
                     className="bg-white text-blue-gray300"
                     size="lg"
                   >
@@ -1549,7 +1465,7 @@ export const AdminUserManagement = (): JSX.Element => {
                       </Option>
                     ))}
                   </Select>
-                  {investorTouched.investment_amount_range && formErrors.investment_amount_range && (
+                  {formErrors.investment_amount_range && (
                     <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                       {formErrors.investment_amount_range}
                     </Typography>
@@ -1562,11 +1478,11 @@ export const AdminUserManagement = (): JSX.Element => {
                         type="number"
                         value={investorForm.investment_preferences.revenue_share_percentage}
                         onChange={(e) => handleInvestorPrefChange('revenue_share_percentage', parseFloat(e.target.value) || 0)}
-                        error={!!investorTouched.revenue_share_percentage && !!formErrors.revenue_share_percentage}
+                        error={!!formErrors.revenue_share_percentage}
                         className="bg-white text-blue-gray300 "
                         size="lg"
                     />
-                    {investorTouched.revenue_share_percentage && formErrors.revenue_share_percentage && (
+                    {formErrors.revenue_share_percentage && (
                         <Typography variant="small" color="red" className="mt-1 font-text-sm-font-normal">
                         {formErrors.revenue_share_percentage}
                         </Typography>
@@ -1578,21 +1494,23 @@ export const AdminUserManagement = (): JSX.Element => {
           )}
           </div>
         </DialogBody>
-        <DialogFooter className="p-6 max-md:p-4 max-sm:p-3 bg-gray-50 rounded-b-2xl">
-          <Button 
+        <DialogFooter className="p-6 max-md:p-4 max-sm:p-3 bg-gray-50 rounded-b-2xl flex justify-end gap-4">
+          <AppButton 
             variant="text" 
+            size="md"
             onClick={closeCreateModal}
-            className="mr-3 max-md:mr-2 max-sm:mr-1 font-semibold capitalize"
           >
             Cancel
-          </Button>
-          <Button 
+          </AppButton>
+          <AppButton 
+            variant="primary"
+            size="md"
             onClick={handleCreateAccount} 
             disabled={submitting}
-            className="bg-dark-plum hover:bg-light-purple text-white font-semibold capitalize px-6 max-md:px-4 max-sm:px-3"
+            loading={submitting}
           >
-            {submitting ? <Spinner className="h-5 w-5" /> : 'Create Account'}
-          </Button>
+            Create Account
+          </AppButton>
         </DialogFooter>
       </Dialog>
 
@@ -1665,21 +1583,23 @@ export const AdminUserManagement = (): JSX.Element => {
             </div>
           )}
         </DialogBody>
-        <DialogFooter className="p-6 max-md:p-4 max-sm:p-3 bg-gray-50 rounded-b-2xl">
-          <Button 
+        <DialogFooter className="p-6 max-md:p-4 max-sm:p-3 bg-gray-50 rounded-b-2xl flex justify-end gap-4">
+          <AppButton 
             variant="text" 
+            size="md"
             onClick={closeChangePasswordModal}
-            className="mr-3 max-md:mr-2 max-sm:mr-1 font-semibold capitalize"
           >
             Cancel
-          </Button>
-          <Button 
+          </AppButton>
+          <AppButton 
+            variant="secondary"
+            size="md"
             onClick={handleChangePassword} 
             disabled={changingPassword}
-            className="bg-avocado-green hover:bg-avocado-green/80 text-blue-gray font-semibold capitalize px-6 max-md:px-4 max-sm:px-3"
+            loading={changingPassword}
           >
-            {changingPassword ? <Spinner className="h-5 w-5" /> : 'Change Password'}
-          </Button>
+            Change Password
+          </AppButton>
         </DialogFooter>
       </Dialog>
     </div>

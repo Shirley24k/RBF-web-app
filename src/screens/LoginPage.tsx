@@ -1,8 +1,9 @@
-import { Button, Input, Spinner } from "@material-tailwind/react";
+import { Input } from "@material-tailwind/react";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import AppButton from "../components/ui/AppButton";
 
 export const Login = (): JSX.Element => {
   const navigate = useNavigate();
@@ -95,13 +96,13 @@ export const Login = (): JSX.Element => {
             <span className="text-[#073b1d]">F</span>
           </div>
 
-          <Button
-            variant="outlined"
-            className="h-12 max-md:h-10 max-sm:h-8 px-6 max-md:px-4 max-sm:px-3 py-[5px] rounded-lg border border-solid border-light-purple [font-family:'Roboto',Helvetica] font-bold text-dark-plum text-sm max-md:text-xs bg-transparent hover:bg-light-purple hover:text-white capitalize"
+          <AppButton
+            variant="outline"
+            size="lg"
             onClick={() => navigate("/")}
           >
             Home
-          </Button>
+          </AppButton>
         </header>
 
         {/* Main Content */}
@@ -170,19 +171,16 @@ export const Login = (): JSX.Element => {
             </div>
 
             {/* Sign In Button */}
-            <Button
-              className="w-full h-12 max-md:h-10 max-sm:h-8 bg-dark-plum hover:bg-dark-plum/90 text-white font-bold text-sm max-md:text-xs rounded-lg capitalize hover:bg-light-purple disabled:opacity-50 disabled:cursor-not-allowed"
+            <AppButton
+              variant="primary"
+              size="lg"
+              fullWidth
               onClick={() => login(email, password)}
               disabled={isLoading}
+              loading={isLoading}
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Spinner className="h-5 w-5" />
-                </div>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
+              Sign In
+            </AppButton>
 
             {/* Create Account Link */}
             <div className="text-center font-['Roboto',Helvetica] font-normal text-gray-600 text-sm max-md:text-xs tracking-[0] leading-[21px]">

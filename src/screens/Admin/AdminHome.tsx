@@ -4,12 +4,15 @@ import {
   DocumentTextIcon,
   UserGroupIcon
 } from "@heroicons/react/24/outline";
-import { Button, Spinner, Typography } from "@material-tailwind/react";
+import { Typography } from "@material-tailwind/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { MonthlyChart } from "../../components/MonthlyChart";
-import { Sidenav } from "../../components/sidenav";
-import { StatCard } from "../../components/StatCard";
+import { AppButton } from "../../components/ui/AppButton";
+import { Sidenav } from "../../components/ui/sidenav";
+import { StatCard } from "../../components/ui/StatCard";
+import Lottie from "lottie-react";
+import coinCirclingWallet from "../../assets/coin circling wallet.json";
 
 export const AdminHome = (): JSX.Element => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -117,22 +120,16 @@ export const AdminHome = (): JSX.Element => {
     fetchAnalytics();
   }, []);
 
-  const handlePreviousMonth = () => {
-    if (currentMonthIndex > 0) {
-      setCurrentMonthIndex(currentMonthIndex - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (currentMonthIndex < chartData.length - 1) {
-      setCurrentMonthIndex(currentMonthIndex + 1);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner className="h-8 w-8" />
+      <div className="flex flex-col justify-center items-center h-screen">
+        <Lottie 
+          animationData={coinCirclingWallet} 
+          loop={true} 
+          autoplay={true}
+          style={{ width: '15%', height: '15%' }}
+        />
+        <Typography variant="h4" className="text-xl max-md:text-base font-bold">Loading...</Typography>
       </div>
     );
   }
@@ -176,10 +173,6 @@ export const AdminHome = (): JSX.Element => {
                       <MonthlyChart
                         data={chartData}
                         currentMonthIndex={currentMonthIndex}
-                        onPreviousMonth={handlePreviousMonth}
-                        onNextMonth={handleNextMonth}
-                        canGoPrevious={currentMonthIndex > 0}
-                        canGoNext={currentMonthIndex < chartData.length - 1}
                       />
                     ) : (
                       <div className="flex items-center justify-center h-64">
@@ -196,25 +189,24 @@ export const AdminHome = (): JSX.Element => {
                       </Typography>
                     </div>
                     <div className="grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-6 max-lg:gap-4">
-                    <StatCard
-                        title="New Applications"
-                        value={analytics.newApplicationsThisMonth}
-                      icon={DocumentTextIcon}
-                      color="border-l-blue-500"
-                    />
-                    <StatCard
-                        title="New Startups"
-                        value={analytics.newStartupsThisMonth}
-                        icon={UserGroupIcon}
-                      color="border-l-green-500"
-                    />
-                    <StatCard
-                        title="New Investors"
-                        value={analytics.newInvestorsThisMonth}
-                        icon={UserGroupIcon}
-                      color="border-l-purple-500"
-                    />
-                    
+                      <StatCard
+                          title="New Applications"
+                          value={analytics.newApplicationsThisMonth}
+                        icon={DocumentTextIcon}
+                        color="border-l-blue-500"
+                      />
+                      <StatCard
+                          title="New Startups"
+                          value={analytics.newStartupsThisMonth}
+                          icon={UserGroupIcon}
+                        color="border-l-green-500"
+                      />
+                      <StatCard
+                          title="New Investors"
+                          value={analytics.newInvestorsThisMonth}
+                          icon={UserGroupIcon}
+                        color="border-l-purple-500"
+                      />
                     </div>
                   </div>
 
@@ -270,27 +262,21 @@ export const AdminHome = (): JSX.Element => {
 
                   {/* Quick Actions Row */}
                   <div className="bg-white rounded-2xl p-8 max-lg:p-6 shadow-sm border border-gray-200">
-                    <div className="flex flex-row items-center justify-between gap-4 max-sm:flex-col max-sm:items-start max-sm:gap-2">
+                    <div className="flex flex-row items-center justify-between gap-4">
                       <div className="flex items-center gap-4 max-lg:gap-3 max-sm:gap-2">
                         <UserGroupIcon className="w-8 h-8 max-lg:w-6 max-lg:h-6 max-sm:w-5 max-sm:h-5 text-orange-500" />
                         <Typography variant="h4" className="text-2xl max-lg:text-xl max-sm:text-lg font-bold text-gray-900">Quick Actions</Typography>
                       </div>
-                      <Button 
-                        className={`font-bold py-4 max-lg:py-3 max-sm:py-2.5 px-8 max-lg:px-6 max-sm:px-4 rounded-xl text-lg max-lg:text-base max-sm:text-sm capitalize transition-all duration-200 ${
-                          applications && applications.length > 0 
-                          ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl' 
-                          : 'bg-dark-plum hover:bg-light-purple text-white shadow-lg hover:shadow-xl'
-                        }`}
+                      <AppButton 
+                        variant={applications && applications.length > 0 ? 'danger' : 'primary'}
+                        size="lg"
+                        className="max-sm:text-xs max-sm:py-1.5 max-sm:px-3"
                         onClick={()=>{
-                          if (applications && applications.length > 0) {
-                            window.location.href = "/admin-funding?status=Pending";
-                          } else {
-                            window.location.href = "/admin-funding";
-                          }
+                          window.location.href = `${applications && applications.length > 0 ? '/admin-funding?status=Pending' : '/admin-funding'}`;
                         }}
                       >
                         {applications && applications.length > 0 ? `Review Applications (${applications.length})` : 'View Applications'}
-                      </Button>
+                      </AppButton>
                     </div>
                   </div>
               </div>
