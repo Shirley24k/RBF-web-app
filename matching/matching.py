@@ -1,11 +1,13 @@
+# This is the matching algorithm used for production (use Neo4j aura)
+
 from neo4j import GraphDatabase
 import os
 import time
 
 def get_driver():
     """Create a new Neo4j driver instance"""
-    # uri = os.getenv("NEO4J_PROD_URI") or ""
-    uri = os.getenv("NEO4J_TRAIN_URI") or ""
+    uri = os.getenv("NEO4J_PROD_URI") or ""
+    # uri = os.getenv("NEO4J_TRAIN_URI") or ""
     username = os.getenv("NEO4J_USERNAME") or ""
     password = os.getenv("NEO4J_PASSWORD") or ""
     

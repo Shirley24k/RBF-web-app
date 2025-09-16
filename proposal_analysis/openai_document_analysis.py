@@ -134,7 +134,7 @@ def craft_prompt_for_proposal_analysis(document_text):
     For company_industry, you MUST use EXACTLY one of these values (case-sensitive):
     - "SaaS", "FinTech", "HealthTech", "EdTech", "AI_ML", "Blockchain", "IoT", "Cybersecurity", "Cloud_Computing", "Data_Analytics"
     - "AR_VR", "Robotics", "Quantum_Computing", "Biotech", "CleanTech", "AgriTech", "Logistics_Tech", "E_Commerce", "Gaming", "Social_Media"
-    - "Other_Tech", "Non_Tech"
+    - "Other_Tech"
     
     Do not modify the case or format. Use the exact value as shown above.
 
@@ -476,14 +476,4 @@ async def extract_agreement_details(agreement_path: str) -> dict:
             "cap_multiple": "Null"
         }
 
-if __name__ == "__main__":
-    # Example usage with a file stored in Supabase storage
-    # The path should be relative to your storage bucket
-    storage_path = "Agreement sample.pdf"  # Adjust this path
-    response = asyncio.run(extract_agreement_details(storage_path))
-    print(response)
-    if response and 'revenue_share_percentage' in response:
-        print(response['revenue_share_percentage'])
-    else:
-        print("No revenue share percentage found in response")
     

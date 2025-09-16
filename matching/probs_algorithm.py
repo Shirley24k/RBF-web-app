@@ -1,3 +1,5 @@
+# This is the evaluation script for the matching algorithm on itjuzi.com dataset (use local Neo4j)
+
 from neo4j import GraphDatabase
 import os
 from dotenv import load_dotenv
@@ -160,19 +162,6 @@ def load_csv_data_to_neo4j():
     except Exception as e:
         print(f"Error loading CSV data: {e}")
         return False
-
-# def compute_tag_coverage(app_tags, recommended_investors, investor_tags):
-#     covered_tags = set()
-#     for inv in recommended_investors:
-#         covered_tags |= investor_tags.get(inv, set())
-#     return len(app_tags & covered_tags) / len(app_tags) if app_tags else 0.0
-
-# def compute_tag_overlap(app_tags, investor, investor_tags):
-#     inv_tags = investor_tags.get(investor, set())
-#     union = app_tags | inv_tags
-#     inter = app_tags & inv_tags
-#     return len(inter) / len(union) if union else 0.0
-
 
 def print_recommendations(app_tag_map):
     """Print recommendations for each application with score, sector investments, and tag overlap count."""

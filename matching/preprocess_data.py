@@ -1,4 +1,5 @@
-# Preprocess investment data for three-node system (Application, Tag, Investor)
+# Preprocess itjuzi.com dataset for three-node system (Application, Tag, Investor)
+
 import pandas as pd
 import uuid
 import os
