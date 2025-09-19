@@ -1,0 +1,717 @@
+﻿investor,investor_name,tag
+207,青锐创投,AI技术层
+207,青锐创投,Seed
+207,青锐创投,0-100M
+16,Amadeus Capital Partners,AI技术层
+16,Amadeus Capital Partners,Seed
+16,Amadeus Capital Partners,0-100M
+194,Zetta Venture Partners,AI技术层
+194,Zetta Venture Partners,Seed
+194,Zetta Venture Partners,0-100M
+170,Symvan Capital,AI技术层
+170,Symvan Capital,Seed
+170,Symvan Capital,0-100M
+108,MD One Ventures,AI技术层
+108,MD One Ventures,Seed
+108,MD One Ventures,0-100M
+95,Kadmos Capital,AI技术层
+95,Kadmos Capital,Seed
+95,Kadmos Capital,0-100M
+12,Ahren,AI技术层
+12,Ahren,Seed
+12,Ahren,0-100M
+19,Andreessen Horowitz-a16z,AI基础层
+19,Andreessen Horowitz-a16z,AI技术层
+19,Andreessen Horowitz-a16z,AI行业应用
+19,Andreessen Horowitz-a16z,Seed
+19,Andreessen Horowitz-a16z,A Series
+19,Andreessen Horowitz-a16z,B Series
+19,Andreessen Horowitz-a16z,10B+
+19,Andreessen Horowitz-a16z,0-100M
+19,Andreessen Horowitz-a16z,100M-200M
+19,Andreessen Horowitz-a16z,200M-300M
+19,Andreessen Horowitz-a16z,300M-400M
+19,Andreessen Horowitz-a16z,1B-2B
+45,Conviction Partners,AI基础层
+45,Conviction Partners,Seed
+45,Conviction Partners,10B+
+208,高通Qualcomm,AI行业应用
+208,高通Qualcomm,Seed
+208,高通Qualcomm,0-100M
+71,General Catalyst Partners,AI行业应用
+71,General Catalyst Partners,AIGC
+71,General Catalyst Partners,Seed
+71,General Catalyst Partners,A Series
+71,General Catalyst Partners,B Series
+71,General Catalyst Partners,0-100M
+71,General Catalyst Partners,100M-200M
+71,General Catalyst Partners,500M-600M
+71,General Catalyst Partners,1B-2B
+71,General Catalyst Partners,600M-700M
+104,Lux Capital,AI行业应用
+104,Lux Capital,AIGC
+104,Lux Capital,Seed
+104,Lux Capital,A Series
+104,Lux Capital,B Series
+104,Lux Capital,0-100M
+104,Lux Capital,100M-200M
+104,Lux Capital,1B-2B
+165,SpeedInvest,AI技术层
+165,SpeedInvest,Seed
+165,SpeedInvest,0-100M
+55,EVC,AI技术层
+55,EVC,Seed
+55,EVC,0-100M
+172,TEDCO,AI行业应用
+172,TEDCO,Seed
+172,TEDCO,0-100M
+134,Prime Set,AI行业应用
+134,Prime Set,Seed
+134,Prime Set,0-100M
+186,WVC,AI行业应用
+186,WVC,AI技术层
+186,WVC,Seed
+186,WVC,B Series
+186,WVC,0-100M
+186,WVC,300M-400M
+48,Decibel Partners,AI行业应用
+48,Decibel Partners,Seed
+48,Decibel Partners,0-100M
+122,Newfund Capital,AI行业应用
+122,Newfund Capital,Seed
+122,Newfund Capital,0-100M
+27,BPI France,AI行业应用
+27,BPI France,Seed
+27,BPI France,0-100M
+87,INCO Ventures,AI行业应用
+87,INCO Ventures,Seed
+87,INCO Ventures,0-100M
+176,Thrive capital,AI技术层
+176,Thrive capital,Seed
+176,Thrive capital,0-100M
+157,Seven Seven Six,AI技术层
+157,Seven Seven Six,Seed
+157,Seven Seven Six,0-100M
+98,Khosla Ventures,AI技术层
+98,Khosla Ventures,AI行业应用
+98,Khosla Ventures,Seed
+98,Khosla Ventures,B Series
+98,Khosla Ventures,100M-200M
+98,Khosla Ventures,0-100M
+168,Susa Ventures,AI技术层
+168,Susa Ventures,Seed
+168,Susa Ventures,A Series
+168,Susa Ventures,0-100M
+7,Abstract Ventures,AI技术层
+7,Abstract Ventures,AI行业应用
+7,Abstract Ventures,Seed
+7,Abstract Ventures,A Series
+7,Abstract Ventures,B Series
+7,Abstract Ventures,0-100M
+7,Abstract Ventures,200M-300M
+7,Abstract Ventures,300M-400M
+36,Calibrate Ventures,AI行业应用
+36,Calibrate Ventures,Seed
+36,Calibrate Ventures,0-100M
+128,Peak XV Partners,AI行业应用
+128,Peak XV Partners,Seed
+128,Peak XV Partners,0-100M
+68,GSV,AI行业应用
+68,GSV,Seed
+68,GSV,0-100M
+175,The House Fund,AI行业应用
+175,The House Fund,Seed
+175,The House Fund,0-100M
+70,General Catalyst India,AI行业应用
+70,General Catalyst India,Seed
+70,General Catalyst India,0-100M
+26,BDC Venture Capital,AI行业应用
+26,BDC Venture Capital,Seed
+26,BDC Venture Capital,0-100M
+89,Impact Venture Capital,AI行业应用
+89,Impact Venture Capital,Seed
+89,Impact Venture Capital,0-100M
+85,Hitachi Ventures,AI行业应用
+85,Hitachi Ventures,Seed
+85,Hitachi Ventures,0-100M
+84,Hazelview Ventures,AI行业应用
+84,Hazelview Ventures,Seed
+84,Hazelview Ventures,0-100M
+59,Exposition Ventures,AI行业应用
+59,Exposition Ventures,Seed
+59,Exposition Ventures,0-100M
+131,Point72 Ventures,AI行业应用
+131,Point72 Ventures,Seed
+131,Point72 Ventures,100M-200M
+158,Sheva Capital,AI行业应用
+158,Sheva Capital,Seed
+158,Sheva Capital,100M-200M
+171,Synchrony Ventures,AI行业应用
+171,Synchrony Ventures,Seed
+171,Synchrony Ventures,100M-200M
+42,Cerca Partners,AI行业应用
+42,Cerca Partners,Seed
+42,Cerca Partners,100M-200M
+159,Shine Capital,AI行业应用
+159,Shine Capital,Seed
+159,Shine Capital,100M-200M
+78,Greycroft Partners,AI技术层
+78,Greycroft Partners,Seed
+78,Greycroft Partners,0-100M
+195,betaworks,AI技术层
+195,betaworks,Seed
+195,betaworks,0-100M
+189,White Star Capital,AI技术层
+189,White Star Capital,Seed
+189,White Star Capital,0-100M
+183,VariantFund,AI技术层
+183,VariantFund,Seed
+183,VariantFund,0-100M
+116,Mozilla Ventures,AI技术层
+116,Mozilla Ventures,Seed
+116,Mozilla Ventures,0-100M
+152,Seed Club Ventures,AI技术层
+152,Seed Club Ventures,Seed
+152,Seed Club Ventures,0-100M
+52,Differential Ventures,AI技术层
+52,Differential Ventures,Seed
+52,Differential Ventures,0-100M
+198,iNovia Capital,AI行业应用
+198,iNovia Capital,Seed
+198,iNovia Capital,0-100M
+60,Felicis Ventures,AI行业应用
+60,Felicis Ventures,AI技术层
+60,Felicis Ventures,AI基础层
+60,Felicis Ventures,Seed
+60,Felicis Ventures,A Series
+60,Felicis Ventures,B Series
+60,Felicis Ventures,0-100M
+60,Felicis Ventures,300M-400M
+60,Felicis Ventures,600M-700M
+190,Wilson Hill,AI行业应用
+190,Wilson Hill,Seed
+190,Wilson Hill,0-100M
+199,加州理工学院,AI行业应用
+199,加州理工学院,Seed
+199,加州理工学院,0-100M
+138,Radical Ventures,AI技术层
+138,Radical Ventures,AI基础层
+138,Radical Ventures,Seed
+138,Radical Ventures,B Series
+138,Radical Ventures,0-100M
+138,Radical Ventures,1B-2B
+200,李飞飞,AI技术层
+200,李飞飞,Seed
+200,李飞飞,0-100M
+93,Jeff Dean,AI技术层
+93,Jeff Dean,Seed
+93,Jeff Dean,0-100M
+156,Sequoia Capital红杉,AI行业应用
+156,Sequoia Capital红杉,AI技术层
+156,Sequoia Capital红杉,Seed
+156,Sequoia Capital红杉,A Series
+156,Sequoia Capital红杉,B Series
+156,Sequoia Capital红杉,0-100M
+156,Sequoia Capital红杉,300M-400M
+156,Sequoia Capital红杉,10B+
+54,EQT Ventures,AI行业应用
+54,EQT Ventures,Seed
+54,EQT Ventures,0-100M
+69,GTMFund,AI行业应用
+69,GTMFund,Seed
+69,GTMFund,0-100M
+130,Point Nine Capital,AI技术层
+130,Point Nine Capital,Seed
+130,Point Nine Capital,100M-200M
+46,Costanoa Ventures,AI技术层
+46,Costanoa Ventures,Seed
+46,Costanoa Ventures,100M-200M
+153,Seedcamp,AI技术层
+153,Seedcamp,Seed
+153,Seedcamp,100M-200M
+123,Nicolas Dessaigne,AI技术层
+123,Nicolas Dessaigne,Seed
+123,Nicolas Dessaigne,100M-200M
+188,Wes McKinney,AI技术层
+188,Wes McKinney,Seed
+188,Wes McKinney,100M-200M
+127,Oliver Cameron,AI技术层
+127,Oliver Cameron,Seed
+127,Oliver Cameron,100M-200M
+58,Eric Jang,AI技术层
+58,Eric Jang,Seed
+58,Eric Jang,100M-200M
+79,Guillermo Rauch,AI技术层
+79,Guillermo Rauch,Seed
+79,Guillermo Rauch,100M-200M
+167,Sunflower Capital,AI技术层
+167,Sunflower Capital,Seed
+167,Sunflower Capital,100M-200M
+62,First Round Capital,AI行业应用
+62,First Round Capital,Seed
+62,First Round Capital,B Series
+62,First Round Capital,0-100M
+62,First Round Capital,100M-200M
+193,Y Combinator,AI行业应用
+193,Y Combinator,AI技术层
+193,Y Combinator,Seed
+193,Y Combinator,A Series
+193,Y Combinator,B Series
+193,Y Combinator,0-100M
+193,Y Combinator,200M-300M
+193,Y Combinator,100M-200M
+193,Y Combinator,500M-600M
+192,XA Network,AI行业应用
+192,XA Network,Seed
+192,XA Network,0-100M
+65,Forge Ventures,AI行业应用
+65,Forge Ventures,Seed
+65,Forge Ventures,0-100M
+51,Dhruv Arora,AI行业应用
+51,Dhruv Arora,Seed
+51,Dhruv Arora,0-100M
+132,Prashanth Prakash,AI行业应用
+132,Prashanth Prakash,Seed
+132,Prashanth Prakash,0-100M
+13,Alex Svanevik,AI行业应用
+13,Alex Svanevik,Seed
+13,Alex Svanevik,0-100M
+119,Nas Daily,AI行业应用
+119,Nas Daily,Seed
+119,Nas Daily,0-100M
+97,Kevin Aluwi,AI行业应用
+97,Kevin Aluwi,Seed
+97,Kevin Aluwi,0-100M
+124,Nir Eyal,AI行业应用
+124,Nir Eyal,Seed
+124,Nir Eyal,0-100M
+29,Balaji Srinivasan,AI行业应用
+29,Balaji Srinivasan,Seed
+29,Balaji Srinivasan,0-100M
+40,Capital X,AI行业应用
+40,Capital X,Seed
+40,Capital X,0-100M
+99,Kleiner Perkins Caufield & Byers(KPCB全球),AI技术层
+99,Kleiner Perkins Caufield & Byers(KPCB全球),AIGC
+99,Kleiner Perkins Caufield & Byers(KPCB全球),A Series
+99,Kleiner Perkins Caufield & Byers(KPCB全球),B Series
+99,Kleiner Perkins Caufield & Byers(KPCB全球),300M-400M
+99,Kleiner Perkins Caufield & Byers(KPCB全球),1B-2B
+82,Hanabi Capital,AI技术层
+82,Hanabi Capital,A Series
+82,Hanabi Capital,300M-400M
+118,NFDG Ventures,AI技术层
+118,NFDG Ventures,A Series
+118,NFDG Ventures,300M-400M
+8,Accel Partners,AI行业应用
+8,Accel Partners,AI技术层
+8,Accel Partners,A Series
+8,Accel Partners,B Series
+8,Accel Partners,200M-300M
+8,Accel Partners,300M-400M
+8,Accel Partners,400M-500M
+66,Foundation Capital,AI行业应用
+66,Foundation Capital,A Series
+66,Foundation Capital,200M-300M
+39,Capital 49,AI行业应用
+39,Capital 49,A Series
+39,Capital 49,200M-300M
+163,Smedvig Ventures,AI行业应用
+163,Smedvig Ventures,A Series
+163,Smedvig Ventures,0-100M
+32,Blaguss,AI行业应用
+32,Blaguss,A Series
+32,Blaguss,0-100M
+76,Granite Asia,AI行业应用
+76,Granite Asia,A Series
+76,Granite Asia,300M-400M
+3,8VC,AI行业应用
+3,8VC,A Series
+3,8VC,100M-200M
+10,Adverb Ventures,AI行业应用
+10,Adverb Ventures,A Series
+10,Adverb Ventures,100M-200M
+67,Future Back Ventures by Bain & Company,AI行业应用
+67,Future Back Ventures by Bain & Company,A Series
+67,Future Back Ventures by Bain & Company,100M-200M
+103,Lightspeed Venture Partners光速全球,AI行业应用
+103,Lightspeed Venture Partners光速全球,A Series
+103,Lightspeed Venture Partners光速全球,100M-200M
+103,Lightspeed Venture Partners光速全球,300M-400M
+146,SV Angel,AI行业应用
+146,SV Angel,A Series
+146,SV Angel,100M-200M
+140,Ribbit Capital,AI行业应用
+140,Ribbit Capital,A Series
+140,Ribbit Capital,100M-200M
+53,EDBI,AI行业应用
+53,EDBI,A Series
+53,EDBI,100M-200M
+102,Level Equity,AI技术层
+102,Level Equity,A Series
+102,Level Equity,0-100M
+63,Flex Capital,AI技术层
+63,Flex Capital,A Series
+63,Flex Capital,100M-200M
+86,Holman Growth Ventures,AI技术层
+86,Holman Growth Ventures,A Series
+86,Holman Growth Ventures,100M-200M
+150,Scale Angels Fund,AI技术层
+150,Scale Angels Fund,A Series
+150,Scale Angels Fund,100M-200M
+179,Unpopular Ventures,AI技术层
+179,Unpopular Ventures,A Series
+179,Unpopular Ventures,100M-200M
+30,Benchmark Capital,AI技术层
+30,Benchmark Capital,AI行业应用
+30,Benchmark Capital,A Series
+30,Benchmark Capital,B Series
+30,Benchmark Capital,100M-200M
+30,Benchmark Capital,500M-600M
+30,Benchmark Capital,600M-700M
+112,Mayfield Fund,AI技术层
+112,Mayfield Fund,A Series
+112,Mayfield Fund,B Series
+112,Mayfield Fund,100M-200M
+112,Mayfield Fund,300M-400M
+142,Rocketship,AI技术层
+142,Rocketship,A Series
+142,Rocketship,100M-200M
+164,Snowflake Ventures,AI技术层
+164,Snowflake Ventures,A Series
+164,Snowflake Ventures,100M-200M
+25,B Capital Group,AI技术层
+25,B Capital Group,AI行业应用
+25,B Capital Group,A Series
+25,B Capital Group,300M-400M
+72,Global Brain,AI行业应用
+72,Global Brain,A Series
+72,Global Brain,0-100M
+161,SignalFire,AI行业应用
+161,SignalFire,A Series
+161,SignalFire,0-100M
+166,Spero Ventures,AI行业应用
+166,Spero Ventures,A Series
+166,Spero Ventures,0-100M
+202,礼来Eli Lilly,AI行业应用
+202,礼来Eli Lilly,A Series
+202,礼来Eli Lilly,0-100M
+136,Purdue Ventures,AI行业应用
+136,Purdue Ventures,A Series
+136,Purdue Ventures,0-100M
+64,Ford Street Capital,AI行业应用
+64,Ford Street Capital,A Series
+64,Ford Street Capital,0-100M
+91,Innospark Ventures,AI行业应用
+91,Innospark Ventures,A Series
+91,Innospark Ventures,0-100M
+2,2048 Ventures,AI行业应用
+2,2048 Ventures,A Series
+2,2048 Ventures,0-100M
+23,Asymmetry Ventures,AI行业应用
+23,Asymmetry Ventures,A Series
+23,Asymmetry Ventures,0-100M
+41,Cartography Cap,AI行业应用
+41,Cartography Cap,A Series
+41,Cartography Cap,0-100M
+75,Good AI Capital,AI行业应用
+75,Good AI Capital,A Series
+75,Good AI Capital,0-100M
+107,MBX Capital,AI行业应用
+107,MBX Capital,A Series
+107,MBX Capital,0-100M
+90,Index Ventures,AI技术层
+90,Index Ventures,A Series
+90,Index Ventures,200M-300M
+126,Obvious Ventures,AI行业应用
+126,Obvious Ventures,A Series
+126,Obvious Ventures,B Series
+126,Obvious Ventures,100M-200M
+126,Obvious Ventures,200M-300M
+20,Andreessen Horowitz（a16z）Bio+Health,AI行业应用
+20,Andreessen Horowitz（a16z）Bio+Health,A Series
+20,Andreessen Horowitz（a16z）Bio+Health,100M-200M
+18,Amino Collective,AI行业应用
+18,Amino Collective,A Series
+18,Amino Collective,100M-200M
+43,Character,AI行业应用
+43,Character,A Series
+43,Character,100M-200M
+144,S32,AI行业应用
+144,S32,A Series
+144,S32,100M-200M
+125,Northzone Ventures,AI行业应用
+125,Northzone Ventures,A Series
+125,Northzone Ventures,100M-200M
+1,1984 Ventures,AI行业应用
+1,1984 Ventures,A Series
+1,1984 Ventures,100M-200M
+96,Kaiser Permanente Ventures,AI行业应用
+96,Kaiser Permanente Ventures,A Series
+96,Kaiser Permanente Ventures,100M-200M
+14,AlleyCorp,AI行业应用
+14,AlleyCorp,AI基础层
+14,AlleyCorp,A Series
+14,AlleyCorp,B Series
+14,AlleyCorp,100M-200M
+14,AlleyCorp,600M-700M
+173,TMCVF,AI行业应用
+173,TMCVF,A Series
+173,TMCVF,100M-200M
+143,Roo Partners,AI通用应用
+143,Roo Partners,A Series
+143,Roo Partners,0-100M
+147,SaaS Ventures,AI通用应用
+147,SaaS Ventures,A Series
+147,SaaS Ventures,0-100M
+141,Riptide Ventures,AI通用应用
+141,Riptide Ventures,A Series
+141,Riptide Ventures,0-100M
+109,Main Growth Partners,AI通用应用
+109,Main Growth Partners,A Series
+109,Main Growth Partners,0-100M
+154,Seeds Capital,AI行业应用
+154,Seeds Capital,A Series
+154,Seeds Capital,0-100M
+178,Tin Men Capital,AI行业应用
+178,Tin Men Capital,A Series
+178,Tin Men Capital,0-100M
+187,Wavemaker Ventures,AI行业应用
+187,Wavemaker Ventures,A Series
+187,Wavemaker Ventures,0-100M
+206,贝恩资本BainCapital,AI行业应用
+206,贝恩资本BainCapital,AI技术层
+206,贝恩资本BainCapital,A Series
+206,贝恩资本BainCapital,B Series
+206,贝恩资本BainCapital,100M-200M
+206,贝恩资本BainCapital,300M-400M
+206,贝恩资本BainCapital,400M-500M
+206,贝恩资本BainCapital,3B-4B
+113,Menlo Ventures,AI行业应用
+113,Menlo Ventures,AI技术层
+113,Menlo Ventures,A Series
+113,Menlo Ventures,B Series
+113,Menlo Ventures,300M-400M
+101,Larry Ellison,AI行业应用
+101,Larry Ellison,B Series
+101,Larry Ellison,100M-200M
+11,Aguras Pathology Investments,AI行业应用
+11,Aguras Pathology Investments,B Series
+11,Aguras Pathology Investments,100M-200M
+50,Dentsu Ventures,AI行业应用
+50,Dentsu Ventures,B Series
+50,Dentsu Ventures,100M-200M
+191,Wipro Ventures,AI行业应用
+191,Wipro Ventures,B Series
+191,Wipro Ventures,100M-200M
+15,Alumni Ventures Group,AI行业应用
+15,Alumni Ventures Group,B Series
+15,Alumni Ventures Group,100M-200M
+135,Prosperity7 Ventures,AI行业应用
+135,Prosperity7 Ventures,AIGC
+135,Prosperity7 Ventures,B Series
+135,Prosperity7 Ventures,100M-200M
+135,Prosperity7 Ventures,1B-2B
+57,Engineering Capital,AI行业应用
+57,Engineering Capital,B Series
+57,Engineering Capital,100M-200M
+57,Engineering Capital,200M-300M
+139,Redpoint Ventures红点全球基金,AI行业应用
+139,Redpoint Ventures红点全球基金,B Series
+139,Redpoint Ventures红点全球基金,500M-600M
+88,Iconiq Capital,AI行业应用
+88,Iconiq Capital,B Series
+88,Iconiq Capital,500M-600M
+205,谷歌Google,AI行业应用
+205,谷歌Google,B Series
+205,谷歌Google,10B+
+77,Greenoaks Capital Management,AI行业应用
+77,Greenoaks Capital Management,B Series
+77,Greenoaks Capital Management,10B+
+203,英伟达NVIDIA,AI行业应用
+203,英伟达NVIDIA,AIGC
+203,英伟达NVIDIA,AI技术层
+203,英伟达NVIDIA,AI基础层
+203,英伟达NVIDIA,B Series
+203,英伟达NVIDIA,10B+
+203,英伟达NVIDIA,1B-2B
+203,英伟达NVIDIA,3B-4B
+169,Sutter Hill Ventures,AI技术层
+169,Sutter Hill Ventures,B Series
+169,Sutter Hill Ventures,300M-400M
+37,Canaan Partners,AI技术层
+37,Canaan Partners,B Series
+37,Canaan Partners,300M-400M
+105,M Ventures,AI行业应用
+105,M Ventures,B Series
+105,M Ventures,200M-300M
+6,ARM IoT Capital,AI行业应用
+6,ARM IoT Capital,B Series
+6,ARM IoT Capital,200M-300M
+115,Motus Ventures,AI行业应用
+115,Motus Ventures,B Series
+115,Motus Ventures,200M-300M
+197,eLab Ventures,AI行业应用
+197,eLab Ventures,B Series
+197,eLab Ventures,200M-300M
+83,HarbourVest,AI行业应用
+83,HarbourVest,B Series
+83,HarbourVest,200M-300M
+21,Anthology Fund,AI技术层
+21,Anthology Fund,B Series
+21,Anthology Fund,300M-400M
+160,Shopify Ventures,AI技术层
+160,Shopify Ventures,B Series
+160,Shopify Ventures,300M-400M
+61,Figma Ventures,AI技术层
+61,Figma Ventures,B Series
+61,Figma Ventures,300M-400M
+174,The General Partnership,AI技术层
+174,The General Partnership,B Series
+174,The General Partnership,300M-400M
+184,Venrock Healthcare Capital Partners,AI行业应用
+184,Venrock Healthcare Capital Partners,B Series
+184,Venrock Healthcare Capital Partners,200M-300M
+120,Neotribe Ventures,AI行业应用
+120,Neotribe Ventures,B Series
+120,Neotribe Ventures,200M-300M
+92,Innovius Capital,AI行业应用
+92,Innovius Capital,B Series
+92,Innovius Capital,200M-300M
+94,KPMG Ventures,AI行业应用
+94,KPMG Ventures,B Series
+94,KPMG Ventures,200M-300M
+155,Sentinel Global,AI行业应用
+155,Sentinel Global,B Series
+155,Sentinel Global,200M-300M
+49,Dell Technologies Capital,AI行业应用
+49,Dell Technologies Capital,B Series
+49,Dell Technologies Capital,200M-300M
+56,Emergence Capital Partners,AIGC
+56,Emergence Capital Partners,B Series
+56,Emergence Capital Partners,1B-2B
+148,Salesforce,AIGC
+148,Salesforce,B Series
+148,Salesforce,1B-2B
+81,Hamilton Lane,AI行业应用
+81,Hamilton Lane,B Series
+81,Hamilton Lane,300M-400M
+74,Golub Capital,AI行业应用
+74,Golub Capital,B Series
+74,Golub Capital,300M-400M
+73,Goldman Sachs Alternatives,AI行业应用
+73,Goldman Sachs Alternatives,B Series
+73,Goldman Sachs Alternatives,300M-400M
+34,Broadhaven Ventures,AI行业应用
+34,Broadhaven Ventures,B Series
+34,Broadhaven Ventures,300M-400M
+31,Blackstone Innovations Investments,AI行业应用
+31,Blackstone Innovations Investments,B Series
+31,Blackstone Innovations Investments,300M-400M
+47,DST Global,AI行业应用
+47,DST Global,AI技术层
+47,DST Global,B Series
+47,DST Global,600M-700M
+47,DST Global,3B-4B
+149,Samsung Ventures三星,AI基础层
+149,Samsung Ventures三星,B Series
+149,Samsung Ventures三星,600M-700M
+177,Tiger Global老虎海外,AI基础层
+177,Tiger Global老虎海外,B Series
+177,Tiger Global老虎海外,600M-700M
+151,Scout Ventures,AI基础层
+151,Scout Ventures,B Series
+151,Scout Ventures,600M-700M
+22,Anzu Partners,AI基础层
+22,Anzu Partners,B Series
+22,Anzu Partners,600M-700M
+145,SIP Global Partners,AI基础层
+145,SIP Global Partners,B Series
+145,SIP Global Partners,600M-700M
+111,Maverick Silicon,AI基础层
+111,Maverick Silicon,B Series
+111,Maverick Silicon,600M-700M
+44,Constellation Technology Ventures,AI基础层
+44,Constellation Technology Ventures,B Series
+44,Constellation Technology Ventures,600M-700M
+35,CTBC Capital,AI基础层
+35,CTBC Capital,B Series
+35,CTBC Capital,600M-700M
+185,VentureTech Alliance,AI基础层
+185,VentureTech Alliance,B Series
+185,VentureTech Alliance,600M-700M
+182,Vanderbilt University,AI基础层
+182,Vanderbilt University,B Series
+182,Vanderbilt University,600M-700M
+162,Smash Capital,AI行业应用
+162,Smash Capital,B Series
+162,Smash Capital,200M-300M
+181,Valor Equity Partners,AI行业应用
+181,Valor Equity Partners,B Series
+181,Valor Equity Partners,200M-300M
+24,Atreides Management,AI行业应用
+24,Atreides Management,B Series
+24,Atreides Management,200M-300M
+9,Adobe Ventures,AI行业应用
+9,Adobe Ventures,B Series
+9,Adobe Ventures,200M-300M
+28,BainCap VC,AI行业应用
+28,BainCap VC,B Series
+28,BainCap VC,200M-300M
+33,Bond Capital,AI行业应用
+33,Bond Capital,B Series
+33,Bond Capital,400M-500M
+4,ACME Ventures,AI行业应用
+4,ACME Ventures,B Series
+4,ACME Ventures,400M-500M
+196,eBay,AI技术层
+196,eBay,B Series
+196,eBay,3B-4B
+100,LG集团,AI技术层
+100,LG集团,B Series
+100,LG集团,3B-4B
+201,汇丰创投,AI技术层
+201,汇丰创投,B Series
+201,汇丰创投,3B-4B
+106,M13,AI行业应用
+106,M13,B Series
+106,M13,100M-200M
+121,NewView Capital,AI行业应用
+121,NewView Capital,B Series
+121,NewView Capital,100M-200M
+133,Prelude Ventures,AI行业应用
+133,Prelude Ventures,B Series
+133,Prelude Ventures,200M-300M
+114,Metaplanet Holdings,AI行业应用
+114,Metaplanet Holdings,B Series
+114,Metaplanet Holdings,200M-300M
+129,Piva Capital,AI行业应用
+129,Piva Capital,B Series
+129,Piva Capital,200M-300M
+38,Canvas Ventures,AI技术层
+38,Canvas Ventures,B Series
+38,Canvas Ventures,200M-300M
+180,Valor Capital Group,AI技术层
+180,Valor Capital Group,B Series
+180,Valor Capital Group,200M-300M
+17,American Family Ventures,AI技术层
+17,American Family Ventures,B Series
+17,American Family Ventures,200M-300M
+110,Manchester Story,AI技术层
+110,Manchester Story,B Series
+110,Manchester Story,200M-300M
+80,HC9 Ventures,AI技术层
+80,HC9 Ventures,B Series
+80,HC9 Ventures,200M-300M
+137,QED Holdings,AI技术层
+137,QED Holdings,B Series
+137,QED Holdings,200M-300M
+204,英特尔投资Intel Capital,AI基础层
+204,英特尔投资Intel Capital,B Series
+204,英特尔投资Intel Capital,1B-2B
+117,NEA恩颐投资-New Enterprise Associates,AI基础层
+117,NEA恩颐投资-New Enterprise Associates,B Series
+117,NEA恩颐投资-New Enterprise Associates,1B-2B
+5,AMD,AI基础层
+5,AMD,B Series
+5,AMD,1B-2B
