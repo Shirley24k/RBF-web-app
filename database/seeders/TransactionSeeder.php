@@ -74,31 +74,33 @@ class TransactionSeeder extends Seeder
         ]);
 
 
-        $activeApplication = Application::where('status', 'Active')->first();
-        if (!$activeApplication) {
-            $this->command->info('No active applications found. Please run ApplicationSeeder first.');
-            return;
-        }
-    
-        Transaction::create([
-            'application_id' => $activeApplication->id,
-            'amount' => 150000.00,
-            'transaction_datetime' => '2025-06-27 10:00:00',
-            'from_stripe_id' => $activeApplication->investor->stripe_id,
-            'to_stripe_id' => $activeApplication->startup->stripe_id,
-            'type' => 'FUND_TRANSFER',
-            'status' => 'Completed',
-        ]);
+		$activeApplications = Application::where('status', 'Active')->get();
+		if ($activeApplications->isEmpty()) {
+			$this->command->info('No active applications found. Please run ApplicationSeeder first.');
+			return;
+		}
 
-        Transaction::create([
-            'application_id' => $activeApplication->id,
-            'amount' => 5000.00,
-            'transaction_datetime' => '2025-07-27 10:00:00',
-            'from_stripe_id' => $activeApplication->startup->stripe_id,
-            'to_stripe_id' => $activeApplication->investor->stripe_id,
-            'type' => 'REPAYMENT',
-            'status' => 'Completed',
-        ]);
+		foreach ($activeApplications as $activeApplication) {
+			Transaction::create([
+				'application_id' => $activeApplication->id,
+				'amount' => 150000.00,
+				'transaction_datetime' => '2025-06-27 10:00:00',
+				'from_stripe_id' => $activeApplication->investor->stripe_id,
+				'to_stripe_id' => $activeApplication->startup->stripe_id,
+				'type' => 'FUND_TRANSFER',
+				'status' => 'Completed',
+			]);
+
+			Transaction::create([
+				'application_id' => $activeApplication->id,
+				'amount' => 5000.00,
+				'transaction_datetime' => '2025-07-27 10:00:00',
+				'from_stripe_id' => $activeApplication->startup->stripe_id,
+				'to_stripe_id' => $activeApplication->investor->stripe_id,
+				'type' => 'REPAYMENT',
+				'status' => 'Completed',
+			]);
+		}
     
         $this->command->info('Transactions seeded successfully!');
     }

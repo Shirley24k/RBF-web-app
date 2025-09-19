@@ -37,7 +37,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'imbvents@gmail.com',
-                'password' => Hash::make('imbvents'),
+                'password' => Hash::make('investor123'),
                 'type' => 'firm',
                 'name' => 'IMB Ventures Sdn Bhd',
                 'contact_no' => '+60123459876',
@@ -55,7 +55,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'wong.xiao.meng@gmail.com',
-                'password' => Hash::make('wongxiaomeng'),
+                'password' => Hash::make('investor123'),
                 'type' => 'individual',
                 'name' => 'Wong Xiao Meng',
                 'contact_no' => '+60123349789',
@@ -73,7 +73,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'low.kee.heng@gmail.com',
-                'password' => Hash::make('lowkeeheng'),
+                'password' => Hash::make('investor123'),
                 'type' => 'individual',
                 'name' => 'Low Kee Heng',
                 'contact_no' => '+60123456789',
@@ -91,7 +91,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'sarah.ahmad@gmail.com',
-                'password' => Hash::make('sarahahmad'),
+                'password' => Hash::make('investor123'),
                 'type' => 'individual',
                 'name' => 'Sarah Ahmad',
                 'contact_no' => '+60123456790',
@@ -109,7 +109,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'techventures@outlook.com',
-                'password' => Hash::make('techventures'),
+                'password' => Hash::make('investor123'),
                 'type' => 'firm',
                 'name' => 'Tech Ventures Capital',
                 'contact_no' => '+60123456791',
@@ -127,7 +127,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'michael.tan@gmail.com',
-                'password' => Hash::make('michaeltan'),
+                'password' => Hash::make('investor123'),
                 'type' => 'individual',
                 'name' => 'Michael Tan',
                 'contact_no' => '+60123456792',
@@ -145,7 +145,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'greenfund@greenventures.com',
-                'password' => Hash::make('greenfund'),
+                'password' => Hash::make('investor123'),
                 'type' => 'firm',
                 'name' => 'Green Ventures Fund',
                 'contact_no' => '+60123456793',
@@ -163,7 +163,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'lisa.ong@gmail.com',
-                'password' => Hash::make('lisaong'),
+                'password' => Hash::make('investor123'),
                 'type' => 'individual',
                 'name' => 'Lisa Ong',
                 'contact_no' => '+60123456794',
@@ -181,7 +181,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'startupcapital@venture.com',
-                'password' => Hash::make('startupcapital'),
+                'password' => Hash::make('investor123'),
                 'type' => 'firm',
                 'name' => 'Startup Capital Partners',
                 'contact_no' => '+60123456795',
@@ -199,7 +199,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'ahmad.rahman@gmail.com',
-                'password' => Hash::make('ahmadrahman'),
+                'password' => Hash::make('investor123'),
                 'type' => 'individual',
                 'name' => 'Ahmad Rahman',
                 'contact_no' => '+60123456796',
@@ -217,7 +217,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'foodtech@innovate.com',
-                'password' => Hash::make('foodtech'),
+                'password' => Hash::make('investor123'),
                 'type' => 'firm',
                 'name' => 'FoodTech Innovation Fund',
                 'contact_no' => '+60123456797',
@@ -235,7 +235,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'jennifer.lim@gmail.com',
-                'password' => Hash::make('jenniferlim'),
+                'password' => Hash::make('investor123'),
                 'type' => 'individual',
                 'name' => 'Jennifer Lim',
                 'contact_no' => '+60123456798',
@@ -253,7 +253,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'socialimpact@impact.com',
-                'password' => Hash::make('socialimpact'),
+                'password' => Hash::make('investor123'),
                 'type' => 'firm',
                 'name' => 'Social Impact Ventures',
                 'contact_no' => '+60123456799',
@@ -271,7 +271,7 @@ class InvestorSeeder extends Seeder
             ],
             [
                 'email' => 'robert.lee@gmail.com',
-                'password' => Hash::make('robertlee'),
+                'password' => Hash::make('investor123'),
                 'type' => 'individual',
                 'name' => 'Robert Lee',
                 'contact_no' => '+60123456800',
