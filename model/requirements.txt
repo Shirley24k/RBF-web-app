@@ -1,0 +1,15 @@
+flask==3.0.2
+selenium
+pandas
+python-dotenv
+xgboost
+scikit-learn
+matplotlib
+seaborn
+joblib
+psycopg2-binary
+PyPDF2
+requests
+supabase
+neo4j
+openai
