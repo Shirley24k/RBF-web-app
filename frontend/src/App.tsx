@@ -1,0 +1,73 @@
+import { Route, Routes } from "react-router-dom";
+import { PrivateRoute } from "./PrivateRoute";
+import { AdminFunding } from "./screens/Admin/AdminFundingApplication";
+import { AdminHome } from "./screens/Admin/AdminHome";
+import { AdminUserManagement } from "./screens/Admin/AdminUserManagement";
+import { ApplicationDetails } from "./screens/ApplicationDetails";
+import { ForgotPassword } from "./screens/ForgotPasswordPage";
+import { InvestorFunding } from "./screens/Investor/InvestorFundingApplication";
+import { InvestorHome } from "./screens/Investor/InvestorHome";
+import { InvestorRegister } from "./screens/Investor/InvestorRegisterPage";
+import { InvestorProfile } from "./screens/Investor/Profile";
+import { InvestorTransaction } from "./screens/Investor/Transaction";
+import { LandingPage } from "./screens/LandingPage";
+import { Login } from "./screens/LoginPage";
+import { Register } from "./screens/RegisterPage";
+import { ResetPassword } from "./screens/ResetPasswordPage";
+import { ProcessingFundingPage } from "./screens/Startup/ProcessingFundingPage";
+import { StartupProfile } from "./screens/Startup/Profile";
+import { ProposalListings } from "./screens/Startup/ProposalListings";
+import { ProposalManagement } from "./screens/Startup/ProposalManagement";
+import { SelectInvestor } from "./screens/Startup/SelectInvestor";
+import { StartupFunding } from "./screens/Startup/StartupFundingApplication";
+import { StartupHome } from "./screens/Startup/StartupHome";
+import { StartupRegister } from "./screens/Startup/StartupRegisterPage";
+import { StartupSubmitFunding } from "./screens/Startup/StartupSubmitFunding";
+import { SuccessSubmitFunding } from "./screens/Startup/SuccessSubmitFunding";
+import { StartupTransaction } from "./screens/Startup/Transaction";
+import { TransactionDetails } from "./screens/TransactionDetails";
+
+function App() {
+    return (
+        <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/startup-register" element={<StartupRegister />} />
+            <Route path="/investor-register" element={<InvestorRegister />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/password-reset/:token" element={<ResetPassword />} />
+
+            {/* Private Routes */}
+            <Route element={<PrivateRoute />}>
+                <Route path="/startup-home" element={<StartupHome />} />
+                <Route path="/proposal-listings" element={<ProposalListings />} />
+                <Route path="/proposal-management" element={<ProposalManagement />} />
+                <Route path="/startup-profile" element={<StartupProfile />} />
+                <Route path="/startup-funding" element={<StartupFunding />} />
+                <Route path="/submit-funding" element={<StartupSubmitFunding />} />
+                <Route path="/processing-funding" element={<ProcessingFundingPage />} />
+                <Route path="/select-investor" element={<SelectInvestor />} />
+                <Route path="/startup-transaction" element={<StartupTransaction />} />
+                <Route path="/application-transaction-details/:id" element={<TransactionDetails />} />
+                <Route path="/application/:id" element={<ApplicationDetailsWrapper />} />
+                <Route path="/success-submit-funding" element={<SuccessSubmitFunding />} />
+                <Route path="/investor-home" element={<InvestorHome />} />
+                <Route path="/investor-funding" element={<InvestorFunding />} />
+                <Route path="/investor-profile" element={<InvestorProfile />} />
+                <Route path="/investor-transaction" element={<InvestorTransaction />} />
+                <Route path="/admin-home" element={<AdminHome />} />
+                <Route path="/admin-funding" element={<AdminFunding />} />
+                <Route path="/admin-user-management" element={<AdminUserManagement />} />
+            </Route>
+        </Routes>
+    );
+}
+
+export function ApplicationDetailsWrapper() {
+    const role = localStorage.getItem("role");
+    return <ApplicationDetails userRole={role as "startup" | "investor" | "admin"} />;
+}
+
+export default App;

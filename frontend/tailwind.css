@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .all-\[unset\] {
+    all: unset;
+  }
+}
+
+:root {
+  --avocado-green: rgba(205, 214, 195, 0.8);
+  --light-blue: rgba(134, 181, 229, 0.8);
+  --blue-gray-50: rgba(236, 239, 241, 1);
+  --brown-50: rgba(239, 235, 233, 1);
+  --brown-700: rgba(93, 64, 55, 1);
+  --amber-50: rgb(255, 248, 225);
+  --amber-800: rgb(255, 143, 0);
+  --deep-orange-50: rgb(251, 233, 231);
+  --deep-orange-500: rgb(191, 54, 12);
+  --gray-900: rgba(33, 33, 33, 1);
+  --green-50: rgb(232, 245, 233);
+  --green-900: rgba(27, 94, 32, 1);
+  --light-purple: rgba(87, 73, 100, 0.78);
+  --beige: rgba(253, 250, 246, 1);
+  --dark-beige: rgba(250, 241, 230, 1);
+  --dark-plum: rgb(87, 73, 100);
+  --gray-300: rgba(224, 224, 224, 1);
+  --light-apple-green: rgba(247, 247, 232, 1);
+  --light-green: rgba(205, 214, 195, 0.42);
+  --light-purple: rgba(87, 73, 100, 0.78);
+  --warm-off-white: #f3f1ed;
+  --white: rgba(255, 255, 255, 1);
+  --description-font-family: "Lato", Helvetica;
+  --description-font-weight: 500;
+  --section-title-font-family: "Lora", Helvetica;
+  --section-title-font-weight: 600;
+  --small-text-font-family: "Inter", Helvetica;
+  --small-text-font-weight: 500;
+  --shadow-dark-500-20: 0px 2px 4px -2px rgba(33, 33, 33, 0.2), 0px 4px 6px -1px rgba(33, 33, 33, 0.2);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+
+    --card: transparent;
+    --card-foreground: 222.2 47.4% 11.2%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 215 20.2% 65.1%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+
+    --card: transparent;
+    --card-foreground: 213 31% 91%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 216 34% 17%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
